@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "KanColle Cond Checker",
 	"version": "0.0.1",
-	"description": "艦これの疲労度を監視する",
+	"description": "艦これの疲労度を数値で表示する",
 	"background": {
 		"scripts": ["background.js"]
 	},
