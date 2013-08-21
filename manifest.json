@@ -6,6 +6,12 @@
 	"background": {
 		"scripts": ["background.js"]
 	},
+	"content_scripts": [
+		{
+			"matches": ["http://www.dmm.com/netgame/social/-/gadgets/=/app_id=854854/"],
+			"js": ["content.js"]
+		}
+	],
 	"devtools_page": "devtools.html",
 	"permissions": [
 		"webRequest",

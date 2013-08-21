@@ -1,7 +1,8 @@
-chrome.webRequest.onCompleted.addListener(function (details) {
-	console.log(details);
-}, {
-	urls: ["http://*/kcsapi/api_get_member/ship2"],
-	types: ["object"]
+chrome.extension.onRequest.addListener(function (req) {
+	chrome.windows.getCurrent(function (win) {
+		chrome.tabs.getSelected(win.id, function (tab) {
+			chrome.tabs.sendMessage(tab.id, req);
+		});
+	});
 });
 
