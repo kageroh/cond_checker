@@ -1,0 +1,15 @@
+{
+	"manifest_version": 2,
+	"name": "KanColle Cond Checker",
+	"version": "0.0.1",
+	"description": "艦これの疲労度を監視する",
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"devtools_page": "devtools.html",
+	"permissions": [
+		"webRequest",
+		"http://*/kcsapi/api_get_member/ship2"
+	]
+}
+
