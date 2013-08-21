@@ -1,5 +1,5 @@
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/http:\/\/[^\/]+\/kcsapi\/api_get_member\/ship2/.test(request.request.url)) return;
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/ship2$/.test(request.request.url)) return;
 	var date = new Date();
 	var req = [];
 	req.push(date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds());
