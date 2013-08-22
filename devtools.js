@@ -2,7 +2,11 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/ship2$/.test(request.request.url)) return;
 	var date = new Date();
 	var req = [];
-	req.push(date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds());
+	req.push([
+		('0' + date.getHours()).slice(-2),
+		('0' + date.getMinutes()).slice(-2),
+		('0' + date.getSeconds()).slice(-2)
+	].join(':'));
 	request.getContent(function (content) {
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		var data_list = json.api_data;
