@@ -12,7 +12,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var ship_list = deck.api_ship;
 			for (var j = 0, ship; ship = ship_list[j]; j++) {
 				for (var k = 0, data; data = data_list[k]; k++) {
-					if (data.api_id === ship) req.push((j + 1).toString(10) + ': ' + data.api_cond.toString(10));
+					if (data.api_id === ship) {
+						req.push((j + 1).toString(10) + ': ' + data.api_cond.toString(10));
+						break;
+					}
 				}
 			}
 		}
