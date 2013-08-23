@@ -12,6 +12,10 @@
 			"js": ["content.js"]
 		}
 	],
+	"permissions": [
+		"webRequest",
+		"http://*/kcsapi/api_get_member/ship2"
+	],
 	"devtools_page": "devtools.html"
 }
 
