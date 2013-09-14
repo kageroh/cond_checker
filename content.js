@@ -4,7 +4,12 @@ div.style.position = 'absolute';
 div.style.top = '7em';
 div.style.right = '.5em';
 document.body.appendChild(div);
+
 chrome.runtime.onMessage.addListener(function (req) {
-	div.textContent = req.join('\n');
+	if (req instanceof Array) {
+		div.textContent = req.join('\n');
+	} else {
+		div.textContent += '\n\n' + req.toString(10);
+	}
 });
 
