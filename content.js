@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
 		div.textContent = req.join('\n');
 	} else {
-		div.textContent += '\n\n' + req.toString(10);
+		div.textContent += '\n\nnext enemy\n' + req.toString(10);
 	}
 });
 

@@ -43,7 +43,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		if (!json) return;
 		var enemy_id = json.api_data.api_enemy.api_enemy_id;
-		chrome.extension.sendRequest('next enemy\n' + enemy_id);
+		chrome.extension.sendRequest(enemy_id);
 	});
 });
 
