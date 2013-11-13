@@ -4,6 +4,8 @@ $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/ship2$/.test(request.request.url)) return;
 	request.getContent(function (content) {
+		if (!content) return;
+
 		var req = [];
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		var data_list = json.api_data;
@@ -41,7 +43,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	request.getContent(function (content) {
 		if (!content) return
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json) return;
+		if (!json || !json.api_data.api_enemy) return;
 		var enemy_id = json.api_data.api_enemy.api_enemy_id;
 		chrome.extension.sendRequest(enemy_id);
 	});
