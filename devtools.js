@@ -46,9 +46,18 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data.api_enemy) return;
-		var enemy_id = json.api_data.api_enemy.api_enemy_id;
-		chrome.extension.sendRequest(enemy_id);
+		if (!json) return;
+		if (json.api_data.api_enemy) {
+			var enemy_id = json.api_data.api_enemy.api_enemy_id;
+			chrome.extension.sendRequest(enemy_id);
+		} else if(json.api_data.api_itemget) {
+			var item_type_id = json.api_data.api_itemget.api_id;
+			var item_amount = json.api_data.api_itemget.api_getcount;
+			chrome.extension.sendRequest({
+				item_type: item_type_id,
+				item_amount: item_amount
+			});
+		}
 	});
 });
 
