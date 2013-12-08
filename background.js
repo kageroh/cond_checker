@@ -3,7 +3,10 @@ var $time_stamp;
 chrome.webRequest.onCompleted.addListener(function (details) {
 	$time_stamp = new Date(details.timeStamp);
 }, {
-	urls: ["http://*/kcsapi/api_get_member/ship2"],
+	urls: [
+		"http://*/kcsapi/api_get_member/ship2",
+		"http://*/kcsapi/api_get_member/ship3",
+	],
 	types: ["object"]
 });
 
