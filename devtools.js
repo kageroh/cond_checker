@@ -27,6 +27,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
 			req.push(deck.api_name);
+			var mission_info = deck.api_mission;
+			if(mission_info[2]) {
+				var rest_time = parseInt((mission_info[2] - (new Date).getTime()) / 1000);
+				var rest_seconds = rest_time % 60;
+				var rest_minutes = parseInt(rest_time / 60);
+				var rest_hours = parseInt(rest_minutes / 60);
+				rest_minutes = rest_minutes % 60;
+				req.push('遠征中 あと ' + [rest_hours, ('0'+rest_minutes).slice(-2), ('0'+rest_seconds).slice(-2)].join(':'));
+			}
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
 				if (id === -1) break;
@@ -46,9 +55,18 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data.api_enemy) return;
-		var enemy_id = json.api_data.api_enemy.api_enemy_id;
-		chrome.extension.sendRequest(enemy_id);
+		if (!json) return;
+		if (json.api_data.api_enemy) {
+			var enemy_id = json.api_data.api_enemy.api_enemy_id;
+			chrome.extension.sendRequest(enemy_id);
+		} else if(json.api_data.api_itemget) {
+			var item_type_id = json.api_data.api_itemget.api_id;
+			var item_amount = json.api_data.api_itemget.api_getcount;
+			chrome.extension.sendRequest({
+				item_type: item_type_id,
+				item_amount: item_amount
+			});
+		}
 	});
 });
 
