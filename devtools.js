@@ -29,8 +29,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			req.push(deck.api_name);
 			var mission_info = deck.api_mission;
 			if(mission_info[2]) {
-				var rest_time = new Date(mission_info[2] - (new Date).getTime());
-				req.push('遠征中 あと ' + rest_time.getHours() + ':' + rest_time.getMinutes() + ':' + rest_time.getSeconds());
+				var rest_time = parseInt((mission_info[2] - (new Date).getTime()) / 1000);
+				var rest_seconds = rest_time % 60;
+				var rest_minutes = parseInt(rest_time / 60);
+				var rest_hours = parseInt(rest_minutes / 60);
+				rest_minutes = rest_minutes % 60;
+				req.push('遠征中 あと ' + [rest_hours, ('0'+rest_minutes).slice(-2), ('0'+rest_seconds).slice(-2)].join(':'));
 			}
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
