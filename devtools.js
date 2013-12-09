@@ -29,7 +29,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			req.push(deck.api_name);
 			var mission_info = deck.api_mission;
 			if(mission_info[2]) {
-				var rest_time = new Date(mission_info[2] * 1000 - (new Date).getTime());
+				var rest_time = new Date(mission_info[2] - (new Date).getTime());
 				req.push('遠征中 あと ' + rest_time.getHours() + ':' + rest_time.getMinutes() + ':' + rest_time.getSeconds());
 			}
 			var id_list = deck.api_ship;
