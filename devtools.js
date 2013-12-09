@@ -27,6 +27,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
 			req.push(deck.api_name);
+			var mission_info = deck.api_mission;
+			if(mission_info[2]) req.push('遠征中 ' + new Date(mission_info[2] * 1000) + ' まで')
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
 				if (id === -1) break;
