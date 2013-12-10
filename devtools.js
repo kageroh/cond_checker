@@ -1,4 +1,4 @@
-var $ship_list = localStorage['ship_list']
+var $ship_list = localStorage['ship_list'];
 $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
