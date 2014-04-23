@@ -2,16 +2,21 @@ var $ship_list = localStorage['ship_list'];
 $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/ship[23]$/.test(request.request.url)) return;
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_(?:get_member\/ship[23]|port\/port)$/.test(request.request.url)) return;
 	var ship2 = /ship2$/.test(request.request.url);
 	var ship3 = /ship3$/.test(request.request.url);
+	var port  = /port$/ .test(request.request.url);
 	request.getContent(function (content) {
 		if (!content) return;
 
 		var req = [];
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		var data_list = ship2 ? json.api_data      : ship3 ? json.api_data.api_ship_data : null;
-		var deck_list = ship2 ? json.api_data_deck : ship3 ? json.api_data.api_deck_data : null;
+		var data_list = ship2 ? json.api_data               :
+		                ship3 ? json.api_data.api_ship_data :
+		                port  ? json.api_data.api_ship      : null;
+		var deck_list = ship2 ? json.api_data_deck          :
+		                ship3 ? json.api_data.api_deck_data :
+		                port  ? json.api_data.api_deck_port : null;
 		if (!data_list || !deck_list) return;
 
 		var ship_list = {};

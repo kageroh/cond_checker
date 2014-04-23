@@ -6,6 +6,7 @@ chrome.webRequest.onCompleted.addListener(function (details) {
 	urls: [
 		"http://*/kcsapi/api_get_member/ship2",
 		"http://*/kcsapi/api_get_member/ship3",
+		"http://*/kcsapi/api_port/port",
 	],
 	types: ["object"]
 });
