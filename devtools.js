@@ -3,9 +3,18 @@ $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	if (!/^http:\/\/[^\/]+\/kcsapi\/api_(?:get_member\/ship[23]|port\/port)$/.test(request.request.url)) return;
+
 	var ship2 = /ship2$/.test(request.request.url);
 	var ship3 = /ship3$/.test(request.request.url);
 	var port  = /port$/ .test(request.request.url);
+
+	if (ship3) {
+		var params = request.request.postData.params;
+		for (var i = 0, param; param = params[i]; i++) {
+			if (param.name === 'api%5Fshipid') return;
+		}
+	}
+
 	request.getContent(function (content) {
 		if (!content) return;
 
