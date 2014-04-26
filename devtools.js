@@ -51,6 +51,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				req.push((j + 1).toString(10) + '. ' + cond.toString(10) + ' (' + diff + ')');
 			}
 		}
+		req.push('TotalShips:' + Object.keys(ship_list).length);
 		chrome.extension.sendRequest(req);
 	});
 });
