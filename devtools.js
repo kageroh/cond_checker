@@ -48,7 +48,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				var cond = ship.c_cond;
 				var diff = cond - ship.p_cond;
 				diff = ((diff > 0) ? '+' : '') + diff.toString(10);
-				req.push((j + 1).toString(10) + '. ' + cond.toString(10) + ' (' + diff + ')');
+				var kirakira = (cond >= 50) ? '* ' : '. ';
+				req.push((j + 1).toString(10) + kirakira + cond.toString(10) + ' (' + diff + ')');
 			}
 		}
 		req.push('TotalShips:' + Object.keys(ship_list).length);
