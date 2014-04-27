@@ -52,9 +52,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				var ship = $ship_list[id.toString(10)];
 				var cond = ship.c_cond;
 				var diff = cond - ship.p_cond;
-				diff = ((diff > 0) ? '+' : '') + diff.toString(10);
-				var kirakira = (cond >= 50) ? '* ' : '. ';
-				req.push((j + 1).toString(10) + kirakira + cond.toString(10) + ' (' + diff + ')');
+				var diff_str = (diff > 0) ? ' (+' + diff.toString(10) + ')' : // with plus sign
+							   (diff < 0) ? ' ('  + diff.toString(10) + ')' : // with minus sign
+							   /* diff==0 */ '';	// blank
+				var kira_str = (cond >  49) ? '* ' : // kirakira				
+				               (cond == 49) ? '. ' : // normal
+							   /* cond < 49 */ '> '; // recovering
+				req.push((j + 1).toString(10) + kira_str + cond.toString(10) + diff_str);
 			}
 		}
 		req.push('TotalShips:' + Object.keys(ship_list).length);
