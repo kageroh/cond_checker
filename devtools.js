@@ -71,9 +71,34 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data.api_enemy) return;
-		var enemy_id = json.api_data.api_enemy.api_enemy_id;
-		chrome.extension.sendRequest('next enemy\n' + enemy_id.toString(10));
+		if (!json || !json.api_data) return;
+		var d = json.api_data;
+		var e = json.api_data.api_enemy;
+		var g = json.api_data.api_itemget;
+		var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
+		if (e) {
+			var msg = e.api_enemy_id.toString(10);
+			if (d.api_event_id == 5) msg += '(boss)';
+			chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
+		}
+		if (g) {
+			var msg;
+			switch (g.api_id) {
+				case 1: msg = '1(fuel)='; break;
+				case 2: msg = '2(ammo)='; break;
+				case 3: msg = '3(steel)='; break;
+				case 4: msg = '4(bauxite)='; break;
+				case 5: msg = '5(burner)='; break;
+				case 6: msg = '6(bucket)='; break;
+				case 7: msg = '7(develop)='; break;
+				case 10: msg = '10(coinbox-S)='; break;
+				case 11: msg = '11(coinbox-M)='; break;
+				case 12: msg = '12(coinbox-L)='; break;
+				default: msg = g.api_id + '(???)='; break; // coin?? ...
+			}
+			msg += g.api_getcount;
+			chrome.extension.sendRequest('next item\n' + area + ': ' + msg);
+		}
 	});
 });
 
