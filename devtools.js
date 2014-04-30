@@ -55,7 +55,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				var diff_str = (diff > 0) ? ' (+' + diff.toString(10) + ')' : // with plus sign
 							   (diff < 0) ? ' ('  + diff.toString(10) + ')' : // with minus sign
 							   /* diff==0 */ '';	// blank
-				var kira_str = (cond >  49) ? '* ' : // kirakira				
+				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 							   /* cond < 49 */ '> '; // recovering
 				req.push((j + 1).toString(10) + kira_str + cond.toString(10) + diff_str);
@@ -73,7 +73,28 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		if (!json || !json.api_data.api_enemy) return;
 		var enemy_id = json.api_data.api_enemy.api_enemy_id;
-		chrome.extension.sendRequest(enemy_id);
+		chrome.extension.sendRequest('next enemy\n' + enemy_id.toString(10));
 	});
 });
 
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_sortie\/battleresult$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		var d = json.api_data;
+		var e = json.api_data.api_enemy_info;
+		var g = json.api_data.api_get_ship;
+		var msg = d.api_win_rank + ':' + d.api_quest_name;
+		if (e) {
+			msg += '\n';
+			msg += e.api_deck_name;
+		}
+		if (g) {
+			msg += '\n\ndrop ship\n';
+			msg += g.api_ship_type + ':' + g.api_ship_name;
+		}
+		chrome.extension.sendRequest('battle result\n' + msg);
+	});
+});
