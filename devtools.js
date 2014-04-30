@@ -86,10 +86,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var d = json.api_data;
 		var e = json.api_data.api_enemy_info;
 		var g = json.api_data.api_get_ship;
-		var msg = d.api_win_rank + ':' + d.api_quest_name;
+		var msg = d.api_win_rank + ':';
 		if (e) {
-			msg += '\n';
 			msg += e.api_deck_name;
+			if (d.api_ship_id) {
+				var total = d.api_ship_id.reduce(function(count, x) { return count + (x != -1); }, 0);
+				msg += '(' + d.api_dests + '/' + total + ')';
+			}
 		}
 		if (g) {
 			msg += '\n\ndrop ship\n';
