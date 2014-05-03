@@ -1,5 +1,18 @@
+// -*- coding: utf-8 -*-
 var $ship_list = localStorage['ship_list'];
 $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
+
+function hp_status(nowhp, maxhp) {
+	if (nowhp < 0) nowhp = 0;
+	var r = nowhp / maxhp;
+	var msg = (r == 0) ? '撃沈---'
+		: (r <= 0.25) ? '大破!!!'
+		: (r <= 0.50) ? '中破'
+		: (r <= 0.75) ? '小破'
+		: (r <  1.00) ? '軽微'
+		: '*';
+	return nowhp + '/' + maxhp + ':' + msg;
+}
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	if (!/^http:\/\/[^\/]+\/kcsapi\/api_(?:get_member\/ship[23]|port\/port)$/.test(request.request.url)) return;
@@ -126,3 +139,61 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		chrome.extension.sendRequest('battle result\n' + msg);
 	});
 });
+
+function calc_damage(hp, battle) {
+	// hp ::= [-1, friend1...6, enemy1...6]
+	if (!battle) return;
+	if (battle.api_df_list && battle.api_damage) {
+		var df = battle.api_df_list;
+		for (var i = 1; i < df.length; ++i) {
+			for (var j = 0; j < df[i].length; ++j) {
+				var target = df[i][j];
+				hp[target] -= Math.floor(battle.api_damage[i][j]);
+			}
+		}
+	}
+	if (battle.api_fdam) {
+		for (var i = 1; i <= 6; ++i) {
+			hp[i] -= Math.floor(battle.api_fdam[i]);
+		}
+	}
+	if (battle.api_edam) {
+		for (var i = 1; i <= 6; ++i) {
+			hp[i+6] -= Math.floor(battle.api_edam[i]);
+		}
+	}
+}
+
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie|battle_midnight)\/battle$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		var d = json.api_data;
+		var maxhps = d.api_maxhps;
+		var nowhps = d.api_nowhps.concat();	// make a copy
+		if (d.api_kouku) calc_damage(nowhps, d.api_kouku.api_stage3);
+		calc_damage(nowhps, d.api_opening_atack);
+		calc_damage(nowhps, d.api_hougeki);	// midnight
+		calc_damage(nowhps, d.api_hougeki1);
+		calc_damage(nowhps, d.api_hougeki2);
+		calc_damage(nowhps, d.api_hougeki3);
+		calc_damage(nowhps, d.api_raigeki);
+		if (d.api_support_flag) {
+			///@todo
+		}
+		var req = [];
+		req.push('friend damage');
+		for (var i = 1; i <= 6; ++i) {
+			if (maxhps[i] != -1) req.push(i + '. ' + hp_status(nowhps[i], maxhps[i]));
+		}
+		req.push('\nenemy damage');
+		for (var i = 1; i <= 6; ++i) {
+			var ke = d.api_ship_ke[i];
+			if (ke != -1) req.push(i + '(' + ke + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
+		}
+		chrome.extension.sendRequest(req);
+	});
+});
+
