@@ -167,7 +167,7 @@ function calc_damage(hp, battle) {
 }
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie|battle_midnight)\/battle$/.test(request.request.url)) return;
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battle|battle_midnight\/battle|battle_midnight\/sp_midnight)$/.test(request.request.url)) return;
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
