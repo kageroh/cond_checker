@@ -2,6 +2,22 @@
 var $ship_list = localStorage['ship_list'];
 $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 
+function item_name(id) {
+	switch (id) {
+		case 1: return '燃料';
+		case 2: return '弾薬';
+		case 3: return '鋼材';
+		case 4: return 'ボーキ';
+		case 5: return '建造材';
+		case 6: return '修復材';
+		case 7: return '開発資材';
+		case 10: return '家具箱小';
+		case 11: return '家具箱中';
+		case 12: return '家具箱大';
+		default: return 'id(' + id + ')';
+	}
+}
+
 function hp_status(nowhp, maxhp) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
@@ -95,21 +111,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
 		}
 		if (g) {
-			var msg;
-			switch (g.api_id) {
-				case 1: msg = '1(fuel)='; break;
-				case 2: msg = '2(ammo)='; break;
-				case 3: msg = '3(steel)='; break;
-				case 4: msg = '4(bauxite)='; break;
-				case 5: msg = '5(burner)='; break;
-				case 6: msg = '6(bucket)='; break;
-				case 7: msg = '7(develop)='; break;
-				case 10: msg = '10(coinbox-S)='; break;
-				case 11: msg = '11(coinbox-M)='; break;
-				case 12: msg = '12(coinbox-L)='; break;
-				default: msg = g.api_id + '(???)='; break; // coin?? ...
-			}
-			msg += g.api_getcount;
+			var msg = item_name(g.api_id) + 'x' + g.api_getcount;
 			chrome.extension.sendRequest('next item\n' + area + ': ' + msg);
 		}
 	});
