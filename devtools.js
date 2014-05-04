@@ -118,7 +118,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 });
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_sortie\/battleresult$/.test(request.request.url)) return;
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battleresult|practice\/battle_result)$/.test(request.request.url)) return;
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
@@ -167,12 +167,13 @@ function calc_damage(hp, battle) {
 }
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battle|battle_midnight\/battle|battle_midnight\/sp_midnight)$/.test(request.request.url)) return;
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battle|battle_midnight\/battle|battle_midnight\/sp_midnight|sortie\/night_to_day|practice\/battle|practice\/midnight_battle)$/.test(request.request.url)) return;
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		if (!json || !json.api_data) return;
 		var d = json.api_data;
+		if (!d.api_maxhps || !d.api_nowhps) return;
 		var maxhps = d.api_maxhps;
 		var nowhps = d.api_nowhps.concat();	// make a copy
 		if (d.api_kouku) calc_damage(nowhps, d.api_kouku.api_stage3);
