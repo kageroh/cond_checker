@@ -2,6 +2,9 @@
 var $ship_list = localStorage['ship_list'];
 $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 
+var $mst_ship = localStorage['mst_ship'];
+$mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
+
 function item_name(id) {
 	switch (id) {
 		case 1: return '燃料';
@@ -18,6 +21,17 @@ function item_name(id) {
 	}
 }
 
+function ship_name(id) {
+	var ship = $mst_ship[id];
+	if (ship) {
+		id = ship.api_name;
+		if (ship.api_sortno == 0 && ship.api_yomi.length > 1) {
+			id += ship.api_yomi; // 'elite', 'flag ship' ...
+		}
+	}
+	return id.toString();
+}
+
 function hp_status(nowhp, maxhp) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
@@ -25,8 +39,9 @@ function hp_status(nowhp, maxhp) {
 		: (r <= 0.25) ? '大破!!!'
 		: (r <= 0.50) ? '中破'
 		: (r <= 0.75) ? '小破'
-		: (r <  1.00) ? '軽微'
-		: '*';
+		: (r <= 0.85) ? '..'	// 軽微2.
+		: (r <  1.00) ? '.'		// 軽微1.
+		: '*';					// 無傷.
 	return nowhp + '/' + maxhp + ':' + msg;
 }
 
@@ -194,9 +209,27 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		req.push('\nenemy damage');
 		for (var i = 1; i <= 6; ++i) {
 			var ke = d.api_ship_ke[i];
-			if (ke != -1) req.push(i + '(' + ke + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
+			var name = ship_name(ke) + ' lv' + d.api_ship_lv[i];
+			if (ke != -1) req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
 		}
 		chrome.extension.sendRequest(req);
 	});
 });
 
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_start2$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		var d = json.api_data;
+		if (d.api_mst_ship) {
+			var mst_ship = {};
+			for (var i = 0, data; data = d.api_mst_ship[i]; ++i) {
+				mst_ship[data.api_id] = data;
+			}
+			$mst_ship = mst_ship;
+			localStorage['mst_ship'] = JSON.stringify($mst_ship);
+		}
+	});
+});
