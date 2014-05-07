@@ -209,7 +209,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		req.push('\nenemy damage');
 		for (var i = 1; i <= 6; ++i) {
 			var ke = d.api_ship_ke[i];
-			var name = ship_name(ke) + ' lv' + d.api_ship_lv[i];
+//			var name = ship_name(ke);
+			var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
 			if (ke != -1) req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
 		}
 		chrome.extension.sendRequest(req);
