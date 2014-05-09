@@ -5,6 +5,10 @@ $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 var $mst_ship = localStorage['mst_ship'];
 $mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
 
+var $slotitem_list = {};
+var $max_ship = 0;
+var $max_slotitem = 0;
+
 function item_name(id) {
 	switch (id) {
 		case 1: return '燃料';
@@ -83,6 +87,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		$ship_list = ship_list;
 		localStorage['ship_list'] = JSON.stringify($ship_list);
 
+		var basic = json.api_data.api_basic;
+		if (basic) {
+			$max_ship     = basic.api_max_chara;
+			$max_slotitem = basic.api_max_slotitem + 3;
+		}
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
+		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem);
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
 			req.push(deck.api_name);
 			var mission_end = deck.api_mission[2];
@@ -105,7 +116,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				req.push((j + 1).toString(10) + kira_str + cond.toString(10) + diff_str);
 			}
 		}
-		req.push('TotalShips:' + Object.keys(ship_list).length);
 		chrome.extension.sendRequest(req);
 	});
 });
@@ -232,5 +242,49 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			$mst_ship = mst_ship;
 			localStorage['mst_ship'] = JSON.stringify($mst_ship);
 		}
+	});
+});
+
+function add_slotitem_list(a) {
+	if (!a) return;
+	if (a instanceof Array) {
+		for (var i = 0, data; data = a[i]; ++i) {
+			$slotitem_list[data.api_id] = data.api_slotitem_id;
+		}
+	}
+	if (a.api_slotitem_id) {
+		var data = a;
+		$slotitem_list[data.api_id] = data.api_slotitem_id;
+	}
+}
+
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/slot_item$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		$slotitem_list = {};
+		add_slotitem_list(json.api_data);
+	});
+});
+
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_kousyou\/createitem$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		add_slotitem_list(json.api_data.api_slot_item);
+	});
+});
+
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_kousyou\/getship$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		add_slotitem_list(json.api_data.api_slotitem);
 	});
 });
