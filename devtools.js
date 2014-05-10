@@ -249,10 +249,10 @@ function add_slotitem_list(a) {
 	if (!a) return;
 	if (a instanceof Array) {
 		for (var i = 0, data; data = a[i]; ++i) {
-			$slotitem_list[data.api_id] = data.api_slotitem_id;
+			add_slotitem_list(data);
 		}
 	}
-	if (a.api_slotitem_id) {
+	else if (a.api_slotitem_id) {
 		var data = a;
 		$slotitem_list[data.api_id] = data.api_slotitem_id;
 	}
