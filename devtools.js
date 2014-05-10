@@ -8,6 +8,8 @@ $mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
 var $slotitem_list = {};
 var $max_ship = 0;
 var $max_slotitem = 0;
+var $fdeck_list = {}
+var $next_enemy = null;
 
 function item_name(id) {
 	switch (id) {
@@ -94,7 +96,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem);
+		$fdeck_list = {};
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
+			$fdeck_list[deck.api_id] = deck;
 			req.push(deck.api_name);
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
@@ -133,6 +137,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		if (e) {
 			var msg = e.api_enemy_id.toString(10);
 			if (d.api_event_id == 5) msg += '(boss)';
+			$next_enemy = area + ': ' + msg;
 			chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
 		}
 		if (g) {
@@ -211,7 +216,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		if (d.api_support_flag) {
 			///@todo
 		}
+		var fdeck = $fdeck_list[d.api_dock_id];
 		var req = [];
+		req.push('next enemy\n' + $next_enemy + '\n');
+		req.push(fdeck.api_name);
 		req.push('friend damage');
 		for (var i = 1; i <= 6; ++i) {
 			if (maxhps[i] != -1) req.push(i + '. ' + hp_status(nowhps[i], maxhps[i]));
@@ -286,5 +294,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		if (!json || !json.api_data) return;
 		add_slotitem_list(json.api_data.api_slotitem);
+	});
+});
+
+chrome.devtools.network.onRequestFinished.addListener(function (request) {
+	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_member\/get_practice_enemyinfo$/.test(request.request.url)) return;
+	request.getContent(function (content) {
+		if (!content) return;
+		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		if (!json || !json.api_data) return;
+		$next_enemy = '演習: ' + json.api_data.api_nickname;
 	});
 });
