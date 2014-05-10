@@ -38,6 +38,15 @@ function ship_name(id) {
 	return id.toString();
 }
 
+function slotitem_count(slot, item_id) {
+	if (!slot) return 0;
+	var count = 0;
+	for (var i = 0; i < slot.length; ++i) {
+		if ($slotitem_list[slot[i]] == item_id) ++count;
+	}
+	return count;
+}
+
 function hp_status(nowhp, maxhp) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
@@ -86,7 +95,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				c_cond: data.api_cond,
 				maxhp: data.api_maxhp,
 				nowhp: data.api_nowhp,
-				slot:  data.api_slot,
+				repair: slotitem_count(data.api_slot, 42),	// 修理要員(ダメコン).
+				megami: slotitem_count(data.api_slot, 43),	// 修理女神.
+				lv:    data.api_lv,
 				ship_id: data.api_ship_id
 			};
 		}
@@ -223,19 +234,25 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var fdeck = $fdeck_list[d.api_dock_id];
 		var req = [];
 		req.push('next enemy\n' + $next_enemy + '\n');
-		req.push(fdeck.api_name);
 		req.push('friend damage');
+		req.push(fdeck.api_name);
 		for (var i = 1; i <= 6; ++i) {
+			if (maxhps[i] == -1) continue;
+			var name = '?';
 			var ship = $ship_list[fdeck.api_ship[i-1]];
-			var name = ship ? ship_name(ship.ship_id) : '?';
-			if (maxhps[i] != -1) req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
+			if (ship) {
+				name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+				if (ship.repair) name += '+修理要員x' + ship.repair;
+				if (ship.megami) name += '+修理女神x' + ship.megami;
+			}
+			req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
 		}
 		req.push('\nenemy damage');
 		for (var i = 1; i <= 6; ++i) {
 			var ke = d.api_ship_ke[i];
-//			var name = ship_name(ke);
+			if (ke == -1) continue;
 			var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
-			if (ke != -1) req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
+			req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
 		}
 		chrome.extension.sendRequest(req);
 	});
