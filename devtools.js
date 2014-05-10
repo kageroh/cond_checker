@@ -81,9 +81,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var ship_list = {};
 		for (var i = 0, data; data = data_list[i]; i++) {
 			var ship = $ship_list[data.api_id];
-			ship_list[data.api_id.toString(10)] = {
+			ship_list[data.api_id] = {
 				p_cond: (ship) ? ship.c_cond : 49,
-				c_cond: data.api_cond
+				c_cond: data.api_cond,
+				maxhp: data.api_maxhp,
+				nowhp: data.api_nowhp,
+				slot:  data.api_slot,
+				ship_id: data.api_ship_id
 			};
 		}
 		$ship_list = ship_list;
@@ -222,7 +226,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		req.push(fdeck.api_name);
 		req.push('friend damage');
 		for (var i = 1; i <= 6; ++i) {
-			if (maxhps[i] != -1) req.push(i + '. ' + hp_status(nowhps[i], maxhps[i]));
+			var ship = $ship_list[fdeck.api_ship[i-1]];
+			var name = ship ? ship_name(ship.ship_id) : '?';
+			if (maxhps[i] != -1) req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
 		}
 		req.push('\nenemy damage');
 		for (var i = 1; i <= 6; ++i) {
