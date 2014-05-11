@@ -232,6 +232,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			///@todo
 		}
 		var fdeck = $fdeck_list[d.api_dock_id];
+		if (!fdeck) fdeck = $fdeck_list[d.api_deck_id]; // for */api_req_practice/midnight_battle
 		var req = [];
 		req.push('next enemy\n' + $next_enemy + '\n');
 		req.push('friend damage');
