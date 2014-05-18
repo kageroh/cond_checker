@@ -42,8 +42,8 @@ function match_name(id) {
 	switch (id) {
 		case 1: return '同航';
 		case 2: return '反航';
-		case 3: return '丁字有利';
-		case 4: return '丁字不利';
+		case 3: return 'Ｔ字有利';
+		case 4: return 'Ｔ字不利';
 		default: return id.toString();
 	}
 }
