@@ -319,42 +319,43 @@ function add_slotitem_list(a) {
 }
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_get_member\/slot_item$/.test(request.request.url)) return;
+	var func = null;
+	var api_name = request.request.url.replace(/^http:\/\/[^\/]+\/kcsapi\//, '/');
+	if (api_name == request.request.url) {
+		// 置換失敗. api以外なので早抜けする.
+		return;
+	}
+	else if (api_name == '/api_get_member/slot_item') {
+		// ゲーム開始時点の保有装備一覧表.
+		func = function(json) { // 保有する装備配列をリストに記録する.
+			$slotitem_list = {};
+			add_slotitem_list(json.api_data);
+		};
+	}
+	else if (api_name == '/api_req_kousyou/createitem') {
+		// 装備開発.
+		func = function(json) { // 開発した装備を、リストに加える.
+			if (json.api_data.api_create_flag)
+				add_slotitem_list(json.api_data.api_slot_item);
+		};
+	}
+	else if (api_name == '/api_req_kousyou/getship') {
+		// 新艦建造成功.
+		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
+			add_slotitem_list(json.api_data.api_slotitem);
+		};
+	}
+	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
+		// 演習相手の情報.
+		func = function(json) { // 演習相手の提督名を記憶する.
+			$next_enemy = '演習: ' + json.api_data.api_nickname;
+		};
+	}
+	if (!func) return;
 	request.getContent(function (content) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
 		if (!json || !json.api_data) return;
-		$slotitem_list = {};
-		add_slotitem_list(json.api_data);
-	});
-});
-
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_kousyou\/createitem$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		add_slotitem_list(json.api_data.api_slot_item);
-	});
-});
-
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_kousyou\/getship$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		add_slotitem_list(json.api_data.api_slotitem);
-	});
-});
-
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_member\/get_practice_enemyinfo$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		$next_enemy = '演習: ' + json.api_data.api_nickname;
+		func(json);
 	});
 });
