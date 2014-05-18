@@ -160,53 +160,41 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	});
 });
 
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_map\/(?:start|next)$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		var d = json.api_data;
-		var e = json.api_data.api_enemy;
-		var g = json.api_data.api_itemget;
-		var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
-		if (e) {
-			var msg = e.api_enemy_id.toString(10);
-			if (d.api_event_id == 5) msg += '(boss)';
-			$next_enemy = area + ': ' + msg;
-			chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
-		}
-		if (g) {
-			var msg = item_name(g.api_id) + 'x' + g.api_getcount;
-			chrome.extension.sendRequest('next item\n' + area + ': ' + msg);
-		}
-	});
-});
+function on_next_cell(json) {
+	var d = json.api_data;
+	var e = json.api_data.api_enemy;
+	var g = json.api_data.api_itemget;
+	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
+	if (e) {
+		var msg = e.api_enemy_id.toString(10);
+		if (d.api_event_id == 5) msg += '(boss)';
+		$next_enemy = area + ': ' + msg;
+		chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
+	}
+	if (g) {
+		var msg = item_name(g.api_id) + 'x' + g.api_getcount;
+		chrome.extension.sendRequest('next item\n' + area + ': ' + msg);
+	}
+}
 
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battleresult|practice\/battle_result)$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		var d = json.api_data;
-		var e = json.api_data.api_enemy_info;
-		var g = json.api_data.api_get_ship;
-		var msg = d.api_win_rank + ':';
-		if (e) {
-			msg += e.api_deck_name;
-			if (d.api_ship_id) {
-				var total = d.api_ship_id.reduce(function(count, x) { return count + (x != -1); }, 0);
-				msg += '(' + d.api_dests + '/' + total + ')';
-			}
+function on_battle_result(json) {
+	var d = json.api_data;
+	var e = json.api_data.api_enemy_info;
+	var g = json.api_data.api_get_ship;
+	var msg = d.api_win_rank + ':';
+	if (e) {
+		msg += e.api_deck_name;
+		if (d.api_ship_id) {
+			var total = d.api_ship_id.reduce(function(count, x) { return count + (x != -1); }, 0);
+			msg += '(' + d.api_dests + '/' + total + ')';
 		}
-		if (g) {
-			msg += '\n\ndrop ship\n';
-			msg += g.api_ship_type + ':' + g.api_ship_name;
-		}
-		chrome.extension.sendRequest('battle result\n' + msg);
-	});
-});
+	}
+	if (g) {
+		msg += '\n\ndrop ship\n';
+		msg += g.api_ship_type + ':' + g.api_ship_name;
+	}
+	chrome.extension.sendRequest('battle result\n' + msg);
+}
 
 function calc_damage(hp, battle) {
 	// hp ::= [-1, friend1...6, enemy1...6]
@@ -232,78 +220,54 @@ function calc_damage(hp, battle) {
 	}
 }
 
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_req_(?:sortie\/battle|battle_midnight\/battle|battle_midnight\/sp_midnight|sortie\/night_to_day|practice\/battle|practice\/midnight_battle)$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		var d = json.api_data;
-		if (!d.api_maxhps || !d.api_nowhps) return;
-		var maxhps = d.api_maxhps;
-		var nowhps = d.api_nowhps.concat();	// make a copy
-		if (d.api_kouku) calc_damage(nowhps, d.api_kouku.api_stage3);
-		calc_damage(nowhps, d.api_opening_atack);
-		calc_damage(nowhps, d.api_hougeki);	// midnight
-		calc_damage(nowhps, d.api_hougeki1);
-		calc_damage(nowhps, d.api_hougeki2);
-		calc_damage(nowhps, d.api_hougeki3);
-		calc_damage(nowhps, d.api_raigeki);
-		if (d.api_support_flag) {
-			///@todo
+function on_battle(json) {
+	var d = json.api_data;
+	if (!d.api_maxhps || !d.api_nowhps) return;
+	var maxhps = d.api_maxhps;
+	var nowhps = d.api_nowhps.concat();	// make a copy
+	if (d.api_kouku) calc_damage(nowhps, d.api_kouku.api_stage3);
+	calc_damage(nowhps, d.api_opening_atack);
+	calc_damage(nowhps, d.api_hougeki);	// midnight
+	calc_damage(nowhps, d.api_hougeki1);
+	calc_damage(nowhps, d.api_hougeki2);
+	calc_damage(nowhps, d.api_hougeki3);
+	calc_damage(nowhps, d.api_raigeki);
+	if (d.api_support_flag) {
+		///@todo
+	}
+	var fdeck = $fdeck_list[d.api_dock_id];
+	if (!fdeck) fdeck = $fdeck_list[d.api_deck_id]; // for */api_req_practice/midnight_battle
+	if (d.api_formation) {
+		$next_enemy += '\n'
+			+ formation_name(d.api_formation[0]) + '/'
+			+ match_name(d.api_formation[2]) + '/'
+			+ formation_name(d.api_formation[1]);
+	}
+	var req = [];
+	req.push('battle')
+	req.push($next_enemy);
+	req.push('\nfriend damage');
+	req.push(fdeck.api_name);
+	for (var i = 1; i <= 6; ++i) {
+		if (maxhps[i] == -1) continue;
+		var name = '?';
+		var ship = $ship_list[fdeck.api_ship[i-1]];
+		if (ship) {
+			name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+			if (ship.repair) name += '+修理要員x' + ship.repair;
+			if (ship.megami) name += '+修理女神x' + ship.megami;
 		}
-		var fdeck = $fdeck_list[d.api_dock_id];
-		if (!fdeck) fdeck = $fdeck_list[d.api_deck_id]; // for */api_req_practice/midnight_battle
-		if (d.api_formation) {
-			$next_enemy += '\n'
-				+ formation_name(d.api_formation[0]) + '/'
-				+ match_name(d.api_formation[2]) + '/'
-				+ formation_name(d.api_formation[1]);
-		}
-		var req = [];
-		req.push('battle')
-		req.push($next_enemy);
-		req.push('\nfriend damage');
-		req.push(fdeck.api_name);
-		for (var i = 1; i <= 6; ++i) {
-			if (maxhps[i] == -1) continue;
-			var name = '?';
-			var ship = $ship_list[fdeck.api_ship[i-1]];
-			if (ship) {
-				name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
-				if (ship.repair) name += '+修理要員x' + ship.repair;
-				if (ship.megami) name += '+修理女神x' + ship.megami;
-			}
-			req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
-		}
-		req.push('\nenemy damage');
-		for (var i = 1; i <= 6; ++i) {
-			var ke = d.api_ship_ke[i];
-			if (ke == -1) continue;
-			var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
-			req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
-		}
-		chrome.extension.sendRequest(req);
-	});
-});
-
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_start2$/.test(request.request.url)) return;
-	request.getContent(function (content) {
-		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		if (!json || !json.api_data) return;
-		var d = json.api_data;
-		if (d.api_mst_ship) {
-			var mst_ship = {};
-			for (var i = 0, data; data = d.api_mst_ship[i]; ++i) {
-				mst_ship[data.api_id] = data;
-			}
-			$mst_ship = mst_ship;
-			localStorage['mst_ship'] = JSON.stringify($mst_ship);
-		}
-	});
-});
+		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
+	}
+	req.push('\nenemy damage');
+	for (var i = 1; i <= 6; ++i) {
+		var ke = d.api_ship_ke[i];
+		if (ke == -1) continue;
+		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
+		req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
+	}
+	chrome.extension.sendRequest(req);
+}
 
 function add_slotitem_list(a) {
 	if (!a) return;
@@ -325,8 +289,21 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 置換失敗. api以外なので早抜けする.
 		return;
 	}
+	else if (api_name == 'api_start2') {
+		// ゲーム開始時点.
+		func = function(json) { //　艦種表を取り込む.
+			var list = json.api_data.api_mst_ship;
+			if (list) {
+				$mst_ship = {};
+				for (var i = 0, data; data = list[i]; ++i) {
+					$mst_ship[data.api_id] = data;
+				}
+				localStorage['mst_ship'] = JSON.stringify($mst_ship);
+			}
+		};
+	}
 	else if (api_name == '/api_get_member/slot_item') {
-		// ゲーム開始時点の保有装備一覧表.
+		// 保有装備一覧表.
 		func = function(json) { // 保有する装備配列をリストに記録する.
 			$slotitem_list = {};
 			add_slotitem_list(json.api_data);
@@ -350,6 +327,46 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 演習相手の提督名を記憶する.
 			$next_enemy = '演習: ' + json.api_data.api_nickname;
 		};
+	}
+	else if (api_name == '/api_req_map/start') {
+		// 海域初回選択.
+		func = on_next_cell;
+	}
+	else if (api_name == '/api_req_map/next') {
+		// 海域次選択.
+		func = on_next_cell;
+	}
+	else if (api_name == '/api_req_sortie/battle') {
+		// 昼戦開始.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_battle_midnight/battle') {
+		// 夜戦継続.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_battle_midnight/sp_midnight') {
+		// 夜戦開始.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_sortie/night_to_day') {
+		// 昼戦継続.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_practice/battle') {
+		// 演習開始.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_practice/midnight_battle') {
+		// 夜演習継続.
+		func = on_battle;
+	}
+	else if (api_name == '/api_req_sortie/battleresult') {
+		// 戦闘結果.
+		func = on_battle_result;
+	}
+	else if (api_name == '/api_req_practice/battle_result') {
+		// 演習結果.
+		func = on_battle_result;
 	}
 	if (!func) return;
 	request.getContent(function (content) {
