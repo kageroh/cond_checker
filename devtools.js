@@ -27,6 +27,27 @@ function item_name(id) {
 	}
 }
 
+function formation_name(id) {
+	switch (id) {
+		case 1: return '単縦';
+		case 2: return '複縦';
+		case 3: return '輪形';
+		case 4: return '梯形';
+		case 5: return '単横';
+		default: return id.toString();
+	}
+}
+
+function match_name(id) {
+	switch (id) {
+		case 1: return '同航';
+		case 2: return '反航';
+		case 3: return '丁字有利';
+		case 4: return '丁字不利';
+		default: return id.toString();
+	}
+}
+
 function ship_name(id) {
 	var ship = $mst_ship[id];
 	if (ship) {
@@ -233,9 +254,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		}
 		var fdeck = $fdeck_list[d.api_dock_id];
 		if (!fdeck) fdeck = $fdeck_list[d.api_deck_id]; // for */api_req_practice/midnight_battle
+		if (d.api_formation) {
+			$next_enemy += '\n'
+				+ formation_name(d.api_formation[0]) + '/'
+				+ match_name(d.api_formation[2]) + '/'
+				+ formation_name(d.api_formation[1]);
+		}
 		var req = [];
-		req.push('next enemy\n' + $next_enemy + '\n');
-		req.push('friend damage');
+		req.push('battle')
+		req.push($next_enemy);
+		req.push('\nfriend damage');
 		req.push(fdeck.api_name);
 		for (var i = 1; i <= 6; ++i) {
 			if (maxhps[i] == -1) continue;
