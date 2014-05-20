@@ -5,11 +5,42 @@ $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 var $mst_ship = localStorage['mst_ship'];
 $mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
 
+var $weekly = localStorage['weekly'];
+$weekly = ($weekly) ? JSON.parse($weekly) : null;
+
 var $slotitem_list = {};
 var $max_ship = 0;
 var $max_slotitem = 0;
 var $fdeck_list = {}
 var $next_enemy = null;
+
+function get_weekly() {
+	var wn = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
+	wn = Math.floor(wn / (7*24*60*60*1000)); // 経過週数に変換する.
+	if ($weekly == null || $weekly.week != wn) {
+		$weekly = {
+			sortie    : 0,
+			is_boss   : 0,
+			boss_cell : 0,
+			win_boss  : 0,
+			win_S     : 0,
+			week      : wn
+		};
+	}
+	return $weekly;
+}
+
+function save_weekly() {
+	localStorage['weekly'] = JSON.stringify($weekly);
+}
+
+function weekly_name() {
+	var w = get_weekly();
+	return '週間出撃:' + w.sortie + '/36, '
+		+ 'ボス到達:' + w.boss_cell + '/24, '
+		+ 'ボス勝利:' + w.win_boss  + '/12, '
+		+ 'S勝利:' + w.win_S + '/6';
+}
 
 function item_name(id) {
 	switch (id) {
@@ -132,6 +163,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem);
+		req.push(weekly_name());
 		$fdeck_list = {};
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
 			$fdeck_list[deck.api_id] = deck;
@@ -167,7 +199,10 @@ function on_next_cell(json) {
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	if (e) {
 		var msg = e.api_enemy_id.toString(10);
-		if (d.api_event_id == 5) msg += '(boss)';
+		if (d.api_event_id == 5) {
+			msg += '(boss)';
+			get_weekly().is_boss = 1;
+		}
 		$next_enemy = area + ': ' + msg;
 		chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
 	}
@@ -330,6 +365,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_map/start') {
 		// 海域初回選択.
+		var w = get_weekly()
+		w.sortie++;
+		w.is_boss = 0;
 		func = on_next_cell;
 	}
 	else if (api_name == '/api_req_map/next') {
@@ -362,7 +400,17 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_sortie/battleresult') {
 		// 戦闘結果.
-		func = on_battle_result;
+		func = function(json) {
+			on_battle_result(json);
+			var w = get_weekly();
+			var r = json.api_data.api_win_rank;
+			if (r == 'S') w.win_S++;
+			if(w.is_boss) {
+				w.boss_cell++;
+				if (r == 'S' || r == 'A' || r == 'B') w.win_boss++;
+			}
+			save_weekly();
+		};
 	}
 	else if (api_name == '/api_req_practice/battle_result') {
 		// 演習結果.
