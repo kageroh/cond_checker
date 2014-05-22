@@ -14,6 +14,8 @@ var $max_slotitem = 0;
 var $fdeck_list = {}
 var $next_enemy = null;
 var $is_boss = false;
+var $unlock_ship = 0;
+var $unlock_slotitem = 0;
 
 function get_weekly() {
 	var wn = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
@@ -90,6 +92,14 @@ function ship_name(id) {
 	return id.toString();
 }
 
+function count_if(ary, value) {
+	return ary.reduce(function(count, x) { return count + (x == value); }, 0);
+}
+
+function count_unless(ary, value) {
+	return ary.reduce(function(count, x) { return count + (x != value); }, 0);
+}
+
 function slotitem_count(slot, item_id) {
 	if (!slot) return 0;
 	var count = 0;
@@ -140,6 +150,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		if (!data_list || !deck_list) return;
 
 		var ship_list = {};
+		$unlock_ship = 0;
+		$unlock_slotitem = 0;
 		for (var i = 0, data; data = data_list[i]; i++) {
 			var ship = $ship_list[data.api_id];
 			ship_list[data.api_id] = {
@@ -152,6 +164,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				lv:    data.api_lv,
 				ship_id: data.api_ship_id
 			};
+			if (!data.api_locked) {
+				$unlock_ship++;
+				$unlock_slotitem += count_unless(data.api_slot, -1);
+			}
 		}
 		$ship_list = ship_list;
 		localStorage['ship_list'] = JSON.stringify($ship_list);
@@ -161,8 +177,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
-		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem);
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ')');
+		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
 		req.push(weekly_name());
 		$fdeck_list = {};
 		for (var i = 0, deck; deck = deck_list[i]; i++) {
@@ -220,7 +236,7 @@ function on_battle_result(json) {
 	if (e) {
 		msg += e.api_deck_name;
 		if (d.api_ship_id) {
-			var total = d.api_ship_id.reduce(function(count, x) { return count + (x != -1); }, 0);
+			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
 		}
 	}
