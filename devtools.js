@@ -13,6 +13,7 @@ var $max_ship = 0;
 var $max_slotitem = 0;
 var $fdeck_list = {}
 var $next_enemy = null;
+var $is_boss = false;
 
 function get_weekly() {
 	var wn = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
@@ -20,7 +21,6 @@ function get_weekly() {
 	if ($weekly == null || $weekly.week != wn) {
 		$weekly = {
 			sortie    : 0,
-			is_boss   : 0,
 			boss_cell : 0,
 			win_boss  : 0,
 			win_S     : 0,
@@ -201,7 +201,7 @@ function on_next_cell(json) {
 		var msg = e.api_enemy_id.toString(10);
 		if (d.api_event_id == 5) {
 			msg += '(boss)';
-			get_weekly().is_boss = 1;
+			$is_boss = true;
 		}
 		$next_enemy = area + ': ' + msg;
 		chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
@@ -367,7 +367,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 海域初回選択.
 		var w = get_weekly()
 		w.sortie++;
-		w.is_boss = 0;
+		$is_boss = false;
 		func = on_next_cell;
 	}
 	else if (api_name == '/api_req_map/next') {
@@ -405,7 +405,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var w = get_weekly();
 			var r = json.api_data.api_win_rank;
 			if (r == 'S') w.win_S++;
-			if(w.is_boss) {
+			if($is_boss) {
 				w.boss_cell++;
 				if (r == 'S' || r == 'A' || r == 'B') w.win_boss++;
 			}
