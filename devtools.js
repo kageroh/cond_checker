@@ -17,6 +17,34 @@ var $is_boss = false;
 var $unlock_ship = 0;
 var $unlock_slotitem = 0;
 
+function update_ship_list(list, is_all) {
+	// update ship_list
+	var prev_ship_list = $ship_list;
+	if (is_all) $ship_list = {};
+	for (var i = 0, data; data = list[i]; i++) {
+		var ship = prev_ship_list[data.api_id];
+		$ship_list[data.api_id] = {
+			p_cond : (ship) ? ship.c_cond : 49,
+			c_cond : data.api_cond,
+			maxhp  : data.api_maxhp,
+			nowhp  : data.api_nowhp,
+			slot   : data.api_slot,
+			lv     : data.api_lv,
+			locked : data.api_locked,
+			ship_id: data.api_ship_id
+		};
+	}
+	localStorage['ship_list'] = JSON.stringify($ship_list);
+}
+
+function update_mst_ship(list) {
+	$mst_ship = {};
+	for (var i = 0, data; data = list[i]; ++i) {
+		$mst_ship[data.api_id] = data;
+	}
+	localStorage['mst_ship'] = JSON.stringify($mst_ship);
+}
+
 function get_weekly() {
 	var wn = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
 	wn = Math.floor(wn / (7*24*60*60*1000)); // 経過週数に変換する.
@@ -165,27 +193,17 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		                port  ? json.api_data.api_deck_port : null;
 		if (!data_list || !deck_list) return;
 
-		var ship_list = {};
+		update_ship_list(data_list, true);
+
 		$unlock_ship = 0;
 		$unlock_slotitem = 0;
-		for (var i = 0, data; data = data_list[i]; i++) {
-			var ship = $ship_list[data.api_id];
-			ship_list[data.api_id] = {
-				p_cond: (ship) ? ship.c_cond : 49,
-				c_cond: data.api_cond,
-				maxhp: data.api_maxhp,
-				nowhp: data.api_nowhp,
-				slot: data.api_slot,
-				lv: data.api_lv,
-				ship_id: data.api_ship_id
-			};
-			if (!data.api_locked) {
+		for (var id in $ship_list) {
+			var ship = $ship_list[id];
+			if (!ship.locked) {
 				$unlock_ship++;
-				$unlock_slotitem += count_unless(data.api_slot, -1);
+				$unlock_slotitem += count_unless(ship.slot, -1);
 			}
 		}
-		$ship_list = ship_list;
-		localStorage['ship_list'] = JSON.stringify($ship_list);
 
 		var basic = json.api_data.api_basic;
 		if (basic) {
@@ -362,13 +380,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// ゲーム開始時点.
 		func = function(json) { //　艦種表を取り込む.
 			var list = json.api_data.api_mst_ship;
-			if (list) {
-				$mst_ship = {};
-				for (var i = 0, data; data = list[i]; ++i) {
-					$mst_ship[data.api_id] = data;
-				}
-				localStorage['mst_ship'] = JSON.stringify($mst_ship);
-			}
+			if (list) update_mst_ship(list);
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
