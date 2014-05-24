@@ -383,7 +383,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
-		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			var data_list = json.api_data.api_ship;
 			var deck_list = json.api_data.api_deck_port;
 			if (!data_list || !deck_list) return;
@@ -394,7 +394,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_get_member/ship2') {
 		// 進撃.
-		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			var data_list = json.api_data;
 			var deck_list = json.api_data_deck;
 			if (!data_list || !deck_list) return;
@@ -404,8 +404,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		};
 	}
 	else if (api_name == '/api_get_member/ship3') {
-		// 装備換装、改修改造.
-		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+		// 装備換装.
+		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する..
 			var params = request.request.postData.params;
 			for (var i = 0, param; param = params[i]; i++) {
 				if (param.name === 'api%5Fshipid') return;
@@ -415,6 +415,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			if (!data_list || !deck_list) return;
 			update_ship_list(data_list, true);
 			update_fdeck_list(deck_list);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_get_member/deck') {
+		// 遠征出発.
+		func = function(json) { // 艦隊一覧を更新してcond表示する.
+			update_fdeck_list(json.api_data);
 			on_port(json);
 		};
 	}
