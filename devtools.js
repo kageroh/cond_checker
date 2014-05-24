@@ -37,6 +37,13 @@ function update_ship_list(list, is_all) {
 	localStorage['ship_list'] = JSON.stringify($ship_list);
 }
 
+function update_fdeck_list(list) {
+	$fdeck_list = {};
+	for (var i = 0, deck; deck = list[i]; i++) {
+		$fdeck_list[deck.api_id] = deck;
+	}
+}
+
 function update_mst_ship(list) {
 	$mst_ship = {};
 	for (var i = 0, data; data = list[i]; ++i) {
@@ -194,6 +201,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		if (!data_list || !deck_list) return;
 
 		update_ship_list(data_list, true);
+		update_fdeck_list(deck_list);
 
 		$unlock_ship = 0;
 		$unlock_slotitem = 0;
@@ -213,9 +221,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
 		req.push(weekly_name());
-		$fdeck_list = {};
-		for (var i = 0, deck; deck = deck_list[i]; i++) {
-			$fdeck_list[deck.api_id] = deck;
+		for (var id in $fdeck_list) {
+			var deck = $fdeck_list[id];
 			req.push(deck.api_name);
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
