@@ -92,21 +92,37 @@ function ship_name(id) {
 	return id.toString();
 }
 
-function count_if(ary, value) {
-	return ary.reduce(function(count, x) { return count + (x == value); }, 0);
+function count_if(a, value) {
+	if (a instanceof Array)
+		return a.reduce(function(count, x) { return count + (x == value); }, 0);
+	else
+		return (a == value) ? 1 : 0;
 }
 
-function count_unless(ary, value) {
-	return ary.reduce(function(count, x) { return count + (x != value); }, 0);
+function count_unless(a, value) {
+	if (a instanceof Array)
+		return a.reduce(function(count, x) { return count + (x != value); }, 0);
+	else
+		return (a != value) ? 1 : 0;
 }
 
 function slotitem_count(slot, item_id) {
 	if (!slot) return 0;
 	var count = 0;
-	for (var i = 0; i < slot.length; ++i) {
-		if ($slotitem_list[slot[i]] == item_id) ++count;
+	for (var i = 0, value; value = $slotitem_list[slot[i]]; ++i) {
+		if (count_if(item_id, value)) ++count;
 	}
 	return count;
+}
+
+function slotitem_use(slot, item_id) {
+	if (!slot) return 0;
+	for (var i = 0, value; value = $slotitem_list[slot[i]]; ++i) {
+		if (count_if(item_id, value)) {
+			slot[i] = -1; return true;
+		}
+	}
+	return false;
 }
 
 function hp_status(nowhp, maxhp) {
@@ -159,9 +175,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				c_cond: data.api_cond,
 				maxhp: data.api_maxhp,
 				nowhp: data.api_nowhp,
-				repair: slotitem_count(data.api_slot, 42),	// 修理要員(ダメコン).
-				megami: slotitem_count(data.api_slot, 43),	// 修理女神.
-				lv:    data.api_lv,
+				slot: data.api_slot,
+				lv: data.api_lv,
 				ship_id: data.api_ship_id
 			};
 			if (!data.api_locked) {
@@ -305,8 +320,11 @@ function on_battle(json) {
 		var ship = $ship_list[fdeck.api_ship[i-1]];
 		if (ship) {
 			name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
-			if (ship.repair) name += '+修理要員x' + ship.repair;
-			if (ship.megami) name += '+修理女神x' + ship.megami;
+			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
+			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
+			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
+			if (repair) name += '+修理要員x' + repair;
+			if (megami) name += '+修理女神x' + megami;
 		}
 		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
 	}
