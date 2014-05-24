@@ -173,36 +173,8 @@ function hp_status(nowhp, maxhp) {
 	return nowhp + '/' + maxhp + ':' + msg;
 }
 
-chrome.devtools.network.onRequestFinished.addListener(function (request) {
-	if (!/^http:\/\/[^\/]+\/kcsapi\/api_(?:get_member\/ship[23]|port\/port)$/.test(request.request.url)) return;
-
-	var ship2 = /ship2$/.test(request.request.url);
-	var ship3 = /ship3$/.test(request.request.url);
-	var port  = /port$/ .test(request.request.url);
-
-	if (ship3) {
-		var params = request.request.postData.params;
-		for (var i = 0, param; param = params[i]; i++) {
-			if (param.name === 'api%5Fshipid') return;
-		}
-	}
-
-	request.getContent(function (content) {
-		if (!content) return;
-
+function on_port(json) {
 		var req = [];
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
-		var data_list = ship2 ? json.api_data               :
-		                ship3 ? json.api_data.api_ship_data :
-		                port  ? json.api_data.api_ship      : null;
-		var deck_list = ship2 ? json.api_data_deck          :
-		                ship3 ? json.api_data.api_deck_data :
-		                port  ? json.api_data.api_deck_port : null;
-		if (!data_list || !deck_list) return;
-
-		update_ship_list(data_list, true);
-		update_fdeck_list(deck_list);
-
 		$unlock_ship = 0;
 		$unlock_slotitem = 0;
 		for (var id in $ship_list) {
@@ -245,8 +217,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			}
 		}
 		chrome.extension.sendRequest(req);
-	});
-});
+}
 
 function on_next_cell(json) {
 	var d = json.api_data;
@@ -408,6 +379,43 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 新艦建造成功.
 		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
 			add_slotitem_list(json.api_data.api_slotitem);
+		};
+	}
+	else if (api_name == '/api_port/port') {
+		// 母港帰還.
+		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+			var data_list = json.api_data.api_ship;
+			var deck_list = json.api_data.api_deck_port;
+			if (!data_list || !deck_list) return;
+			update_ship_list(data_list, true);
+			update_fdeck_list(deck_list);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_get_member/ship2') {
+		// 進撃.
+		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+			var data_list = json.api_data;
+			var deck_list = json.api_data_deck;
+			if (!data_list || !deck_list) return;
+			update_ship_list(data_list, true);
+			update_fdeck_list(deck_list);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_get_member/ship3') {
+		// 装備換装、改修改造.
+		func = function(json) { // 保有艦、保有装備一覧を更新してcond表示する.
+			var params = request.request.postData.params;
+			for (var i = 0, param; param = params[i]; i++) {
+				if (param.name === 'api%5Fshipid') return;
+			}
+			var data_list = json.api_data.api_ship_data;
+			var deck_list = json.api_data.api_deck_data;
+			if (!data_list || !deck_list) return;
+			update_ship_list(data_list, true);
+			update_fdeck_list(deck_list);
+			on_port(json);
 		};
 	}
 	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
