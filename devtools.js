@@ -18,6 +18,7 @@ var $unlock_ship = 0;
 var $unlock_slotitem = 0;
 
 function update_ship_list(list, is_all) {
+	if (!list) return;
 	// update ship_list
 	var prev_ship_list = $ship_list;
 	if (is_all) $ship_list = {};
@@ -38,6 +39,7 @@ function update_ship_list(list, is_all) {
 }
 
 function update_fdeck_list(list) {
+	if (!list) return;
 	$fdeck_list = {};
 	for (var i = 0, deck; deck = list[i]; i++) {
 		$fdeck_list[deck.api_id] = deck;
@@ -45,6 +47,7 @@ function update_fdeck_list(list) {
 }
 
 function update_mst_ship(list) {
+	if (!list) return;
 	$mst_ship = {};
 	for (var i = 0, data; data = list[i]; ++i) {
 		$mst_ship[data.api_id] = data;
@@ -338,7 +341,7 @@ function add_slotitem_list(a) {
 	if (!a) return;
 	if (a instanceof Array) {
 		for (var i = 0, data; data = a[i]; ++i) {
-			add_slotitem_list(data);
+			$slotitem_list[data.api_id] = data.api_slotitem_id;
 		}
 	}
 	else if (a.api_slotitem_id) {
@@ -384,22 +387,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			var data_list = json.api_data.api_ship;
-			var deck_list = json.api_data.api_deck_port;
-			if (!data_list || !deck_list) return;
-			update_ship_list(data_list, true);
-			update_fdeck_list(deck_list);
+			update_ship_list(json.api_data.api_ship, true);
+			update_fdeck_list(json.api_data.api_deck_port);
 			on_port(json);
 		};
 	}
 	else if (api_name == '/api_get_member/ship2') {
 		// 進撃.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			var data_list = json.api_data;
-			var deck_list = json.api_data_deck;
-			if (!data_list || !deck_list) return;
-			update_ship_list(data_list, true);
-			update_fdeck_list(deck_list);
+			update_ship_list(json.api_data, true);
+			update_fdeck_list(json.api_data_deck);
 			on_port(json);
 		};
 	}
@@ -411,11 +408,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			for (var i = 0, param; param = params[i]; i++) {
 				if (param.name === 'api%5Fshipid') is_all = false; // 装備解除時は差分のみ.
 			}
-			var data_list = json.api_data.api_ship_data;
-			var deck_list = json.api_data.api_deck_data;
-			if (!data_list || !deck_list) return;
-			update_ship_list(data_list, is_all);
-			update_fdeck_list(deck_list);
+			update_ship_list(json.api_data.api_ship_data, is_all);
+			update_fdeck_list(json.api_data.api_deck_data);
 			on_port(json);
 		};
 	}
@@ -488,7 +482,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	if (!func) return;
 	request.getContent(function (content) {
 		if (!content) return;
-		var json = JSON.parse(content.replace(/^[^=]+=/, ''));
+		var json = JSON.parse(content.replace(/^svdata=/, ''));
 		if (!json || !json.api_data) return;
 		func(json);
 	});
