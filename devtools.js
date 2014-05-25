@@ -413,6 +413,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			on_port(json);
 		};
 	}
+	else if (api_name == '/api_req_kousyou/destroyship') {
+		// 艦娘解体.
+		func = function(json) { // 解体した艦娘が持つ装備を、リストから抜く.
+			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
+			var ship = $ship_list[id];
+			if (ship) slotitem_delete(ship.slot);
+			delete $ship_list[id];
+			on_port(json);
+		};
+	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
