@@ -194,6 +194,17 @@ function slotitem_delete(slot) {
 	}
 }
 
+function ship_delete(list) {
+	if (!list) return;
+	for (var i = 0, id; id = list[i]; ++i) {
+		var ship = $ship_list[id];
+		if (ship) {
+			slotitem_delete(ship.slot);
+			delete $ship_list[id];
+		}
+	}
+}
+
 function hp_status(nowhp, maxhp) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
@@ -417,9 +428,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 艦娘解体.
 		func = function(json) { // 解体した艦娘が持つ装備を、リストから抜く.
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
-			var ship = $ship_list[id];
-			if (ship) slotitem_delete(ship.slot);
-			delete $ship_list[id];
+			if (id) ship_delete([id]);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_req_kaisou/powerup') {
+		// 近代化改修.
+		func = function(json) { // 素材として使った艦娘が持つ装備を、リストから抜く.
+			var ids = decode_postdata_params(request.request.postData.params).api_id_items;
+			if (ids) ship_delete(ids.split('%2C'));
 			on_port(json);
 		};
 	}
