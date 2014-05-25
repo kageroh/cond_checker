@@ -130,6 +130,17 @@ function ship_name(id) {
 	return id.toString();
 }
 
+function decode_postdata_params(params) {
+	var r = {};
+	if (!params) return;
+	for (var i = 0, data; data = params[i]; ++i) {
+		var name  = decodeURI(data.name);
+		var value = decodeURI(data.value);
+		if (name && value) r[name] = value;
+	}
+	return r;
+}
+
 function count_if(a, value) {
 	if (a instanceof Array)
 		return a.reduce(function(count, x) { return count + (x == value); }, 0);
@@ -142,6 +153,19 @@ function count_unless(a, value) {
 		return a.reduce(function(count, x) { return count + (x != value); }, 0);
 	else
 		return (a != value) ? 1 : 0;
+}
+
+function add_slotitem_list(a) {
+	if (!a) return;
+	if (a instanceof Array) {
+		for (var i = 0, data; data = a[i]; ++i) {
+			$slotitem_list[data.api_id] = data.api_slotitem_id;
+		}
+	}
+	else if (a.api_slotitem_id) {
+		var data = a;
+		$slotitem_list[data.api_id] = data.api_slotitem_id;
+	}
 }
 
 function slotitem_count(slot, item_id) {
@@ -161,6 +185,13 @@ function slotitem_use(slot, item_id) {
 		}
 	}
 	return false;
+}
+
+function slotitem_delete(slot) {
+	if (!slot) return;
+	for (var i = 0, id; id = slot[i]; ++i) {
+		delete $slotitem_list[id];
+	}
 }
 
 function hp_status(nowhp, maxhp) {
@@ -337,19 +368,6 @@ function on_battle(json) {
 	chrome.extension.sendRequest(req);
 }
 
-function add_slotitem_list(a) {
-	if (!a) return;
-	if (a instanceof Array) {
-		for (var i = 0, data; data = a[i]; ++i) {
-			$slotitem_list[data.api_id] = data.api_slotitem_id;
-		}
-	}
-	else if (a.api_slotitem_id) {
-		var data = a;
-		$slotitem_list[data.api_id] = data.api_slotitem_id;
-	}
-}
-
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	var func = null;
 	var api_name = request.request.url.replace(/^http:\/\/[^\/]+\/kcsapi\//, '/');
@@ -374,14 +392,25 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kousyou/createitem') {
 		// 装備開発.
 		func = function(json) { // 開発した装備を、リストに加える.
-			if (json.api_data.api_create_flag)
+			if (json.api_data.api_create_flag) {
 				add_slotitem_list(json.api_data.api_slot_item);
+				on_port(json);
+			}
 		};
 	}
 	else if (api_name == '/api_req_kousyou/getship') {
 		// 新艦建造成功.
 		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
 			add_slotitem_list(json.api_data.api_slotitem);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_req_kousyou/destroyitem2') {
+		// 装備破棄.
+		func = function(json) { // 破棄した装備を、リストから抜く.
+			var ids = decode_postdata_params(request.request.postData.params).api_slotitem_ids;
+			if (ids) slotitem_delete(ids.split('%2C'));
+			on_port(json);
 		};
 	}
 	else if (api_name == '/api_port/port') {
