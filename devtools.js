@@ -468,9 +468,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 装備換装.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			var is_all = true;
-			var params = request.request.postData.params;
-			for (var i = 0, param; param = params[i]; i++) {
-				if (param.name === 'api%5Fshipid') is_all = false; // 装備解除時は差分のみ.
+			if (decode_postdata_params(request.request.postData.params).api_shipid) {
+				is_all = false; // 装備解除時は差分のみ.
 			}
 			update_ship_list(json.api_data.api_ship_data, is_all);
 			update_fdeck_list(json.api_data.api_deck_data);
