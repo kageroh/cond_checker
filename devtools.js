@@ -412,6 +412,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kousyou/getship') {
 		// 新艦建造成功.
 		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
+			update_ship_list([json.api_data.api_ship], false);
 			add_slotitem_list(json.api_data.api_slotitem);
 			on_port(json);
 		};
