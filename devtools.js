@@ -34,6 +34,12 @@ function update_ship_list(list, is_all) {
 			locked : data.api_locked,
 			ship_id: data.api_ship_id
 		};
+		if (is_all) {
+			data.api_slot.forEach(function(id) {
+				// 未知の装備があれば、ダミーエントリを作って数を合わせる. 戦闘直後のship2にて、ドロップ艦がこの状況となる.
+				if (id != -1 && !$slotitem_list[id]) $slotitem_list[id] = -1;
+			});
+		}
 	}
 	localStorage['ship_list'] = JSON.stringify($ship_list);
 }
