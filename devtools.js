@@ -22,7 +22,7 @@ function update_ship_list(list, is_all) {
 	// update ship_list
 	var prev_ship_list = $ship_list;
 	if (is_all) $ship_list = {};
-	for (var i = 0, data; data = list[i]; i++) {
+	list.forEach(function(data) {
 		var ship = prev_ship_list[data.api_id];
 		$ship_list[data.api_id] = {
 			p_cond : (ship) ? ship.c_cond : 49,
@@ -40,24 +40,24 @@ function update_ship_list(list, is_all) {
 				if (id != -1 && !$slotitem_list[id]) $slotitem_list[id] = -1;
 			});
 		}
-	}
+	});
 	localStorage['ship_list'] = JSON.stringify($ship_list);
 }
 
 function update_fdeck_list(list) {
 	if (!list) return;
 	$fdeck_list = {};
-	for (var i = 0, deck; deck = list[i]; i++) {
+	list.forEach(function(deck) {
 		$fdeck_list[deck.api_id] = deck;
-	}
+	});
 }
 
 function update_mst_ship(list) {
 	if (!list) return;
 	$mst_ship = {};
-	for (var i = 0, data; data = list[i]; ++i) {
+	list.forEach(function(data) {
 		$mst_ship[data.api_id] = data;
-	}
+	});
 	localStorage['mst_ship'] = JSON.stringify($mst_ship);
 }
 
@@ -139,11 +139,11 @@ function ship_name(id) {
 function decode_postdata_params(params) {
 	var r = {};
 	if (!params) return;
-	for (var i = 0, data; data = params[i]; ++i) {
+	params.forEach(function(data) {
 		var name  = decodeURI(data.name);
 		var value = decodeURI(data.value);
 		if (name && value) r[name] = value;
-	}
+	});
 	return r;
 }
 
@@ -161,15 +161,14 @@ function count_unless(a, value) {
 		return (a != value) ? 1 : 0;
 }
 
-function add_slotitem_list(a) {
-	if (!a) return;
-	if (a instanceof Array) {
-		for (var i = 0, data; data = a[i]; ++i) {
-			$slotitem_list[data.api_id] = data.api_slotitem_id;
-		}
+function add_slotitem_list(data) {
+	if (!data) return;
+	if (data instanceof Array) {
+		data.forEach(function(e) {
+			add_slotitem_list(e);
+		});
 	}
-	else if (a.api_slotitem_id) {
-		var data = a;
+	else if (data.api_slotitem_id) {
 		$slotitem_list[data.api_id] = data.api_slotitem_id;
 	}
 }
@@ -177,38 +176,40 @@ function add_slotitem_list(a) {
 function slotitem_count(slot, item_id) {
 	if (!slot) return 0;
 	var count = 0;
-	for (var i = 0, value; value = $slotitem_list[slot[i]]; ++i) {
-		if (count_if(item_id, value)) ++count;
-	}
+	slot.forEach(function(id) {
+		var value = $slotitem_list[id];
+		if (value && count_if(item_id, value)) ++count;
+	});
 	return count;
 }
 
 function slotitem_use(slot, item_id) {
 	if (!slot) return 0;
-	for (var i = 0, value; value = $slotitem_list[slot[i]]; ++i) {
-		if (count_if(item_id, value)) {
+	slot.forEach(function(id) {
+		var value = $slotitem_list[id];
+		if (value && count_if(item_id, value)) {
 			slot[i] = -1; return true;
 		}
-	}
+	});
 	return false;
 }
 
 function slotitem_delete(slot) {
 	if (!slot) return;
-	for (var i = 0, id; id = slot[i]; ++i) {
+	slot.forEach(function(id) {
 		delete $slotitem_list[id];
-	}
+	});
 }
 
 function ship_delete(list) {
 	if (!list) return;
-	for (var i = 0, id; id = list[i]; ++i) {
+	list.forEach(function(id) {
 		var ship = $ship_list[id];
 		if (ship) {
 			slotitem_delete(ship.slot);
 			delete $ship_list[id];
 		}
-	}
+	});
 }
 
 function hp_status(nowhp, maxhp) {
