@@ -234,6 +234,7 @@ function hp_status(nowhp, maxhp) {
 
 function on_port(json) {
 		var req = [];
+		var unlock_names = [];
 		var $unlock_ship = 0;
 		var $unlock_slotitem = 0;
 		for (var id in $ship_list) {
@@ -241,14 +242,17 @@ function on_port(json) {
 			if (!ship.locked) {
 				$unlock_ship++;
 				$unlock_slotitem += count_unless(ship.slot, -1);
+				unlock_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
 			}
 		}
+		unlock_names.reverse();
+		if (unlock_names.length > 3) unlock_names.splice(3, unlock_names.length - 3, '...'); // 3隻以上は省略する.
 		var basic = json.api_data.api_basic;
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ')');
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ':　' + unlock_names.join(', ') + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
 		req.push(weekly_name());
 		var material = json.api_data.api_material;
