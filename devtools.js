@@ -274,16 +274,12 @@ function on_port(json) {
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
 				if (id === -1) break;
-				var ship = $ship_list[id.toString(10)];
+				var ship = $ship_list[id];
 				var cond = ship.c_cond;
-				var diff = cond - ship.p_cond;
-				var diff_str = (diff > 0) ? ' (+' + diff.toString(10) + ')' : // with plus sign
-							   (diff < 0) ? ' ('  + diff.toString(10) + ')' : // with minus sign
-							   /* diff==0 */ '';	// blank
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 							   /* cond < 49 */ '> '; // recovering
-				req.push((j + 1).toString(10) + kira_str + cond.toString(10) + diff_str);
+				req.push((j + 1).toString(10) + kira_str + cond + diff_name(cond, ship.p_cond));
 			}
 		}
 		chrome.extension.sendRequest(req);
