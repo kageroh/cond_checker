@@ -14,8 +14,6 @@ var $max_slotitem = 0;
 var $fdeck_list = {}
 var $next_enemy = null;
 var $is_boss = false;
-var $unlock_ship = 0;
-var $unlock_slotitem = 0;
 
 function update_ship_list(list, is_all) {
 	if (!list) return;
@@ -227,8 +225,8 @@ function hp_status(nowhp, maxhp) {
 
 function on_port(json) {
 		var req = [];
-		$unlock_ship = 0;
-		$unlock_slotitem = 0;
+		var $unlock_ship = 0;
+		var $unlock_slotitem = 0;
 		for (var id in $ship_list) {
 			var ship = $ship_list[id];
 			if (!ship.locked) {
@@ -236,7 +234,6 @@ function on_port(json) {
 				$unlock_slotitem += count_unless(ship.slot, -1);
 			}
 		}
-
 		var basic = json.api_data.api_basic;
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
