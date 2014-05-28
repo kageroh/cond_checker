@@ -11,9 +11,10 @@ $weekly = ($weekly) ? JSON.parse($weekly) : null;
 var $slotitem_list = {};
 var $max_ship = 0;
 var $max_slotitem = 0;
-var $fdeck_list = {}
+var $fdeck_list = {};
 var $next_enemy = null;
 var $is_boss = false;
+var $material = {};
 
 function update_ship_list(list, is_all) {
 	if (!list) return;
@@ -84,6 +85,14 @@ function weekly_name() {
 		+ 'ボス到達:' + w.boss_cell + '/24, '
 		+ 'ボス勝利:' + w.win_boss  + '/12, '
 		+ 'S勝利:' + w.win_S + '/6';
+}
+
+function diff_name(now, prev) {
+	var diff = now - prev;
+	if (!prev) return '';
+	else if (diff > 0) return '(+' + diff + ')'; // with plus sign
+	else if (diff < 0) return '(' + diff +')';   // with minus sign
+	else /* diff == 0 */ return '';
 }
 
 function item_name(id) {
@@ -242,6 +251,18 @@ function on_port(json) {
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
 		req.push(weekly_name());
+		var material = json.api_data.api_material;
+		if (material) {
+			var msg = [];
+			material.forEach(function(data) {
+				var id = data.api_id;
+				var value = data.api_value;
+				var diff  = diff_name(value, $material[id]);
+				$material[id] = value;
+				if (diff.length) msg.push(item_name(id) + diff);
+			});
+			req.push(msg.join(', '));
+		}
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
 			req.push(deck.api_name);
