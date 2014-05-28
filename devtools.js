@@ -252,7 +252,7 @@ function on_port(json) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ':　' + unlock_names.join(', ') + ')');
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ': ' + unlock_names.join(', ') + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
 		req.push(weekly_name());
 		var material = json.api_data.api_material;
