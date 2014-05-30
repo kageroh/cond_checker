@@ -411,7 +411,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 置換失敗. api以外なので早抜けする.
 		return;
 	}
-	else if (api_name == 'api_start2') {
+	else if (api_name == '/api_start2') {
 		// ゲーム開始時点.
 		func = function(json) { //　艦種表を取り込む.
 			var list = json.api_data.api_mst_ship;
