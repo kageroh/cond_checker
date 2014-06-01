@@ -15,6 +15,8 @@ var $fdeck_list = {};
 var $next_enemy = null;
 var $is_boss = false;
 var $material = {};
+var $quest_count = 0;
+var $quest_list = {};
 
 function update_ship_list(list, is_all) {
 	if (!list) return;
@@ -268,6 +270,17 @@ function on_port(json) {
 			req.push('資材増減数:' + msg.join(', '));
 		}
 		req.push(weekly_name());
+		for (var id in $quest_list) {
+			var quest = $quest_list[id];
+			if (quest.api_state > 1) {
+				var progress = (quest.api_state == 3) ? '任務達成!!'
+					: (quest.api_progress == 2) ? '任務遂行80%'
+					: (quest.api_progress == 1) ? '任務遂行50%'
+					: '任務遂行中';
+				req.push(progress + ':' + quest.api_title);
+			}
+		}
+		if (Object.keys($quest_list).length != $quest_count) req.push('...任務リストを先頭から最終ページまでめくってください');
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
 			req.push(deck.api_name);
@@ -464,6 +477,22 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 素材として使った艦娘が持つ装備を、リストから抜く.
 			var ids = decode_postdata_params(request.request.postData.params).api_id_items;
 			if (ids) ship_delete(ids.split('%2C'));
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_get_member/questlist') {
+		// 任務一覧.
+		func = function(json) { // 任務総数と任務リストを記録する.
+			var list = json.api_data.api_list;
+			if (!list) return;
+			$quest_count = json.api_data.api_count;
+			if (json.api_data.api_disp_page == 1 && $quest_count != Object.keys($quest_list).length) {
+				$quest_list = {}; // 任務総数が変わったらリストをクリアする.
+			}
+			list.forEach(function(data) {
+				if (data == -1) return; // 最終ページには埋草で-1　が入っているので除外する.
+				$quest_list[data.api_no] = data;
+			});
 			on_port(json);
 		};
 	}
