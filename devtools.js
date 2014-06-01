@@ -274,8 +274,8 @@ function on_port(json) {
 			var quest = $quest_list[id];
 			if (quest.api_state > 1) {
 				var progress = (quest.api_state == 3) ? '任務達成!!'
-					: (quest.api_progress == 2) ? '任務遂行80%'
-					: (quest.api_progress == 1) ? '任務遂行50%'
+					: (quest.api_progress_flag == 2) ? '任務遂行80%'
+					: (quest.api_progress_flag == 1) ? '任務遂行50%'
 					: '任務遂行中';
 				req.push(progress + ':' + quest.api_title);
 			}
