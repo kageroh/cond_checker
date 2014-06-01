@@ -81,10 +81,11 @@ function save_weekly() {
 
 function weekly_name() {
 	var w = get_weekly();
-	return '週間出撃:' + w.sortie + '/36, '
-		+ 'ボス到達:' + w.boss_cell + '/24, '
-		+ 'ボス勝利:' + w.win_boss  + '/12, '
-		+ 'S勝利:' + w.win_S + '/6';
+	return '週間出撃数:' + w.sortie
+		+ ', ボス勝利/到達:' + w.win_boss + '/' + w.boss_cell　
+		+ ', S勝利:' + w.win_S
+		+ '; あ号条件36,12/24,7';
+		// あ号達成条件 36出撃、ボス到達24、ボス勝利12、S勝利6
 }
 
 function diff_name(now, prev) {
@@ -254,7 +255,6 @@ function on_port(json) {
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ': ' + unlock_names.join(', ') + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
-		req.push(weekly_name());
 		var material = json.api_data.api_material;
 		if (material) {
 			var msg = [];
@@ -265,8 +265,9 @@ function on_port(json) {
 				$material[id] = value;
 				if (diff.length) msg.push(item_name(id) + diff);
 			});
-			req.push(msg.join(', '));
+			req.push('資材増減数:' + msg.join(', '));
 		}
+		req.push(weekly_name());
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
 			req.push(deck.api_name);
@@ -367,8 +368,8 @@ function on_battle(json) {
 	if (d.api_support_flag) {
 		///@todo
 	}
-	var fdeck = $fdeck_list[d.api_dock_id];
-	if (!fdeck) fdeck = $fdeck_list[d.api_deck_id]; // for */api_req_practice/midnight_battle
+	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
+	var fdeck = $fdeck_list[d.api_deck_id];
 	if (d.api_formation) {
 		$next_enemy += '\n'
 			+ formation_name(d.api_formation[0]) + '/'
