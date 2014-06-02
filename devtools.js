@@ -67,6 +67,7 @@ function get_weekly() {
 	wn = Math.floor(wn / (7*24*60*60*1000)); // 経過週数に変換する.
 	if ($weekly == null || $weekly.week != wn) {
 		$weekly = {
+			quest_state : 0, // あ号任務状況(1:未遂行, 2:遂行中, 3:達成)
 			sortie    : 0,
 			boss_cell : 0,
 			win_boss  : 0,
@@ -83,11 +84,10 @@ function save_weekly() {
 
 function weekly_name() {
 	var w = get_weekly();
-	return '週間出撃数:' + w.sortie
-		+ ', ボス勝利/到達:' + w.win_boss + '/' + w.boss_cell　
-		+ ', S勝利:' + w.win_S
-		+ '; あ号条件36,12/24,7';
-		// あ号達成条件 36出撃、ボス到達24、ボス勝利12、S勝利6
+	return '(出撃:' + w.sortie　+ '/36'
+		+ ', ボス勝利:' + w.win_boss + '/12'
+		+ ', ボス到達:' + w.boss_cell + '/24'
+		+ ', S勝利:' + w.win_S + '/6)';
 }
 
 function diff_name(now, prev) {
@@ -269,7 +269,6 @@ function on_port(json) {
 			});
 			req.push('資材増減数:' + msg.join(', '));
 		}
-		req.push(weekly_name());
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
 			if (quest.api_state > 1) {
@@ -277,7 +276,9 @@ function on_port(json) {
 					: (quest.api_progress_flag == 2) ? '任務遂行80%'
 					: (quest.api_progress_flag == 1) ? '任務遂行50%'
 					: '任務遂行中';
-				req.push(progress + ':' + quest.api_title);
+				var title = quest.api_title;
+				if (quest.api_no == 214) title += weekly_name();
+				req.push(progress + ':' + title);
 			}
 		}
 		if (Object.keys($quest_list).length != $quest_count) req.push('...任務リストを先頭から最終ページまでめくってください');
@@ -492,6 +493,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			list.forEach(function(data) {
 				if (data == -1) return; // 最終ページには埋草で-1　が入っているので除外する.
 				$quest_list[data.api_no] = data;
+				if (data.api_no == 214) {
+					get_weekly().quest_state = data.api_state; // あ号任務ならば、遂行状態を記録する(1:未遂行, 2:遂行中, 3:達成)
+				}
 			});
 			on_port(json);
 		};
@@ -539,8 +543,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_map/start') {
 		// 海域初回選択.
-		var w = get_weekly()
-		w.sortie++;
+		var w = get_weekly();
+		if (w.quest_state == 2) w.sortie++;
 		$is_boss = false;
 		func = on_next_cell;
 	}
@@ -576,8 +580,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 戦闘結果.
 		func = function(json) {
 			on_battle_result(json);
-			var w = get_weekly();
 			var r = json.api_data.api_win_rank;
+			var w = get_weekly();
+			if (w.quest_state != 2) return; // 遂行中以外は更新しない.
 			if (r == 'S') w.win_S++;
 			if($is_boss) {
 				w.boss_cell++;
