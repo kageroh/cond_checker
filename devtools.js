@@ -33,6 +33,7 @@ function update_ship_list(list, is_all) {
 			slot   : data.api_slot,
 			lv     : data.api_lv,
 			locked : data.api_locked,
+			ndock_time : data.api_ndock_time,
 			ship_id: data.api_ship_id
 		};
 		if (is_all) {
@@ -235,6 +236,21 @@ function hp_status(nowhp, maxhp) {
 	return nowhp + '/' + maxhp + ':' + msg;
 }
 
+function hp_repair_status(nowhp, maxhp, msec) {
+	if (nowhp < 0) nowhp = 0;
+	var r = nowhp / maxhp;
+	if (r <= 0.75) {
+		var sec = msec / 1000;
+		var min = sec / 60;
+		var hh = min / 60;
+		var msg = ' Hp' + hp_status(nowhp, maxhp);
+		if (hh  >= 2) return msg + ' 修理' + hh.toFixed(1) + '時間';
+		if (min >= 2) return msg + ' 修理' + min.toFixed() + '分';
+		if (sec >  0) return msg + ' 修理' + sec.toFixed() + '秒';
+	}
+	return '';
+}
+
 function on_port(json) {
 		var req = [];
 		var unlock_names = [];
@@ -294,11 +310,14 @@ function on_port(json) {
 			for (var j = 0, id; id = id_list[j]; j++) {
 				if (id === -1) break;
 				var ship = $ship_list[id];
+				var name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
 				var cond = ship.c_cond;
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
-							   /* cond < 49 */ '> '; // recovering
-				req.push((j + 1).toString(10) + kira_str + cond + diff_name(cond, ship.p_cond));
+				               /* cond < 49 */ '> '; // recovering
+				req.push((j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
+					+ ' \t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
+					);
 			}
 		}
 		chrome.extension.sendRequest(req);
