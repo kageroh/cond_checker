@@ -5,10 +5,14 @@ $ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
 var $mst_ship = localStorage['mst_ship'];
 $mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
 
+var $mst_slotitem = localStorage['mst_slotitem'];
+$mst_slotitem = ($mst_slotitem) ? JSON.parse($mst_slotitem) : {};
+
 var $weekly = localStorage['weekly'];
 $weekly = ($weekly) ? JSON.parse($weekly) : null;
 
 var $slotitem_list = {};
+var $last_slotitem = -1;
 var $max_ship = 0;
 var $max_slotitem = 0;
 var $fdeck_list = {};
@@ -61,6 +65,15 @@ function update_mst_ship(list) {
 		$mst_ship[data.api_id] = data;
 	});
 	localStorage['mst_ship'] = JSON.stringify($mst_ship);
+}
+
+function update_mst_slotitem(list) {
+	if (!list) return;
+	$mst_slotitem = {};
+	list.forEach(function(data) {
+		$mst_slotitem[data.api_id] = data;
+	});
+	localStorage['mst_slotitem'] = JSON.stringify($mst_slotitem);
 }
 
 function get_weekly() {
@@ -254,8 +267,11 @@ function hp_repair_status(nowhp, maxhp, msec) {
 function on_port(json) {
 		var req = [];
 		var unlock_names = [];
+		var onslot_names = [];
 		var $unlock_ship = 0;
 		var $unlock_slotitem = 0;
+		//
+		// 未ロック艦と指定装備持ち艦を検出する.
 		for (var id in $ship_list) {
 			var ship = $ship_list[id];
 			if (!ship.locked) {
@@ -263,9 +279,15 @@ function on_port(json) {
 				$unlock_slotitem += count_unless(ship.slot, -1);
 				unlock_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
 			}
+			if ($last_slotitem != -1 && slotitem_count(ship.slot, $last_slotitem) > 0) {
+				onslot_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
+			}
 		}
 		unlock_names.reverse();
 		if (unlock_names.length > 3) unlock_names.splice(3, unlock_names.length - 3, '...'); // 3隻以上は省略する.
+		if (onslot_names.length > 3) onslot_names.splice(3, onslot_names.length - 3, '...'); // 3隻以上は省略する.
+		//
+		// 艦娘と装備の数を表示する.
 		var basic = json.api_data.api_basic;
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
@@ -273,6 +295,11 @@ function on_port(json) {
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ': ' + unlock_names.join(', ') + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
+		//
+		// 指定装備持ち艦娘を一覧表示する.
+		if (onslot_names.length > 0) req.push($mst_slotitem[$last_slotitem].api_name + 'の装備艦:' + onslot_names.join(', '));
+		//
+		// 資材変化を表示する.
 		var material = json.api_data.api_material;
 		if (material) {
 			var msg = [];
@@ -285,6 +312,8 @@ function on_port(json) {
 			});
 			req.push('資材増減数:' + msg.join(', '));
 		}
+		//
+		// 遂行中任務を一覧表示する.
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
 			if (quest.api_state > 1) {
@@ -298,6 +327,8 @@ function on_port(json) {
 			}
 		}
 		if (Object.keys($quest_list).length != $quest_count) req.push('...任務リストを先頭から最終ページまでめくってください');
+		//
+		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
 			req.push(deck.api_name);
@@ -448,8 +479,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_start2') {
 		// ゲーム開始時点.
 		func = function(json) { //　艦種表を取り込む.
-			var list = json.api_data.api_mst_ship;
-			if (list) update_mst_ship(list);
+			update_mst_ship(json.api_data.api_mst_ship);
+			update_mst_slotitem(json.api_data.api_mst_slotitem);
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
@@ -499,6 +530,17 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			if (ids) ship_delete(ids.split('%2C'));
 			on_port(json);
 		};
+	}
+	else if (api_name == '/api_req_kaisou/slotset') {
+		// 装備変更.
+		var params = decode_postdata_params(request.request.postData.params);
+		var ship = $ship_list[params.api_id];
+		var id = params.api_item_id;	// 追加した装備ID.
+		if (ship && id == -1) {
+			id = ship.slot[params.api_slot_idx];	// 除去した装備ID.
+		}
+		$last_slotitem = $slotitem_list[id];
+		return; // 直後に ship3 が来るので表示はそこで行う.
 	}
 	else if (api_name == '/api_get_member/questlist') {
 		// 任務一覧.
