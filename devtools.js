@@ -171,6 +171,10 @@ function decode_postdata_params(params) {
 	return r;
 }
 
+function trim_left(a, n) {
+	if (a.length > n) a.splice(n, a.length - n, '...');
+}
+
 function count_if(a, value) {
 	if (a instanceof Array)
 		return a.reduce(function(count, x) { return count + (x == value); }, 0);
@@ -283,9 +287,8 @@ function on_port(json) {
 				onslot_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
 			}
 		}
-		unlock_names.reverse();
-		if (unlock_names.length > 3) unlock_names.splice(3, unlock_names.length - 3, '...'); // 3隻以上は省略する.
-		if (onslot_names.length > 3) onslot_names.splice(3, onslot_names.length - 3, '...'); // 3隻以上は省略する.
+		unlock_names.reverse(); trim_left(unlock_names, 3);	// 3隻以上は省略する.
+		onslot_names.reverse(); trim_left(onslot_names, 24); // 24隻以上は省略する.
 		//
 		// 艦娘と装備の数を表示する.
 		var basic = json.api_data.api_basic;
