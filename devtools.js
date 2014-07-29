@@ -21,6 +21,7 @@ var $is_boss = false;
 var $material = {};
 var $quest_count = 0;
 var $quest_list = {};
+var $battle_count = 0;
 
 function update_ship_list(list, is_all) {
 	if (!list) return;
@@ -96,12 +97,20 @@ function save_weekly() {
 	localStorage['weekly'] = JSON.stringify($weekly);
 }
 
+function fraction_name(num, denom) {
+	if (num >= denom)
+		return '達成';
+	else
+		return num + '/' + denom;
+}
+
 function weekly_name() {
 	var w = get_weekly();
-	return '(出撃:' + w.sortie　+ '/36'
-		+ ', ボス勝利:' + w.win_boss + '/12'
-		+ ', ボス到達:' + w.boss_cell + '/24'
-		+ ', S勝利:' + w.win_S + '/6)';
+	return '(出撃数:'  + fraction_name(w.sortie, 36)
+		+ ', ボス勝利:' + fraction_name(w.win_boss, 12)
+		+ ', ボス到達:' + fraction_name(w.boss_cell, 24)
+		+ ', S勝利:'   + fraction_name(w.win_S, 6)
+		+ ')';
 }
 
 function diff_name(now, prev) {
@@ -158,6 +167,16 @@ function ship_name(id) {
 		}
 	}
 	return id.toString();
+}
+
+function deck_name(deck) {
+	var lv_sum = 0;
+	deck.api_ship.forEach(function(id) {
+		if (id == -1) return;
+		var ship = $ship_list[id];
+		lv_sum += ship.lv;
+	});
+	return deck.api_name + ' 合計Lv'　+ lv_sum;
 }
 
 function decode_postdata_params(params) {
@@ -334,11 +353,14 @@ function on_port(json) {
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
-			req.push(deck.api_name);
+			req.push(deck_name(deck));
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
 				var d = new Date(mission_end);
 				req.push(d.toLocaleString());
+			}
+			else if (deck.api_id != 1)　{
+				req.push('母港待機中');
 			}
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
@@ -444,7 +466,7 @@ function on_battle(json) {
 			+ formation_name(d.api_formation[1]);
 	}
 	var req = [];
-	req.push('battle')
+	req.push('battle' + $battle_count);
 	req.push($next_enemy);
 	req.push('\nfriend damage');
 	req.push(fdeck.api_name);
@@ -607,6 +629,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_map/start') {
 		// 海域初回選択.
+		$battle_count = 0;
 		var w = get_weekly();
 		if (w.quest_state == 2) w.sortie++;
 		$is_boss = false;
@@ -618,6 +641,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_sortie/battle') {
 		// 昼戦開始.
+		$battle_count++;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_battle_midnight/battle') {
@@ -626,6 +650,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_battle_midnight/sp_midnight') {
 		// 夜戦開始.
+		$battle_count++;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_sortie/night_to_day') {
@@ -634,6 +659,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_practice/battle') {
 		// 演習開始.
+		$battle_count = 0;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_practice/midnight_battle') {
