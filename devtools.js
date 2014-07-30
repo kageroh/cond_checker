@@ -1,16 +1,8 @@
 // -*- coding: utf-8 -*-
-var $ship_list = localStorage['ship_list'];
-$ship_list = ($ship_list) ? JSON.parse($ship_list) : {};
-
-var $mst_ship = localStorage['mst_ship'];
-$mst_ship = ($mst_ship) ? JSON.parse($mst_ship) : {};
-
-var $mst_slotitem = localStorage['mst_slotitem'];
-$mst_slotitem = ($mst_slotitem) ? JSON.parse($mst_slotitem) : {};
-
-var $weekly = localStorage['weekly'];
-$weekly = ($weekly) ? JSON.parse($weekly) : null;
-
+var $ship_list		= load_storage('ship_list');
+var $mst_ship		= load_storage('mst_ship');
+var $mst_slotitem	= load_storage('mst_slotitem');
+var $weekly			= load_storage('weekly');
 var $slotitem_list = {};
 var $last_slotitem = -1;
 var $max_ship = 0;
@@ -22,6 +14,15 @@ var $material = {};
 var $quest_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
+
+function load_storage(name) {
+	var v = localStorage[name];
+	return v ? JSON.parse(v) : {};
+}
+
+function save_storage(name, v) {
+	localStorage[name] = JSON.stringify(v);
+}
 
 function update_ship_list(list, is_all) {
 	if (!list) return;
@@ -48,7 +49,7 @@ function update_ship_list(list, is_all) {
 			});
 		}
 	});
-	localStorage['ship_list'] = JSON.stringify($ship_list);
+	save_storage('ship_list', $ship_list);
 }
 
 function update_fdeck_list(list) {
@@ -65,7 +66,7 @@ function update_mst_ship(list) {
 	list.forEach(function(data) {
 		$mst_ship[data.api_id] = data;
 	});
-	localStorage['mst_ship'] = JSON.stringify($mst_ship);
+	save_storage('mst_ship', $mst_ship);
 }
 
 function update_mst_slotitem(list) {
@@ -74,7 +75,7 @@ function update_mst_slotitem(list) {
 	list.forEach(function(data) {
 		$mst_slotitem[data.api_id] = data;
 	});
-	localStorage['mst_slotitem'] = JSON.stringify($mst_slotitem);
+	save_storage('mst_slotitem', $mst_slotitem);
 }
 
 function get_weekly() {
@@ -94,7 +95,7 @@ function get_weekly() {
 }
 
 function save_weekly() {
-	localStorage['weekly'] = JSON.stringify($weekly);
+	save_storage('weekly', $weekly);
 }
 
 function fraction_name(num, denom) {
