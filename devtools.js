@@ -2,6 +2,7 @@
 var $ship_list		= load_storage('ship_list');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
+var $mst_mission	= load_storage('mst_mission');
 var $weekly			= load_storage('weekly');
 var $slotitem_list = {};
 var $last_slotitem = -1;
@@ -76,6 +77,15 @@ function update_mst_slotitem(list) {
 		$mst_slotitem[data.api_id] = data;
 	});
 	save_storage('mst_slotitem', $mst_slotitem);
+}
+
+function update_mst_mission(list) {
+	if (!list) return;
+	$mst_mission = {};
+	list.forEach(function(data) {
+		$mst_mission[data.api_id] = data;
+	});
+	save_storage('mst_mission', $mst_mission);
 }
 
 function get_weekly() {
@@ -358,7 +368,9 @@ function on_port(json) {
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
 				var d = new Date(mission_end);
-				req.push(d.toLocaleString());
+				var id = deck.api_mission[1];
+				var name = $mst_mission[id].api_name;
+				req.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
 			}
 			else if (deck.api_id != 1)　{
 				req.push('母港待機中');
@@ -507,6 +519,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { //　艦種表を取り込む.
 			update_mst_ship(json.api_data.api_mst_ship);
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
+			update_mst_mission(json.api_data.api_mst_mission);
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
