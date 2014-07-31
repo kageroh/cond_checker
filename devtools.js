@@ -317,8 +317,8 @@ function on_port(json) {
 				onslot_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
 			}
 		}
-		unlock_names.reverse(); trim_left(unlock_names, 3);	// 3隻以上は省略する.
-		onslot_names.reverse(); trim_left(onslot_names, 24); // 24隻以上は省略する.
+		unlock_names.reverse(); trim_left(unlock_names, 10);	// 10隻以上は省略する.
+		onslot_names.reverse(); trim_left(onslot_names, 24);	// 24隻以上は省略する.
 		//
 		// 艦娘と装備の数を表示する.
 		var basic = json.api_data.api_basic;
@@ -326,8 +326,9 @@ function on_port(json) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(' + $unlock_ship + ': ' + unlock_names.join(', ') + ')');
-		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(' + $unlock_slotitem + ')');
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
+		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ')');
+		req.push('未ロック艦リスト:' + unlock_names.join(', '));
 		//
 		// 指定装備持ち艦娘を一覧表示する.
 		if (onslot_names.length > 0) req.push($mst_slotitem[$last_slotitem].api_name + 'の装備艦:' + onslot_names.join(', '));
@@ -347,24 +348,26 @@ function on_port(json) {
 		}
 		//
 		// 遂行中任務を一覧表示する.
+		var quest_count = 0;
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
 			if (quest.api_state > 1) {
-				var progress = (quest.api_state == 3) ? '任務達成!!'
-					: (quest.api_progress_flag == 2) ? '任務遂行80%'
-					: (quest.api_progress_flag == 1) ? '任務遂行50%'
-					: '任務遂行中';
+				var progress = (quest.api_state == 3) ? '* 達成!!'
+					: (quest.api_progress_flag == 2) ? '* 遂行80%'
+					: (quest.api_progress_flag == 1) ? '* 遂行50%'
+					: '* 遂行中';
 				var title = quest.api_title;
 				if (quest.api_no == 214) title += weekly_name();
+				if (++quest_count == 1) req.push('## 任務');
 				req.push(progress + ':' + title);
 			}
 		}
-		if (Object.keys($quest_list).length != $quest_count) req.push('...任務リストを先頭から最終ページまでめくってください');
+		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 		//
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
 			var deck = $fdeck_list[id];
-			req.push(deck_name(deck));
+			req.push('## ' + deck_name(deck));
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
 				var d = new Date(mission_end);
@@ -404,11 +407,11 @@ function on_next_cell(json) {
 			$is_boss = true;
 		}
 		$next_enemy = area + ': ' + msg;
-		chrome.extension.sendRequest('next enemy\n' + area + ': ' + msg);
+		chrome.extension.sendRequest('## next enemy\n' + area + ': ' + msg);
 	}
 	if (g) {
 		var msg = item_name(g.api_id) + 'x' + g.api_getcount;
-		chrome.extension.sendRequest('next item\n' + area + ': ' + msg);
+		chrome.extension.sendRequest('## next item\n' + area + ': ' + msg);
 	}
 }
 
@@ -425,10 +428,10 @@ function on_battle_result(json) {
 		}
 	}
 	if (g) {
-		msg += '\n\ndrop ship\n';
+		msg += '\n## drop ship\n';
 		msg += g.api_ship_type + ':' + g.api_ship_name;
 	}
-	chrome.extension.sendRequest('battle result\n' + msg);
+	chrome.extension.sendRequest('## battle result\n' + msg);
 }
 
 function calc_damage(hp, battle) {
@@ -479,9 +482,9 @@ function on_battle(json) {
 			+ formation_name(d.api_formation[1]);
 	}
 	var req = [];
-	req.push('battle' + $battle_count);
+	req.push('# battle' + $battle_count);
 	req.push($next_enemy);
-	req.push('\nfriend damage');
+	req.push('## friend damage');
 	req.push(fdeck.api_name);
 	for (var i = 1; i <= 6; ++i) {
 		if (maxhps[i] == -1) continue;
@@ -497,7 +500,7 @@ function on_battle(json) {
 		}
 		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
 	}
-	req.push('\nenemy damage');
+	req.push('## enemy damage');
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
@@ -673,7 +676,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_practice/battle') {
 		// 演習開始.
-		$battle_count = 0;
+		$battle_count = 1;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_practice/midnight_battle') {
