@@ -169,6 +169,16 @@ function match_name(id) {
 	}
 }
 
+function support_name(id) {
+	// 支援タイプ api_support_flag
+	switch (id) {
+		case 1: return '航空支援';
+		case 2: return '支援射撃';
+		case 3: return '支援長距離雷撃';
+		default: return id.toString();
+	}
+}
+
 function ship_name(id) {
 	var ship = $mst_ship[id];
 	if (ship) {
@@ -456,6 +466,11 @@ function calc_damage(hp, battle) {
 			hp[i+6] -= Math.floor(battle.api_edam[i]);
 		}
 	}
+	if (battle.api_deck_id && battle.api_damage) { // battle: api_support_hourai
+		for (var i = 1; i <= 6; ++i) {
+			hp[i+6] -= Math.floor(battle.api_damage[i]);
+		}
+	}
 }
 
 function on_battle(json) {
@@ -470,9 +485,9 @@ function on_battle(json) {
 	calc_damage(nowhps, d.api_hougeki2);
 	calc_damage(nowhps, d.api_hougeki3);
 	calc_damage(nowhps, d.api_raigeki);
-	if (d.api_support_flag) {
-		///@todo
-	}
+	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3);　// 1:航空支援.
+	if (d.api_support_flag == 2) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
+	if (d.api_support_flag == 3) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
 	var fdeck = $fdeck_list[d.api_deck_id];
 	if (d.api_formation) {
@@ -480,6 +495,7 @@ function on_battle(json) {
 			+ formation_name(d.api_formation[0]) + '/'
 			+ match_name(d.api_formation[2]) + '/'
 			+ formation_name(d.api_formation[1]);
+		if (d.api_support_flag) $next_enemy += '+' + support_name(d.api_support_flag);
 	}
 	var req = [];
 	req.push('# battle' + $battle_count);
