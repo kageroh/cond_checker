@@ -385,7 +385,10 @@ function on_port(json) {
 				var name = $mst_mission[id].api_name;
 				req.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
 			}
-			else if (deck.api_id != 1)　{
+			else if (deck.api_id == $battle_deck_id)　{
+				req.push('出撃中');
+			}
+			else {
 				req.push('母港待機中');
 			}
 			var id_list = deck.api_ship;
@@ -490,6 +493,7 @@ function on_battle(json) {
 	if (d.api_support_flag == 3) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
 	var fdeck = $fdeck_list[d.api_deck_id];
+	$battle_deck_id = fdeck.api_id;
 	if (d.api_formation) {
 		$next_enemy += '\n'
 			+ formation_name(d.api_formation[0]) + '/'
@@ -624,6 +628,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			update_ship_list(json.api_data.api_ship, true);
 			update_fdeck_list(json.api_data.api_deck_port);
+			$battle_deck_id = -1;
 			on_port(json);
 		};
 	}
