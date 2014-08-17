@@ -514,16 +514,18 @@ function on_battle(json) {
 	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
 	var lost_airplane = 0;
 	if (d.api_kouku) {
-		calc_damage(nowhps, d.api_kouku.api_stage3);
-		calc_damage(nowhps, d.api_kouku.api_stage3_combined, nowhps_c);
-		lost_airplane += d.api_kouku.api_stage1.api_f_lostcount;
-		lost_airplane += d.api_kouku.api_stage2.api_f_lostcount;
+		var k = d.api_kouku;
+		calc_damage(nowhps, k.api_stage3);
+		calc_damage(nowhps, k.api_stage3_combined, nowhps_c);
+		if (k.api_stage1) lost_airplane += k.api_stage1.api_f_lostcount;
+		if (k.api_stage2) lost_airplane += k.api_stage2.api_f_lostcount;
 	}
 	if (d.api_kouku2) {
-		calc_damage(nowhps, d.api_kouku2.api_stage3);
-		calc_damage(nowhps, d.api_kouku2.api_stage3_combined, nowhps_c);
-		lost_airplane += d.api_kouku2.api_stage1.api_f_lostcount;
-		lost_airplane += d.api_kouku2.api_stage2.api_f_lostcount;
+		var k = d.api_kouku2;
+		calc_damage(nowhps, k.api_stage3);
+		calc_damage(nowhps, k.api_stage3_combined, nowhps_c);
+		if (k.api_stage1) lost_airplane += k.api_stage1.api_f_lostcount;
+		if (k.api_stage2) lost_airplane += k.api_stage2.api_f_lostcount;
 	}
 	calc_damage(nowhps, d.api_opening_atack);
 	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
