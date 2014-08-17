@@ -149,12 +149,16 @@ function item_name(id) {
 }
 
 function formation_name(id) {
-	switch (id) {
+	switch (parseInt(id, 10)) {	// 連合艦隊戦闘では id が数値ではなく文字列になっている.
 		case 1: return '単縦';
 		case 2: return '複縦';
 		case 3: return '輪形';
 		case 4: return '梯形';
 		case 5: return '単横';
+		case 11: return '連合対潜警戒';
+		case 12: return '連合前方警戒';
+		case 13: return '連合輪形陣';
+		case 14: return '連合戦闘隊形';
 		default: return id.toString();
 	}
 }
@@ -447,21 +451,28 @@ function on_battle_result(json) {
 	chrome.extension.sendRequest('## battle result\n' + msg);
 }
 
-function calc_damage(hp, battle) {
+function calc_damage(hp, battle, hc) {
 	// hp ::= [-1, friend1...6, enemy1...6]
+	// hc ::= [-1, combined1..6]
 	if (!battle) return;
 	if (battle.api_df_list && battle.api_damage) {
 		var df = battle.api_df_list;
 		for (var i = 1; i < df.length; ++i) {
 			for (var j = 0; j < df[i].length; ++j) {
 				var target = df[i][j];
-				hp[target] -= Math.floor(battle.api_damage[i][j]);
+				if (hc && target <= 6)
+					hc[target] -= Math.floor(battle.api_damage[i][j]);
+				else
+					hp[target] -= Math.floor(battle.api_damage[i][j]);
 			}
 		}
 	}
 	if (battle.api_fdam) {
 		for (var i = 1; i <= 6; ++i) {
-			hp[i] -= Math.floor(battle.api_fdam[i]);
+			if (hc)
+				hc[i] -= Math.floor(battle.api_fdam[i]);
+			else
+				hp[i] -= Math.floor(battle.api_fdam[i]);
 		}
 	}
 	if (battle.api_edam) {
@@ -476,18 +487,50 @@ function calc_damage(hp, battle) {
 	}
 }
 
+function push_fdeck_status(req, fdeck, maxhps, nowhps) {
+	req.push(fdeck.api_name);
+	for (var i = 1; i <= 6; ++i) {
+		if (maxhps[i] == -1) continue;
+		var name = '?';
+		var ship = $ship_list[fdeck.api_ship[i-1]];
+		if (ship) {
+			name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
+			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
+			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
+			if (repair) name += '+修理要員x' + repair;
+			if (megami) name += '+修理女神x' + megami;
+		}
+		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
+	}
+}
+
 function on_battle(json) {
 	var d = json.api_data;
 	if (!d.api_maxhps || !d.api_nowhps) return;
-	var maxhps = d.api_maxhps;
-	var nowhps = d.api_nowhps.concat();	// make a copy
-	if (d.api_kouku) calc_damage(nowhps, d.api_kouku.api_stage3);
+	var maxhps = d.api_maxhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
+	var nowhps = d.api_nowhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
+	var maxhps_c = d.api_maxhps_combined;	// 連合第二艦隊[1..6].
+	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
+	var lost_airplane = 0;
+	if (d.api_kouku) {
+		calc_damage(nowhps, d.api_kouku.api_stage3);
+		calc_damage(nowhps, d.api_kouku.api_stage3_combined, nowhps_c);
+		lost_airplane += d.api_kouku.api_stage1.api_f_lostcount;
+		lost_airplane += d.api_kouku.api_stage2.api_f_lostcount;
+	}
+	if (d.api_kouku2) {
+		calc_damage(nowhps, d.api_kouku2.api_stage3);
+		calc_damage(nowhps, d.api_kouku2.api_stage3_combined, nowhps_c);
+		lost_airplane += d.api_kouku2.api_stage1.api_f_lostcount;
+		lost_airplane += d.api_kouku2.api_stage2.api_f_lostcount;
+	}
 	calc_damage(nowhps, d.api_opening_atack);
-	calc_damage(nowhps, d.api_hougeki);	// midnight
-	calc_damage(nowhps, d.api_hougeki1);
+	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
+	calc_damage(nowhps, d.api_hougeki1, nowhps_c);
 	calc_damage(nowhps, d.api_hougeki2);
 	calc_damage(nowhps, d.api_hougeki3);
-	calc_damage(nowhps, d.api_raigeki);
+	calc_damage(nowhps, d.api_raigeki, nowhps_c);
 	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3);　// 1:航空支援.
 	if (d.api_support_flag == 2) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
 	if (d.api_support_flag == 3) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
@@ -505,20 +548,11 @@ function on_battle(json) {
 	req.push('# battle' + $battle_count);
 	req.push($next_enemy);
 	req.push('## friend damage');
-	req.push(fdeck.api_name);
-	for (var i = 1; i <= 6; ++i) {
-		if (maxhps[i] == -1) continue;
-		var name = '?';
-		var ship = $ship_list[fdeck.api_ship[i-1]];
-		if (ship) {
-			name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
-			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
-			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
-			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
-			if (repair) name += '+修理要員x' + repair;
-			if (megami) name += '+修理女神x' + megami;
-		}
-		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
+	push_fdeck_status(req, fdeck, maxhps, nowhps);
+	req.push('被撃墜数: ' + lost_airplane);
+	if (nowhps_c) {
+		req.push('## friend(2nd) damage');
+		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
 	for (var i = 1; i <= 6; ++i) {
@@ -677,12 +711,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 海域次選択.
 		func = on_next_cell;
 	}
-	else if (api_name == '/api_req_sortie/battle') {
+	else if (api_name == '/api_req_sortie/battle'
+		|| api_name == '/api_req_combined_battle/battle'
+		|| api_name == '/api_req_combined_battle/airbattle') {
 		// 昼戦開始.
 		$battle_count++;
 		func = on_battle;
 	}
-	else if (api_name == '/api_req_battle_midnight/battle') {
+	else if (api_name == '/api_req_battle_midnight/battle'
+		|| api_name == '/api_req_combined_battle/midnight_battle') {
 		// 夜戦継続.
 		func = on_battle;
 	}
@@ -704,7 +741,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 夜演習継続.
 		func = on_battle;
 	}
-	else if (api_name == '/api_req_sortie/battleresult') {
+	else if (api_name == '/api_req_sortie/battleresult'
+		|| api_name == '/api_req_combined_battle/battleresult') {
 		// 戦闘結果.
 		func = function(json) {
 			on_battle_result(json);
