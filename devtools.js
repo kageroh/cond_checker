@@ -527,7 +527,7 @@ function on_battle(json) {
 		if (k.api_stage1) lost_airplane += k.api_stage1.api_f_lostcount;
 		if (k.api_stage2) lost_airplane += k.api_stage2.api_f_lostcount;
 	}
-	calc_damage(nowhps, d.api_opening_atack);
+	calc_damage(nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
 	calc_damage(nowhps, d.api_hougeki1, nowhps_c);
 	calc_damage(nowhps, d.api_hougeki2);
