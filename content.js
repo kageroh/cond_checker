@@ -1,7 +1,7 @@
 var div = document.createElement('div');
 div.style.whiteSpace = 'pre-wrap';
 div.style.position = 'absolute';
-div.style.top = '75px' // NaviBar 39px + margin 20px + spacer 16px
+div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
 div.style.left = '50%';
 div.style.marginLeft = '402px';
 document.body.appendChild(div);
