@@ -187,21 +187,21 @@ function seiku_name(id) { ///@todo 制空IDの解析が不十分.
 	switch (id) {
 		case 1: return '制空権確保';
 		case 2: return '航空優勢';
-//		case 0: return '0:航空互角?';
+		case 0: return '0:航空互角?';
 		case 3: return '3:航空劣勢?';
 		case 4: return '制空権喪失';
-		default: return '制空権ID'+id.toString();
+		default: return id.toString();
 	}
 }
 
 function search_name(id) { ///@todo 索敵IDの解析が不十分.
 	switch (id) {
 		case 1: return '発見';
-		case 2: return '発見、未帰還偵察機アリ';
-		case 3: return '失敗、未帰還偵察機アリ';
+		case 2: return '発見、索敵機未帰還あり';
+		case 3: return '失敗、索敵機未帰還あり';
 		case 4: return '失敗';
 		case 5: return '5:発見?';
-		case 6: return '6:敵艦見ゆ?';
+		case 6: return 'なし';
 		default: return id.toString();
 	}
 }
@@ -584,14 +584,14 @@ function on_battle(json) {
 	var req = [];
 	req.push('# battle' + $battle_count);
 	req.push($next_enemy);
-	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
+	if (d.api_search) {
+		req.push('索敵: ' + search_name(d.api_search[0])); // d.api_search[1] は敵索敵か??
+	}
 	if (airplane.touch) {
 		var t0 = airplane.touch[0]; if (t0 != -1) req.push('触接中: ' + slotitem_name(t0));
 		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
 	}
-	if (d.api_search) {
-		req.push('索敵: ' + search_name(d.api_search[0])); // d.api_search[1] は敵索敵か??
-	}
+	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
