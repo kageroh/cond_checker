@@ -556,9 +556,9 @@ function on_battle(json) {
 	var maxhps_c = d.api_maxhps_combined;	// 連合第二艦隊[1..6].
 	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
 	var airplane = {
-		seiku : 0, 			// 制空権.
-		touch : null,		// 触接.
-		f_lostcount : 0		// 非撃墜数.
+		seiku : null, 				// 制空権.
+		touch : d.api_touch_plane,	// 触接. 夜戦はd.にある、昼戦はd.api_kouku.state1.にある.
+		f_lostcount : 0				// 非撃墜数.
 	};
 	calc_kouku_damage(airplane, nowhps, d.api_kouku, nowhps_c); // 航空戦.
 	calc_kouku_damage(airplane, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
@@ -584,13 +584,13 @@ function on_battle(json) {
 	var req = [];
 	req.push('# battle' + $battle_count);
 	req.push($next_enemy);
-	if (airplane.seiku) req.push(seiku_name(airplane.seiku));
+	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
 	if (airplane.touch) {
 		var t0 = airplane.touch[0]; if (t0 != -1) req.push('触接中: ' + slotitem_name(t0));
 		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
 	}
 	if (d.api_search) {
-		req.push('索敵: ' + search_name(d.api_search[0]); // d.api_search[1] は敵索敵か??
+		req.push('索敵: ' + search_name(d.api_search[0])); // d.api_search[1] は敵索敵か??
 	}
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps);
