@@ -183,6 +183,35 @@ function support_name(id) {
 	}
 }
 
+function seiku_name(id) { ///@todo 制空IDの解析が不十分.
+	switch (id) {
+		case 1: return '制空権確保';
+		case 2: return '航空優勢';
+//		case 0: return '0:航空互角?';
+		case 3: return '3:航空劣勢?';
+		case 4: return '制空権喪失';
+		default: return '制空権ID'+id.toString();
+	}
+}
+
+function search_name(id) { ///@todo 索敵IDの解析が不十分.
+	switch (id) {
+		case 1: return '発見';
+		case 2: return '発見、未帰還偵察機アリ';
+		case 3: return '失敗、未帰還偵察機アリ';
+		case 4: return '失敗';
+		case 5: return '5:発見?';
+		case 6: return '6:敵艦見ゆ?';
+		default: return id.toString();
+	}
+}
+
+function slotitem_name(id) {
+	var item = $mst_slotitem[id];
+	if (item) return item.api_name;
+	return id.toString();
+}
+
 function ship_name(id) {
 	var ship = $mst_ship[id];
 	if (ship) {
@@ -487,6 +516,20 @@ function calc_damage(hp, battle, hc) {
 	}
 }
 
+function calc_kouku_damage(airplane, hp, kouku, hc) {
+	if (!kouku) return;
+	if (kouku.api_stage1) {	// 制空戦.
+		airplane.seiku = kouku.api_stage1.api_disp_seiku;
+		airplane.touch = kouku.api_stage1.api_touch_plane;
+		airplane.f_lostcount += kouku.api_stage1.api_f_lostcount;
+	}
+	if (kouku.api_stage2) {	// 防空戦.
+		airplane.f_lostcount += kouku.api_stage2.api_f_lostcount;
+	}
+	calc_damage(hp, kouku.api_stage3);				// 航空爆撃雷撃戦.
+	calc_damage(hp, kouku.api_stage3_combined, hc);	// 連合第二艦隊：航空爆撃雷撃戦.
+}
+
 function push_fdeck_status(req, fdeck, maxhps, nowhps) {
 	req.push(fdeck.api_name);
 	for (var i = 1; i <= 6; ++i) {
@@ -512,21 +555,13 @@ function on_battle(json) {
 	var nowhps = d.api_nowhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
 	var maxhps_c = d.api_maxhps_combined;	// 連合第二艦隊[1..6].
 	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
-	var lost_airplane = 0;
-	if (d.api_kouku) {
-		var k = d.api_kouku;
-		calc_damage(nowhps, k.api_stage3);
-		calc_damage(nowhps, k.api_stage3_combined, nowhps_c);
-		if (k.api_stage1) lost_airplane += k.api_stage1.api_f_lostcount;
-		if (k.api_stage2) lost_airplane += k.api_stage2.api_f_lostcount;
-	}
-	if (d.api_kouku2) {
-		var k = d.api_kouku2;
-		calc_damage(nowhps, k.api_stage3);
-		calc_damage(nowhps, k.api_stage3_combined, nowhps_c);
-		if (k.api_stage1) lost_airplane += k.api_stage1.api_f_lostcount;
-		if (k.api_stage2) lost_airplane += k.api_stage2.api_f_lostcount;
-	}
+	var airplane = {
+		seiku : 0, 			// 制空権.
+		touch : null,		// 触接.
+		f_lostcount : 0		// 非撃墜数.
+	};
+	calc_kouku_damage(airplane, nowhps, d.api_kouku, nowhps_c); // 航空戦.
+	calc_kouku_damage(airplane, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
 	calc_damage(nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
 	calc_damage(nowhps, d.api_hougeki1, nowhps_c);
@@ -549,9 +584,17 @@ function on_battle(json) {
 	var req = [];
 	req.push('# battle' + $battle_count);
 	req.push($next_enemy);
+	if (airplane.seiku) req.push(seiku_name(airplane.seiku));
+	if (airplane.touch) {
+		var t0 = airplane.touch[0]; if (t0 != -1) req.push('触接中: ' + slotitem_name(t0));
+		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
+	}
+	if (d.api_search) {
+		req.push('索敵: ' + search_name(d.api_search[0]); // d.api_search[1] は敵索敵か??
+	}
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps);
-	req.push('被撃墜数: ' + lost_airplane);
+	req.push('被撃墜数: ' + airplane.f_lostcount);
 	if (nowhps_c) {
 		req.push('## friend(2nd) damage');
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c); // 連合第二艦隊は二番固定です.
