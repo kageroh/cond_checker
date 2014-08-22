@@ -183,24 +183,24 @@ function support_name(id) {
 	}
 }
 
-function seiku_name(id) { ///@todo 制空IDの解析が不十分.
+function seiku_name(id) {
 	switch (id) {
 		case 1: return '制空権確保';
 		case 2: return '航空優勢';
-		case 0: return '0:航空互角?';
-		case 3: return '3:航空劣勢?';
+		case 0: return '航空互角';
+		case 3: return '航空劣勢';
 		case 4: return '制空権喪失';
 		default: return id.toString();
 	}
 }
 
-function search_name(id) { ///@todo 索敵IDの解析が不十分.
+function search_name(id) {
 	switch (id) {
-		case 1: return '発見';
-		case 2: return '発見、索敵機未帰還あり';
-		case 3: return '失敗、索敵機未帰還あり';
-		case 4: return '失敗';
-		case 5: return '5:発見?';
+		case 1: return '敵艦隊発見!';
+		case 2: return '敵艦隊発見!索敵機未帰還機あり';
+		case 3: return '敵艦隊発見できず…索敵機未帰還機あり';
+		case 4: return '敵艦隊発見できず…';
+		case 5: return '敵艦隊発見!(索敵機なし)';
 		case 6: return 'なし';
 		default: return id.toString();
 	}
