@@ -16,6 +16,9 @@ var $quest_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
 
+//------------------------------------------------------------------------
+// データ保存と更新.
+//
 function load_storage(name) {
 	var v = localStorage[name];
 	return v ? JSON.parse(v) : {};
@@ -115,6 +118,9 @@ function fraction_name(num, denom) {
 		return num + '/' + denom;
 }
 
+//------------------------------------------------------------------------
+// 表示文字列化.
+//
 function weekly_name() {
 	var w = get_weekly();
 	return '(出撃数:'  + fraction_name(w.sortie, 36)
@@ -173,8 +179,7 @@ function match_name(id) {
 	}
 }
 
-function support_name(id) {
-	// 支援タイプ api_support_flag
+function support_name(id) {	///@param id	支援タイプ api_support_flag
 	switch (id) {
 		case 1: return '航空支援';
 		case 2: return '支援射撃';
@@ -183,7 +188,7 @@ function support_name(id) {
 	}
 }
 
-function seiku_name(id) {
+function seiku_name(id) {	///@param id	制空権 api_disp_seiku
 	switch (id) {
 		case 1: return '制空権確保';
 		case 2: return '航空優勢';
@@ -194,7 +199,7 @@ function seiku_name(id) {
 	}
 }
 
-function search_name(id) {
+function search_name(id) {	///@param id	索敵結果 api_search[]
 	switch (id) {
 		case 1: return '敵艦隊発見!';
 		case 2: return '敵艦隊発見!索敵機未帰還機あり';
@@ -227,12 +232,23 @@ function deck_name(deck) {
 	var lv_sum = 0;
 	deck.api_ship.forEach(function(id) {
 		if (id == -1) return;
-		var ship = $ship_list[id];
-		lv_sum += ship.lv;
+		lv_sum += $ship_list[id].lv;
 	});
 	return deck.api_name + ' 合計Lv'　+ lv_sum;
 }
 
+function msec_name(msec) {
+	var sec = msec / 1000;
+	var min = sec / 60;
+	var hh = min / 60;
+	if (hh  >= 2) return hh.toFixed(1) + '時間';
+	if (min >= 2) return min.toFixed() + '分';
+	return sec.toFixed() + '秒';
+}
+
+//------------------------------------------------------------------------
+// データ解析.
+//
 function decode_postdata_params(params) {
 	var r = {};
 	if (!params) return;
@@ -330,17 +346,14 @@ function hp_repair_status(nowhp, maxhp, msec) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
 	if (r <= 0.75) {
-		var sec = msec / 1000;
-		var min = sec / 60;
-		var hh = min / 60;
-		var msg = ' Hp' + hp_status(nowhp, maxhp);
-		if (hh  >= 2) return msg + ' 修理' + hh.toFixed(1) + '時間';
-		if (min >= 2) return msg + ' 修理' + min.toFixed() + '分';
-		if (sec >  0) return msg + ' 修理' + sec.toFixed() + '秒';
+		return ' Hp' + hp_status(nowhp, maxhp) + ' 修理' + msec_name(msec);
 	}
-	return '';
+	else return '';
 }
 
+//------------------------------------------------------------------------
+// イベントハンドラ.
+//
 function on_port(json) {
 		var req = [];
 		var unlock_names = [];
