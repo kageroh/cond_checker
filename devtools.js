@@ -778,16 +778,17 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_battle_midnight/battle'
 		|| api_name == '/api_req_combined_battle/midnight_battle') {
-		// 夜戦継続.
+		// 昼戦→夜戦追撃.
 		func = on_battle;
 	}
-	else if (api_name == '/api_req_battle_midnight/sp_midnight') {
+	else if (api_name == '/api_req_battle_midnight/sp_midnight'
+		|| api_name == '/api_req_combined_battle/sp_midnight') {
 		// 夜戦開始.
 		$battle_count++;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_sortie/night_to_day') {
-		// 昼戦継続.
+		// 夜戦→昼戦追撃.
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_practice/battle') {
