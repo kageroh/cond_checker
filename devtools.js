@@ -302,12 +302,12 @@ function slotitem_count(slot, item_id) {
 
 function slotitem_use(slot, item_id) {
 	if (!slot) return 0;
-	slot.forEach(function(id) {
-		var value = $slotitem_list[id];
+	for (var i = 0; i < slot.length; ++i) {
+		var value = $slotitem_list[slot[i]];
 		if (value && count_if(item_id, value)) {
 			slot[i] = -1; return true;
 		}
-	});
+	}
 	return false;
 }
 
