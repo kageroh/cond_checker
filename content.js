@@ -8,7 +8,7 @@ document.body.appendChild(div);
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
-	+ "table.markdown {border-collapse:collapse; border:0px;}" // テーブル枠線なし.
+	+ "table.markdown {border-collapse:collapse; border:0px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
 	+ "table.markdown tr td {padding:0px 0.5em;}" // table cellpadding 上下0px, 左右0.5文字.
 	;
 document.getElementsByTagName('head')[0].appendChild(style);
