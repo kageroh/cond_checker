@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener(function (req) {
 function parse_markdown(a) {
 	var html = "";
 	var li_count = 0;
+	var tr_count = 0;
 	for (var i = 0; i < a.length; ++i) {
 		var s = a[i];
 		var t = null;
@@ -34,9 +35,13 @@ function parse_markdown(a) {
 		else if (/^## /.test(s))	t = s.replace(/^#+ (.+)/, "<h3>$1</h3>");
 		else if (/^# /.test(s))		t = s.replace(/^#+ (.+)/, "<h2>$1</h2>");
 		else if (/^\* /.test(s))	{ t = s.replace(/^. (.+)/, "<li>$1</li>"); li_count++; }
+		else if (/\t/.test(s))		{ t = "<tr><td>" + s.replace(/\t/, "<td>") + "</tr>"; tr_count++; }
 		// リストを<ul>で括る.
-		if (li_count == 1) html += "<ul>";
+		if (li_count == 1) html += "<ul style=\"list-style:disc inside;\">";
 		if (li_count > 0 && !/^<li>/.test(t)) { li_count = 0; html += "</ul>"; } 
+		// テーブルを<table>で括る.
+		if (tr_count == 1) html += "<table cellspacing=0 cellpadding=0>";	// html4.0の古い指定方法なのでCSSにしたい.
+		if (tr_count > 0 && !/^<tr>/.test(t)) { tr_count = 0; html += "</table>"; } 
 		// 変換結果をhtmlに格納する.
 		if (t) html += t;
 		else   html += s + "\n";
