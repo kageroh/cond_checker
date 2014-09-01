@@ -346,7 +346,7 @@ function hp_repair_status(nowhp, maxhp, msec) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
 	if (r <= 0.75) {
-		return ' Hp' + hp_status(nowhp, maxhp) + ' 修理' + msec_name(msec);
+		return '\tHp' + hp_status(nowhp, maxhp) + '\t修理' + msec_name(msec);
 	}
 	else return '';
 }
@@ -446,8 +446,8 @@ function on_port(json) {
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
-				req.push((j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
-					+ ' \t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
+				req.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
+					+ '\t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
 					);
 			}
 		}
@@ -557,7 +557,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps) {
 			if (repair) name += '+修理要員x' + repair;
 			if (megami) name += '+修理女神x' + megami;
 		}
-		req.push(i + '(' + name + '). ' + hp_status(nowhps[i], maxhps[i]));
+		req.push('\t' + i + '(' + name + ').\t' + hp_status(nowhps[i], maxhps[i]));
 	}
 }
 
@@ -617,7 +617,7 @@ function on_battle(json) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
-		req.push(i + '(' + name + '). ' + hp_status(nowhps[i+6], maxhps[i+6]));
+		req.push('\t' + i + '(' + name + ').\t' + hp_status(nowhps[i+6], maxhps[i+6]));
 	}
 	chrome.extension.sendRequest(req);
 }
