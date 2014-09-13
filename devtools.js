@@ -3,12 +3,14 @@ var $ship_list		= load_storage('ship_list');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
+var $mst_mapinfo	= load_storage('mst_mapinfo');
 var $weekly			= load_storage('weekly');
 var $slotitem_list = {};
 var $last_slotitem = -1;
 var $max_ship = 0;
 var $max_slotitem = 0;
 var $fdeck_list = {};
+var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
 var $material = {};
@@ -89,6 +91,15 @@ function update_mst_mission(list) {
 		$mst_mission[data.api_id] = data;
 	});
 	save_storage('mst_mission', $mst_mission);
+}
+
+function update_mst_mapinfo(list) {
+	if (!list) return;
+	$mst_mapinfo = {};
+	list.forEach(function(data) {
+		$mst_mapinfo[data.api_id] = data;
+	});
+	save_storage('mst_mapinfo', $mst_mapinfo);
 }
 
 function get_weekly() {
@@ -459,6 +470,7 @@ function on_next_cell(json) {
 	var e = json.api_data.api_enemy;
 	var g = json.api_data.api_itemget;
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
+	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
 	if (e) {
 		var msg = e.api_enemy_id.toString(10);
 		if (d.api_event_id == 5) {
@@ -595,7 +607,7 @@ function on_battle(json) {
 		if (d.api_support_flag) $next_enemy += '+' + support_name(d.api_support_flag);
 	}
 	var req = [];
-	req.push('# battle' + $battle_count);
+	req.push('# ' + ($next_mapinfo ? $next_mapinfo.api_name : '') + ' battle' + $battle_count);
 	req.push($next_enemy);
 	if (d.api_search) {
 		req.push('索敵: ' + search_name(d.api_search[0])); // d.api_search[1] は敵索敵か??
@@ -635,6 +647,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_ship(json.api_data.api_mst_ship);
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
 			update_mst_mission(json.api_data.api_mst_mission);
+			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
@@ -754,7 +767,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
 		// 演習相手の情報.
 		func = function(json) { // 演習相手の提督名を記憶する.
-			$next_enemy = '演習: ' + json.api_data.api_nickname;
+			$next_enemy = json.api_data.api_nickname;
+			$next_mapinfo = { api_name : "演習" };
 		};
 	}
 	else if (api_name == '/api_req_map/start') {
