@@ -491,12 +491,19 @@ function on_battle_result(json) {
 	var e = json.api_data.api_enemy_info;
 	var g = json.api_data.api_get_ship;
 	var msg = d.api_win_rank + ':';
+	var mvp = d.api_mvp;
 	if (e) {
 		msg += e.api_deck_name;
 		if (d.api_ship_id) {
 			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
 		}
+	}
+	if (mvp) {
+		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
+		var ship = $ship_list[id];
+		var name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+		msg += '\nMVP: ' + name;
 	}
 	if (g) {
 		msg += '\n## drop ship\n';
