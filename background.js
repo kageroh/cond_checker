@@ -1,4 +1,4 @@
-var $time_stamp;
+var $time_stamp = new Date();
 
 chrome.webRequest.onCompleted.addListener(function (details) {
 	$time_stamp = new Date(details.timeStamp);
