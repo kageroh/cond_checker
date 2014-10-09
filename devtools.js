@@ -774,7 +774,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
 		// 演習相手の情報.
 		func = function(json) { // 演習相手の提督名を記憶する.
-			$next_enemy = json.api_data.api_nickname;
+			$next_enemy = "演習相手:" + json.api_data.api_nickname;
 			$next_mapinfo = { api_name : "演習" };
 		};
 	}
