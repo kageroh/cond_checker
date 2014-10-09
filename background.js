@@ -8,7 +8,7 @@ chrome.webRequest.onCompleted.addListener(function (details) {
 		"http://*/kcsapi/api_get_member/ship3",
 		"http://*/kcsapi/api_port/port",
 	],
-	types: ["object"]
+	types: ["other"]
 });
 
 chrome.extension.onRequest.addListener(function (req) {
