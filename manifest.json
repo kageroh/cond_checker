@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "KanColle Cond Checker",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "艦これの艦娘疲労度を数値で表示する",
 	"background": {
 		"scripts": ["background.js"]
@@ -15,7 +15,6 @@
 	"permissions": [
 		"webRequest",
 		"http://*/kcsapi/api_get_member/ship2",
-		"http://*/kcsapi/api_get_member/ship3",
 		"http://*/kcsapi/api_port/port"
 	],
 	"devtools_page": "devtools.html"
