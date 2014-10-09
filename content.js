@@ -5,6 +5,7 @@ div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
 div.style.left = '50%';
 div.style.marginLeft = '402px';
 document.body.appendChild(div);
+div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>";
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
