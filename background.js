@@ -6,13 +6,12 @@ chrome.webRequest.onCompleted.addListener(function (details) {
 	urls: [
 		"http://*/kcsapi/api_get_member/ship2",
 		"http://*/kcsapi/api_get_member/ship3",
-		"http://*/kcsapi/api_port/port",
 		"http://*/kcsapi/*/battle",
 		"http://*/kcsapi/*/sp_midnight",
 		"http://*/kcsapi/*/night_to_day",
 		"http://*/kcsapi/*/midnight_battle",
-	],
-	types: ["object"]
+		"http://*/kcsapi/api_port/port"
+	]
 });
 
 chrome.extension.onRequest.addListener(function (req) {

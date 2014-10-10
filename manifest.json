@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "KanColle-YPS",
-	"version": "0.0.1",
+	"version": "0.0.4",
 	"description": "艦これの余所見プレイを支援する(cond_checker改造版)",
 	"background": {
 		"scripts": ["background.js"]
@@ -14,7 +14,8 @@
 	],
 	"permissions": [
 		"webRequest",
-		"http://*/kcsapi/api_get_member/ship2"
+		"http://*/kcsapi/api_get_member/ship2",
+		"http://*/kcsapi/api_port/port"
 	],
 	"devtools_page": "devtools.html"
 }
