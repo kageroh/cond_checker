@@ -4,8 +4,16 @@ div.style.position = 'absolute';
 div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
 div.style.left = '50%';
 div.style.marginLeft = '402px';
-document.body.appendChild(div);
 div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>";
+document.body.appendChild(div);
+
+var div2 = document.createElement('div');
+div2.style.whiteSpace = 'pre-wrap';
+div2.style.position = 'absolute';
+div2.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
+div2.style.right = '50%';
+div2.style.marginRight = '402px';
+document.body.appendChild(div2);
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
@@ -17,6 +25,9 @@ document.getElementsByTagName('head')[0].appendChild(style);
 chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
 		div.innerHTML = parse_markdown(req);
+		var last = req.pop();
+		if (last instanceof Array)
+			div2.innerHTML = parse_markdown(last);
 	} else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
 	}
@@ -29,6 +40,7 @@ function parse_markdown(a) {
 	for (var i = 0; i < a.length; ++i) {
 		var s = a[i];
 		var t = null;
+		if (s instanceof Array) continue; // Array は無視する. 
 		// エスケープを行う.
 		s = s.replace(/\&/g, "&amp;");
 		s = s.replace(/\</g, "&lt;");

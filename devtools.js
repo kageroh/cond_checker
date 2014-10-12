@@ -271,10 +271,6 @@ function decode_postdata_params(params) {
 	return r;
 }
 
-function trim_left(a, n) {
-	if (a.length > n) a.splice(n, a.length - n, '...');
-}
-
 function count_if(a, value) {
 	if (a instanceof Array)
 		return a.reduce(function(count, x) { return count + (x == value); }, 0);
@@ -367,6 +363,7 @@ function hp_repair_status(nowhp, maxhp, msec) {
 //
 function on_port(json) {
 		var req = [];
+		var req2 = [];
 		var unlock_names = [];
 		var onslot_names = [];
 		var $unlock_ship = 0;
@@ -384,8 +381,8 @@ function on_port(json) {
 				onslot_names.push(ship_name(ship.ship_id) + 'Lv' + ship.lv);
 			}
 		}
-		unlock_names.reverse(); trim_left(unlock_names, 10);	// 10隻以上は省略する.
-		onslot_names.reverse(); trim_left(onslot_names, 24);	// 24隻以上は省略する.
+		unlock_names.reverse();	// 最新の艦を先頭にする.
+		onslot_names.reverse();
 		//
 		// 艦娘と装備の数を表示する.
 		var basic = json.api_data.api_basic;
@@ -395,10 +392,10 @@ function on_port(json) {
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ')');
-		req.push('未ロック艦リスト:' + unlock_names.join(', '));
+		req2.push('未ロック艦リスト:' + unlock_names.join(', '));
 		//
 		// 指定装備持ち艦娘を一覧表示する.
-		if (onslot_names.length > 0) req.push($mst_slotitem[$last_slotitem].api_name + 'の装備艦:' + onslot_names.join(', '));
+		if (onslot_names.length > 0) req2.push($mst_slotitem[$last_slotitem].api_name + 'の装備艦:' + onslot_names.join(', '));
 		//
 		// 資材変化を表示する.
 		var material = json.api_data.api_material;
@@ -462,6 +459,7 @@ function on_port(json) {
 					);
 			}
 		}
+		if (req2.length > 0) req.push(req2);
 		chrome.extension.sendRequest(req);
 }
 
