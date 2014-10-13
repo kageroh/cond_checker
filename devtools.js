@@ -238,6 +238,10 @@ function ship_name(id) {
 	return id.toString();
 }
 
+function ship_lv_name(ship) {
+	return ship_name(ship.ship_id) + 'Lv' + ship.lv;
+}
+
 function deck_name(deck) {
 	var lv_sum = 0;
 	deck.api_ship.forEach(function(id) {
@@ -381,7 +385,7 @@ function on_port(json) {
 		// 未ロック艦とロック装備持ち艦を検出する.
 		for (var id in $ship_list) {
 			var ship = $ship_list[id];
-			var name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+			var name = ship_lv_name(ship);
 			if (!ship.locked) {
 				$unlock_ship++;
 				$unlock_slotitem += count_unless(ship.slot, -1);
@@ -478,7 +482,7 @@ function on_port(json) {
 			for (var j = 0, id; id = id_list[j]; j++) {
 				if (id === -1) break;
 				var ship = $ship_list[id];
-				var name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+				var name = ship_lv_name(ship);
 				var cond = ship.c_cond;
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
@@ -529,7 +533,7 @@ function on_battle_result(json) {
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
-		var name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+		var name = ship_lv_name(ship);
 		msg += '\nMVP: ' + name;
 	}
 	if (g) {
@@ -596,7 +600,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps) {
 		var name = '?';
 		var ship = $ship_list[fdeck.api_ship[i-1]];
 		if (ship) {
-			name = ship_name(ship.ship_id) + 'Lv' + ship.lv;
+			name = ship_lv_name(ship);
 			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
 			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
 			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
