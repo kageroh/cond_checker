@@ -387,8 +387,9 @@ function on_port(json) {
 			var name = ship_lv_name(ship);
 			if (!ship.locked) {
 				$unlock_ship++;
-				$unlock_slotitem += count_unless(ship.slot, -1);
-				unlock_names.push(name);
+				var n = count_unless(ship.slot, -1); // スロット装備数.
+				$unlock_slotitem += n;
+				unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
 			}
 			if (ship.slot) {
 				ship.slot.forEach(function(id) {
