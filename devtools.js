@@ -366,7 +366,6 @@ function hp_repair_status(nowhp, maxhp, msec) {
 //
 function on_port(json) {
 		var req = [];
-		var req2 = [];
 		var unlock_names = [];
 		var lockeditem_list = {};
 		var $unlock_ship = 0;
@@ -410,26 +409,6 @@ function on_port(json) {
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ')');
 		//
-		req2.push('## 未ロック艦一覧');
-		req2.push(unlock_names.join(', '));
-		//
-		req2.push('## ロック装備一覧');
-		if (lockeditem_list) {
-			var idlist = Object.keys(lockeditem_list);	// ロック装備の種別ID配列を得る.
-			idlist.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
-				var aa = $mst_slotitem[a];
-				var bb = $mst_slotitem[b];
-				var ret = aa.api_type[2] - bb.api_type[2];　// 装備分類の大小判定.
-				if (!ret) ret = aa.api_sortno - bb.sortno; // 分類内の大小判定.
-				// if (!ret) ret = a - b; // 種別ID値での大小判定.
-				return ret;
-			});
-			idlist.forEach(function(id) {
-				var item = lockeditem_list[id];
-				req2.push(slotitem_name(id) + ': ' + item.ship_names.length + '/' + item.count + ' (' + item.ship_names.join(', ') + ')'); 
-			});
-		}
-		//
 		// 資材変化を表示する.
 		var material = json.api_data.api_material;
 		if (material) {
@@ -443,23 +422,54 @@ function on_port(json) {
 			});
 			req.push('資材増減数:' + msg.join(', '));
 		}
-		//
-		// 遂行中任務を一覧表示する.
-		var quest_count = 0;
-		for (var id in $quest_list) {
-			var quest = $quest_list[id];
-			if (quest.api_state > 1) {
-				var progress = (quest.api_state == 3) ? '* 達成!!'
-					: (quest.api_progress_flag == 2) ? '* 遂行80%'
-					: (quest.api_progress_flag == 1) ? '* 遂行50%'
-					: '* 遂行中';
-				var title = quest.api_title;
-				if (quest.api_no == 214) title += weekly_name();
-				if (++quest_count == 1) req.push('## 任務');
-				req.push(progress + ':' + title);
+		// 未ロック艦一覧.
+		if (unlock_names.length > 0) {
+			req.push('## 未ロック艦一覧');
+			req.push(['unlock_names', unlock_names.join(', ')]);
+		}
+		// ロック装備一覧.
+		var lockeditem_ids = Object.keys(lockeditem_list);
+		if (lockeditem_ids.length > 0) {
+			lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
+				var aa = $mst_slotitem[a];
+				var bb = $mst_slotitem[b];
+				var ret = aa.api_type[2] - bb.api_type[2];　// 装備分類の大小判定.
+				if (!ret) ret = aa.api_sortno - bb.sortno; // 分類内の大小判定.
+				// if (!ret) ret = a - b; // 種別ID値での大小判定.
+				return ret;
+			});
+			var a = ['lockeditem_list'];
+			lockeditem_ids.forEach(function(id) {
+				var item = lockeditem_list[id];
+				a.push(slotitem_name(id) + ': ' + item.ship_names.length + '/' + item.count + ' (' + item.ship_names.join(', ') + ')'); 
+			});
+			if (a.length > 1) {
+				req.push('## ロック装備一覧');
+				req.push(a);
 			}
 		}
-		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
+		//
+		// 遂行中任務を一覧表示する.
+		if (Object.keys($quest_list).length > 0) {
+			var q = ['quest_list'];
+			for (var id in $quest_list) {
+				var quest = $quest_list[id];
+				if (quest.api_state > 1) {
+					var progress = (quest.api_state == 3) ? '* 達成!!'
+						: (quest.api_progress_flag == 2) ? '* 遂行80%'
+						: (quest.api_progress_flag == 1) ? '* 遂行50%'
+						: '* 遂行中';
+					var title = quest.api_title;
+					if (quest.api_no == 214) title += weekly_name();
+					q.push(progress + ':' + title);
+				}
+			}
+			if (Object.keys($quest_list).length != $quest_count) q.push('### 任務リストを先頭から最終ページまでめくってください');
+			if (q.length > 1) {
+				req.push('## 任務');
+				req.push(q);
+			}
+		}
 		//
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
@@ -492,7 +502,6 @@ function on_port(json) {
 					);
 			}
 		}
-		if (req2.length > 0) req.push(req2);
 		chrome.extension.sendRequest(req);
 }
 

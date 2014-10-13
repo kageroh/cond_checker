@@ -4,16 +4,8 @@ div.style.position = 'absolute';
 div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
 div.style.left = '50%';
 div.style.marginLeft = '402px';
-div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>";
 document.body.appendChild(div);
-
-var div2 = document.createElement('div');
-div2.style.whiteSpace = 'pre-wrap';
-div2.style.position = 'absolute';
-div2.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
-div2.style.right = '50%';
-div2.style.marginRight = '402px';
-document.body.appendChild(div2);
+div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>";
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
@@ -25,13 +17,26 @@ document.getElementsByTagName('head')[0].appendChild(style);
 chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
 		div.innerHTML = parse_markdown(req);
-		var last = req.pop();
-		if (last instanceof Array)
-			div2.innerHTML = parse_markdown(last);
 	} else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
 	}
 });
+
+function insert_string(str, index, add) {
+	return str.substring(0, index) + add + str.substring(index);
+}
+
+function toggle_button(id) {
+	var s = '<input type="button" value="＋" onclick="document.getElementById(\'ID\').style.display = \'block\'">'
+		+   '<input type="button" value="－" onclick="document.getElementById(\'ID\').style.display = \'none\'">'
+	return s.replace(/ID/g, id);
+}
+function toggle_div(id) {
+	var e = document.getElementById(id);
+	var d = (e && e.style.display == 'block') ? 'block': 'none';
+	var s = '<div id="ID" style="display:' + d +'">';
+	return s.replace(/ID/g, id);
+}
 
 function parse_markdown(a) {
 	var html = "";
@@ -40,7 +45,18 @@ function parse_markdown(a) {
 	for (var i = 0; i < a.length; ++i) {
 		var s = a[i];
 		var t = null;
-		if (s instanceof Array) continue; // Array は無視する. 
+		if (s instanceof Array) {	// 入れ子ブロック. [id, line1, line2, line3...]
+			var id = s.shift();
+			var end_tag = html.match(/<\/\w+>$/);
+			if (end_tag != null)
+				html = insert_string(html, html.length - end_tag[0].length, toggle_button(id)); // 直前の終了タグの内側にトグルボタンを入れる.
+			else
+				html += toggle_button(id);
+			html += toggle_div(id);
+			html += parse_markdown(s);
+			html += '</div>';
+			continue;
+		}
 		// エスケープを行う.
 		s = s.replace(/\&/g, "&amp;");
 		s = s.replace(/\</g, "&lt;");
