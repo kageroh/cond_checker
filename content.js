@@ -29,9 +29,18 @@ function insert_string(str, index, add) {
 }
 
 function toggle_button(id) {
-	var s = '<input type="button" value="＋" onclick="document.getElementById(\'ID\').style.display = \'block\'">'
-		+   '<input type="button" value="－" onclick="document.getElementById(\'ID\').style.display = \'none\'">'
-	return s.replace(/ID/g, id);
+	var e = document.getElementById(id);
+	var d_show = (e && e.style.display == 'block') ? 'none': 'inline';
+	var d_hide = (e && e.style.display == 'block') ? 'inline': 'none';
+	var s = '  <input id="ID_show" style="display:DISP_show; font-size:70%;" type="button" value="＋" onclick="document.getElementById(\'ID\').style.display = \'block\';'
+			+ 'document.getElementById(\'ID_show\').style.display = \'none\';'
+			+ 'document.getElementById(\'ID_hide\').style.display = \'inline\';">'
+			+ '<input id="ID_hide" style="display:DISP_hide; font-size:70%;" type="button" value="－" onclick="document.getElementById(\'ID\').style.display = \'none\';'
+			+ 'document.getElementById(\'ID_show\').style.display = \'inline\';'
+			+ 'document.getElementById(\'ID_hide\').style.display = \'none\';">'
+	s = s.replace(/\bDISP_show/g, d_show);
+	s = s.replace(/\bDISP_hide/g, d_hide);
+	return s.replace(/\bID/g, id);
 }
 function toggle_div(id) {
 	var e = document.getElementById(id);
