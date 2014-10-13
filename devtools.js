@@ -441,7 +441,8 @@ function on_port(json) {
 			var a = ['lockeditem_list'];
 			lockeditem_ids.forEach(function(id) {
 				var item = lockeditem_list[id];
-				a.push(slotitem_name(id) + ': ' + item.ship_names.length + '/' + item.count + ' (' + item.ship_names.join(', ') + ')'); 
+//				a.push(slotitem_name(id) + ': ' + item.ship_names.length + '/' + item.count + ' (' + item.ship_names.join(', ') + ')'); 
+				a.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
 			});
 			if (a.length > 1) {
 				req.push('## ロック装備一覧');

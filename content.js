@@ -11,8 +11,8 @@ document.getElementById('game_frame').width = '820px';
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
-	+ "table.markdown {border-collapse:collapse; border:0px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
-	+ "table.markdown tr td {padding:0px 0.5em;}" // table cellpadding 上下0px, 左右0.5文字.
+	+ "table.markdown {border-collapse:collapse; border:1px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
+	+ "table.markdown tr td {padding:0px 0.5em; vertical-align:top;}" // table cellpadding 上下0px, 左右0.5文字, 上揃え.
 	;
 document.getElementsByTagName('head')[0].appendChild(style);
 
@@ -82,7 +82,9 @@ function parse_markdown(a) {
 		else if (/^## /.test(s))	t = s.replace(/^#+ (.+)/, "<h3>$1</h3>");
 		else if (/^# /.test(s))		t = s.replace(/^#+ (.+)/, "<h2>$1</h2>");
 		else if (/^\* /.test(s))	{ t = s.replace(/^. (.+)/, "<li>$1</li>"); li_count++; }
-		else if (/^\t/.test(s))		{ t = "<tr>" + s.replace(/\t/g, "<td>") + "</tr>"; tr_count++; }
+		else if (/^\t/.test(s))		{ t = "<tr>" + s.replace(/\t/g, "<td>") + "</tr>"; tr_count++;
+									  t = t.replace(/<td>\|/, '<td style="white-space:normal;">'); // "\t|" は折り返し有のセルに入れる.
+									}
 		// リストを<ul>で括る.
 		if (li_count == 1) html += '<ul class="markdown">';
 		if (li_count > 0 && !/^<li>/.test(t)) { li_count = 0; html += "</ul>"; } 
