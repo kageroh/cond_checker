@@ -93,6 +93,9 @@ function parse_markdown(a) {
 		if (t) html += t;
 		else   html += s + "\n";
 	}
+	// リスト、テーブルの括り漏れに対処する.
+	if (li_count > 0) { html += "</ul>"; } 
+	if (tr_count > 0) { html += "</table>"; } 
 	return html;
 }
 
