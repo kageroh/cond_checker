@@ -761,13 +761,24 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var params = decode_postdata_params(request.request.postData.params);
 		var deck = $fdeck_list[params.api_id];
 		var id = params.api_ship_id;	// -2:一括解除, -1:解除, 他:艦娘ID.
+		var idx = params.api_ship_idx;	// -1:一括解除, 0..N:変更位置.
 		if (id == -2) {
 			// 旗艦以外の艦を外す(-1を設定する).
 			for (var i = 1; i < deck.api_ship.length; ++i) deck.api_ship[i] = -1;
 		}
-		else {
-			// 解除または変更.
-			deck.api_ship[params.api_ship_idx] = id;
+		else if (id == -1) {
+			// 外す.
+			deck.api_ship[idx] = -1;
+		}
+		else { // id = 0..N
+			// 追加または交換.
+			for (var i = 0; i < deck.api_ship.length; ++i) {
+				if (deck.api_ship[i] == id) {
+					deck.api_ship[i] = deck.api_ship[idx];
+					break;
+				}
+			}
+			deck.api_ship[idx] = id;
 		}
 		var dummy_json = { api_data: {} }; // 艦隊編成パケットは api_data を持たないので、母港表示にダミーパケットを渡す.
 		on_port(dummy_json);
