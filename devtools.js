@@ -749,11 +749,27 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_kaisou/lock') {
 		// 装備ロック.
-		var params = decode_postdata_params(request.request.postData.params);
-		var id = params.api_slotitem_id;	// ロック変更した装備ID.
 		func = function(json) {
+			var id = decode_postdata_params(request.request.postData.params).api_slotitem_id;	// ロック変更した装備ID.
 			$slotitem_list[id].locked = json.api_data.api_locked;
+			on_port(json);
 		};
+	}
+	else if (api_name == '/api_req_hensei/change') {
+		// 艦隊編成.
+		var params = decode_postdata_params(request.request.postData.params);
+		var deck = $fdeck_list[params.api_id];
+		var id = params.api_ship_id;	// -2:一括解除, -1:解除, 他:艦娘ID.
+		if (id == -2) {
+			// 旗艦以外の艦を外す(-1を設定する).
+			for (var i = 1; i < deck.api_ship.length; ++i) deck.api_ship[i] = -1;
+		}
+		else {
+			// 解除または変更.
+			deck.api_ship[params.api_ship_idx] = id;
+		}
+		var dummy_json = { api_data: {} }; // 艦隊編成パケットは api_data を持たないので、母港表示にダミーパケットを渡す.
+		on_port(dummy_json);
 	}
 	else if (api_name == '/api_get_member/questlist') {
 		// 任務一覧.
