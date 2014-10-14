@@ -435,7 +435,7 @@ function on_port(json) {
 				var aa = $mst_slotitem[a];
 				var bb = $mst_slotitem[b];
 				var ret = aa.api_type[2] - bb.api_type[2];　// 装備分類の大小判定.
-				if (!ret) ret = aa.api_sortno - bb.sortno; // 分類内の大小判定.
+				if (!ret) ret = aa.api_sortno - bb.api_sortno; // 分類内の大小判定.
 				// if (!ret) ret = a - b; // 種別ID値での大小判定.
 				return ret;
 			});
