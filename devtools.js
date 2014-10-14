@@ -412,8 +412,8 @@ function on_port(json) {
 		//
 		// 資材変化を表示する.
 		var material = json.api_data.api_material;
+		var msg = [];
 		if (material) {
-			var msg = [];
 			material.forEach(function(data) {
 				var id = data.api_id;
 				var value = data.api_value;
@@ -421,8 +421,9 @@ function on_port(json) {
 				$material[id] = value;
 				if (diff.length) msg.push(item_name(id) + diff);
 			});
-			req.push('資材増減数:' + msg.join(', '));
 		}
+		req.push('資材増減数:' + msg.join(', '));
+		//
 		// 未ロック艦一覧.
 		if (unlock_names.length > 0) {
 			req.push('## 未ロック艦一覧');
