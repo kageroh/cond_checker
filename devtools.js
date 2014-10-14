@@ -768,18 +768,30 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		}
 		else if (id == -1) {
 			// 外す.
-			for (var i = idx; i < deck.api_ship.length-1; ++i) deck.api_ship[i] = deck.api_ship[i + 1];
-			deck.api_ship[deck.api_ship.length-1] = -1;
+			deck.api_ship.splice(idx, 1);
+			deck.api_ship.push(-1);
 		}
 		else { // id = 0..N
 			// 追加または交換.
+			var old_idx = -1;
 			for (var i = 0; i < deck.api_ship.length; ++i) {
 				if (deck.api_ship[i] == id) {
-					deck.api_ship[i] = deck.api_ship[idx];
+					old_idx = i;
 					break;
 				}
 			}
-			deck.api_ship[idx] = id;
+			if (old_idx == -1) { // 追加.
+				deck.api_ship[idx] = id;
+			}
+			else { // 交換.
+				var id2 = deck.api_ship[idx];
+				deck.api_ship[idx]     = id;
+				deck.api_ship[old_idx] = id2; // 交換.
+				if (id2 == -1) {
+					deck.api_ship.splice(old_idx, 1); // 外して前詰めする.
+					deck.api_ship.push(-1);
+				}
+			}
 		}
 		var dummy_json = { api_data: {} }; // 艦隊編成パケットは api_data を持たないので、母港表示にダミーパケットを渡す.
 		on_port(dummy_json);
