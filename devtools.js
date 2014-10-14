@@ -466,12 +466,12 @@ function on_port(json) {
 					q.push(progress + ':' + title);
 				}
 			}
-			if (Object.keys($quest_list).length != $quest_count) q.push('### 任務リストを先頭から最終ページまでめくってください');
 			if (q.length > 1) {
 				req.push('## 任務');
 				req.push(q);
 			}
 		}
+		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 		//
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {

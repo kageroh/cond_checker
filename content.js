@@ -32,21 +32,22 @@ function toggle_button(id) {
 	var e = document.getElementById(id);
 	var d_show = (e && e.style.display == 'block') ? 'none': 'inline';
 	var d_hide = (e && e.style.display == 'block') ? 'inline': 'none';
-	var s = '  <input id="ID_show" style="display:DISP_show; font-size:70%;" type="button" value="＋" onclick="document.getElementById(\'ID\').style.display = \'block\';'
-			+ 'document.getElementById(\'ID_show\').style.display = \'none\';'
-			+ 'document.getElementById(\'ID_hide\').style.display = \'inline\';">'
-			+ '<input id="ID_hide" style="display:DISP_hide; font-size:70%;" type="button" value="－" onclick="document.getElementById(\'ID\').style.display = \'none\';'
-			+ 'document.getElementById(\'ID_show\').style.display = \'inline\';'
-			+ 'document.getElementById(\'ID_hide\').style.display = \'none\';">'
-	s = s.replace(/\bDISP_show/g, d_show);
-	s = s.replace(/\bDISP_hide/g, d_hide);
-	return s.replace(/\bID/g, id);
+	var s = '  <input id="<ID>_show" style="display:<DISP_SHOW>; font-size:70%;" type="button" value="＋" onclick="document.getElementById(\'<ID>\').style.display = \'block\';'
+			+ 'document.getElementById(\'<ID>_show\').style.display = \'none\';'
+			+ 'document.getElementById(\'<ID>_hide\').style.display = \'inline\';">'
+			+ '<input id="<ID>_hide" style="display:<DISP_HIDE>; font-size:70%;" type="button" value="－" onclick="document.getElementById(\'<ID>\').style.display = \'none\';'
+			+ 'document.getElementById(\'<ID>_show\').style.display = \'inline\';'
+			+ 'document.getElementById(\'<ID>_hide\').style.display = \'none\';">'
+	s = s.replace(/<DISP_SHOW>/g, d_show);
+	s = s.replace(/<DISP_HIDE>/g, d_hide);
+	return s.replace(/<ID>/g, id);
 }
 function toggle_div(id) {
 	var e = document.getElementById(id);
 	var d = (e && e.style.display == 'block') ? 'block': 'none';
-	var s = '<div id="ID" style="display:' + d +'">';
-	return s.replace(/ID/g, id);
+	var s = '<div id="<ID>" style="display:<DISP_SHOW>;">';
+	s = s.replace(/<DISP_SHOW>/g, d);
+	return s.replace(/<ID>/g, id);
 }
 
 function parse_markdown(a) {
