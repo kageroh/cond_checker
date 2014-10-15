@@ -440,21 +440,20 @@ function on_port(json) {
 				// if (!ret) ret = a - b; // 種別ID値での大小判定.
 				return ret;
 			});
-			var a = ['lockeditem_list'];
+			msg = ['lockeditem_list'];
 			lockeditem_ids.forEach(function(id) {
 				var item = lockeditem_list[id];
-//				a.push(slotitem_name(id) + ': ' + item.ship_names.length + '/' + item.count + ' (' + item.ship_names.join(', ') + ')'); 
-				a.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
+				msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
 			});
-			if (a.length > 1) {
+			if (msg.length > 1) {
 				req.push('## ロック装備一覧');
-				req.push(a);
+				req.push(msg);
 			}
 		}
 		//
 		// 遂行中任務を一覧表示する.
 		if (Object.keys($quest_list).length > 0) {
-			var q = ['quest_list'];
+			msg = ['quest_list'];
 			for (var id in $quest_list) {
 				var quest = $quest_list[id];
 				if (quest.api_state > 1) {
@@ -464,19 +463,19 @@ function on_port(json) {
 						: '* 遂行中';
 					var title = quest.api_title;
 					if (quest.api_no == 214) title += weekly_name();
-					q.push(progress + ':' + title);
+					msg.push(progress + ':' + title);
 				}
 			}
-			if (q.length > 1) {
+			if (msg.length > 1) {
 				req.push('## 任務');
-				req.push(q);
+				req.push(msg);
 			}
 		}
 		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 		//
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
-			var f = ['fdeck_list' + id];
+			msg = ['fdeck_list' + id];
 			var deck = $fdeck_list[id];
 			req.push('## 艦隊' + id + ': ' + deck_name(deck));
 			var mission_end = deck.api_mission[2];
@@ -484,13 +483,13 @@ function on_port(json) {
 				var d = new Date(mission_end);
 				var id = deck.api_mission[1];
 				var name = $mst_mission[id].api_name;
-				f.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
+				msg.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
 			}
 			else if (deck.api_id == $battle_deck_id)　{
-				f.push('出撃中');
+				msg.push('出撃中');
 			}
 			else {
-				f.push('母港待機中');
+				msg.push('母港待機中');
 			}
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
@@ -501,11 +500,11 @@ function on_port(json) {
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
-				f.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
+				msg.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
 					+ '\t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
 					);
 			}
-			req.push(f);
+			req.push(msg);
 		}
 		chrome.extension.sendRequest(req);
 }
