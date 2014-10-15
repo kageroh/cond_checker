@@ -3,21 +3,34 @@ div.style.whiteSpace = 'pre-wrap';
 div.style.position = 'absolute';
 div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
 div.style.left = '822px';
-document.body.appendChild(div);
 div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>";
-
-document.getElementById('area-game').style.textAlign = 'left';
-document.getElementById('game_frame').width = '820px';
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
 	+ "table.markdown {border-collapse:collapse; border:0px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
 	+ "table.markdown tr td {padding:0px 0.5em; vertical-align:top;}" // table cellpadding 上下0px, 左右0.5文字, 上揃え.
 	;
+
+document.getElementById('area-game').style.textAlign = 'left';
+document.getElementById('game_frame').width = '820px';
 document.getElementsByTagName('head')[0].appendChild(style);
+document.body.appendChild(div);
+
+var $style_display = {};
+
+function style_display(id) {
+	var e = document.getElementById(id);
+	if (e && e.style.display)
+		$style_display[id] = e.style.display; // ページ内にidがあればそのdisplay値を記録する.
+	else if (!$style_display[id])
+		$style_display[id] = 'none'; // display値の記録がなければ初期値 none を記録する.
+
+	return $style_display[id]; // 最後に記録されたdisplay値を返す.
+}
 
 chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
+		for (var id in $style_display) { style_display(id); } // ページ変更前に、全idのdisplay値記録を更新する.
 		div.innerHTML = parse_markdown(req);
 	} else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
@@ -29,9 +42,8 @@ function insert_string(str, index, add) {
 }
 
 function toggle_button(id) {
-	var e = document.getElementById(id);
-	var d_show = (e && e.style.display == 'block') ? 'none': 'inline';
-	var d_hide = (e && e.style.display == 'block') ? 'inline': 'none';
+	var d_show = (style_display(id) == 'block') ? 'none': 'inline';
+	var d_hide = (style_display(id) == 'block') ? 'inline': 'none';
 	var s = '  <input id="<ID>_show" style="display:<DISP_SHOW>; font-size:70%;" type="button" value="＋" onclick="document.getElementById(\'<ID>\').style.display = \'block\';'
 			+ 'document.getElementById(\'<ID>_show\').style.display = \'none\';'
 			+ 'document.getElementById(\'<ID>_hide\').style.display = \'inline\';">'
@@ -43,8 +55,7 @@ function toggle_button(id) {
 	return s.replace(/<ID>/g, id);
 }
 function toggle_div(id) {
-	var e = document.getElementById(id);
-	var d = (e && e.style.display == 'block') ? 'block': 'none';
+	var d = (style_display(id) == 'block') ? 'block': 'none';
 	var s = '<div id="<ID>" style="display:<DISP_SHOW>;">';
 	s = s.replace(/<DISP_SHOW>/g, d);
 	return s.replace(/<ID>/g, id);
