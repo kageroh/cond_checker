@@ -476,20 +476,21 @@ function on_port(json) {
 		//
 		// 各艦隊のcond値を一覧表示する.
 		for (var id in $fdeck_list) {
+			var f = ['fdeck_list' + id];
 			var deck = $fdeck_list[id];
-			req.push('## ' + deck_name(deck));
+			req.push('## 艦隊' + id + ': ' + deck_name(deck));
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
 				var d = new Date(mission_end);
 				var id = deck.api_mission[1];
 				var name = $mst_mission[id].api_name;
-				req.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
+				f.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
 			}
 			else if (deck.api_id == $battle_deck_id)　{
-				req.push('出撃中');
+				f.push('出撃中');
 			}
 			else {
-				req.push('母港待機中');
+				f.push('母港待機中');
 			}
 			var id_list = deck.api_ship;
 			for (var j = 0, id; id = id_list[j]; j++) {
@@ -500,10 +501,11 @@ function on_port(json) {
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
-				req.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
+				f.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
 					+ '\t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
 					);
 			}
+			req.push(f);
 		}
 		chrome.extension.sendRequest(req);
 }
