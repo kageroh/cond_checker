@@ -242,15 +242,6 @@ function ship_lv_name(ship) {
 	return ship_name(ship.ship_id) + 'Lv' + ship.lv;
 }
 
-function deck_name(deck) {
-	var lv_sum = 0;
-	deck.api_ship.forEach(function(id) {
-		if (id == -1) return;
-		lv_sum += $ship_list[id].lv;
-	});
-	return deck.api_name + ' 合計Lv'　+ lv_sum;
-}
-
 function msec_name(msec) {
 	var sec = msec / 1000;
 	var min = sec / 60;
@@ -321,6 +312,18 @@ function slotitem_use(slot, item_id) {
 	return false;
 }
 
+function slotitem_names(slot) {
+	if (!slot) return '';
+	var a = [];
+	for (var i = 0; i < slot.length; ++i) {
+		var value = $slotitem_list[slot[i]];
+		if (value) {
+			a.push(slotitem_name(value.item_id));
+		}
+	}
+	return a.join(', ');
+}
+
 function slotitem_delete(slot) {
 	if (!slot) return;
 	slot.forEach(function(id) {
@@ -356,9 +359,9 @@ function hp_repair_status(nowhp, maxhp, msec) {
 	if (nowhp < 0) nowhp = 0;
 	var r = nowhp / maxhp;
 	if (r <= 0.75) {
-		return '\tHp' + hp_status(nowhp, maxhp) + '\t修理' + msec_name(msec);
+		return '\t' + hp_status(nowhp, maxhp) + '\t' + msec_name(msec);
 	}
-	else return '';
+	else return '\t\t';
 }
 
 //------------------------------------------------------------------------
@@ -441,14 +444,13 @@ function on_port(json) {
 				return ret;
 			});
 			msg = ['lockeditem_list'];
+			msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
 			lockeditem_ids.forEach(function(id) {
 				var item = lockeditem_list[id];
 				msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
 			});
-			if (msg.length > 1) {
-				req.push('## ロック装備一覧');
-				req.push(msg);
-			}
+			req.push('## ロック装備一覧');
+			req.push(msg);
 		}
 		//
 		// 遂行中任務を一覧表示する.
@@ -473,38 +475,41 @@ function on_port(json) {
 		}
 		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 		//
-		// 各艦隊のcond値を一覧表示する.
+		// 各艦隊の情報を一覧表示する.
 		for (var id in $fdeck_list) {
-			msg = ['fdeck_list' + id];
+			msg = ['fdeck_list'+id];
+			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 			var deck = $fdeck_list[id];
-			req.push('## 艦隊' + id + ': ' + deck_name(deck));
-			var mission_end = deck.api_mission[2];
-			if (mission_end > 0) {
-				var d = new Date(mission_end);
-				var id = deck.api_mission[1];
-				var name = $mst_mission[id].api_name;
-				msg.push('遠征' + id + ' ' + name + ': ' + d.toLocaleString());
-			}
-			else if (deck.api_id == $battle_deck_id)　{
-				msg.push('出撃中');
-			}
-			else {
-				msg.push('母港待機中');
-			}
-			var id_list = deck.api_ship;
-			for (var j = 0, id; id = id_list[j]; j++) {
-				if (id === -1) break;
-				var ship = $ship_list[id];
+			req.push('## 艦隊' + id + ': ' + deck.api_name);
+			var lv_sum = 0;
+			for (var i = 0, ship; ship = $ship_list[deck.api_ship[i]]; ++i) {
+				lv_sum += ship.lv;
 				var name = ship_lv_name(ship);
 				var cond = ship.c_cond;
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
-				msg.push('\t' + (j + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
-					+ '\t' + name + hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)
+				msg.push('\t' + (i + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
+					+ '\t' + name
+					+ hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)	// カスダメなら空欄とする.
+//					+ '\t' + hp_status(ship.nowhp, ship.maxhp) + '\t' + msec_name(ship.ndock_time)
+					+ '\t' + slotitem_names(ship.slot)
 					);
 			}
+			msg.push('\t合計:\tLv' + lv_sum);
 			req.push(msg);
+			var mission_end = deck.api_mission[2];
+			if (mission_end > 0) {
+				var d = new Date(mission_end);
+				var id = deck.api_mission[1];
+				req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
+			}
+			else if (deck.api_id == $battle_deck_id)　{
+				req.push('出撃中');	///@todo 連合第二艦隊の判定追加.
+			}
+			else {
+				req.push('母港待機中');
+			}
 		}
 		chrome.extension.sendRequest(req);
 }
