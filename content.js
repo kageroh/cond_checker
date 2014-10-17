@@ -9,7 +9,7 @@ var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
 	+ "table.markdown {border-collapse:collapse; border:0px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
 	+ "table.markdown tr td {padding:0px 0.5em; vertical-align:top;}" // table cellpadding 上下0px, 左右0.5文字, 上揃え.
-	+ "table.markdown tr th {padding:0px 0.5em; }" // table cellpadding 上下0px, 左右0.5文字.
+	+ "table.markdown tr th {padding:0px 0.5em; font-size:70%; }" // table cellpadding 上下0px, 左右0.5文字. 文字サイズ70%.
 	+ "h3.markdown { margin:1em 0px 0.3em 0px;}"
 	+ "h4.markdown { margin:0px 1em;}"
 	+ "h5.markdown { margin:0px 1em;}"
@@ -48,10 +48,10 @@ function insert_string(str, index, add) {
 function toggle_button(id) {
 	var d_show = (style_display(id) == 'block') ? 'none': 'inline';
 	var d_hide = (style_display(id) == 'block') ? 'inline': 'none';
-	var s = '  <input id="<ID>_show" style="display:<DISP_SHOW>; font-size:70%;" type="button" value="＋" onclick="document.getElementById(\'<ID>\').style.display = \'block\';'
+	var s = '  <input id="<ID>_show" style="display:<DISP_SHOW>; font-size:70%; padding:0px;" type="button" value="＋" onclick="document.getElementById(\'<ID>\').style.display = \'block\';'
 			+ 'document.getElementById(\'<ID>_show\').style.display = \'none\';'
 			+ 'document.getElementById(\'<ID>_hide\').style.display = \'inline\';">'
-			+ '<input id="<ID>_hide" style="display:<DISP_HIDE>; font-size:70%;" type="button" value="－" onclick="document.getElementById(\'<ID>\').style.display = \'none\';'
+			+ '<input id="<ID>_hide" style="display:<DISP_HIDE>; font-size:70%; padding:0px;" type="button" value="－" onclick="document.getElementById(\'<ID>\').style.display = \'none\';'
 			+ 'document.getElementById(\'<ID>_show\').style.display = \'inline\';'
 			+ 'document.getElementById(\'<ID>_hide\').style.display = \'none\';">'
 	s = s.replace(/<DISP_SHOW>/g, d_show);
