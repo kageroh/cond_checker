@@ -1,4 +1,6 @@
-# KanColle-YPS - 艦これ余所見プレイ支援
+# 艦これ余所見プレイ支援 KanColle-YPS
+* 開発サイト: https://github.com/hkuno9000/KanColle-YPS
+* 公開サイト: http://hkuno9000.github.io/KanColle-YPS
 
 ## 開発コンセプト
 * 艦これの画面から目を離していても、ゲーム進行状況をすべて把握することが目的です。
