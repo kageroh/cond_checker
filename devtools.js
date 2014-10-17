@@ -294,10 +294,10 @@ function add_slotitem_list(data) {
 function slotitem_count(slot, item_id) {
 	if (!slot) return 0;
 	var count = 0;
-	slot.forEach(function(id) {
-		var value = $slotitem_list[id];
+	for (var i = 0; i < slot.length; ++i) {
+		var value = $slotitem_list[slot[i]];
 		if (value && count_if(item_id, value.item_id)) ++count;
-	});
+	}
 	return count;
 }
 
@@ -482,6 +482,7 @@ function on_port(json) {
 			var deck = $fdeck_list[id];
 			req.push('## 艦隊' + id + ': ' + deck.api_name);
 			var lv_sum = 0;
+			var drumcan = {ships:0, sum:0, msg:''};
 			for (var i = 0, ship; ship = $ship_list[deck.api_ship[i]]; ++i) {
 				lv_sum += ship.lv;
 				var name = ship_lv_name(ship);
@@ -495,8 +496,16 @@ function on_port(json) {
 //					+ '\t' + hp_status(ship.nowhp, ship.maxhp) + '\t' + msec_name(ship.ndock_time)
 					+ '\t' + slotitem_names(ship.slot)
 					);
+				var d = slotitem_count(ship.slot, 75);	// ドラム缶.
+				if (d) {
+					drumcan.ships++;
+					drumcan.sum += d;
+				}
 			}
-			msg.push('\t合計:\tLv' + lv_sum);
+			if (drumcan.sum) {
+				drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
+			}
+			msg.push('\t合計:\tLv' + lv_sum + '\t\t\t' + drumcan.msg);
 			req.push(msg);
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
