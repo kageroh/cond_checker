@@ -16,6 +16,7 @@ var $material = {};
 var $quest_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
+var $ndock_list = {};
 
 //------------------------------------------------------------------------
 // データ保存と更新.
@@ -62,6 +63,15 @@ function update_fdeck_list(list) {
 	$fdeck_list = {};
 	list.forEach(function(deck) {
 		$fdeck_list[deck.api_id] = deck;
+	});
+}
+
+function update_ndock_list(list) {
+	if (!list) return;
+	$ndock_list = {};
+	list.forEach(function(data) {
+		var ship_id = data.api_ship_id;
+		if (ship_id) $ndock_list[ship_id] = data;
 	});
 }
 
@@ -355,15 +365,6 @@ function hp_status(nowhp, maxhp) {
 	return nowhp + '/' + maxhp + ':' + msg;
 }
 
-function hp_repair_status(nowhp, maxhp, msec) {
-	if (nowhp < 0) nowhp = 0;
-	var r = nowhp / maxhp;
-	if (r <= 0.75) {
-		return '\t' + hp_status(nowhp, maxhp) + '\t' + msec_name(msec);
-	}
-	else return '\t\t';
-}
-
 //------------------------------------------------------------------------
 // イベントハンドラ.
 //
@@ -476,24 +477,35 @@ function on_port(json) {
 		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 		//
 		// 各艦隊の情報を一覧表示する.
-		for (var id in $fdeck_list) {
-			msg = ['fdeck_list'+id];
+		for (var f_id in $fdeck_list) {
+			msg = ['fdeck_list' + f_id];
 			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
-			var deck = $fdeck_list[id];
-			req.push('## 艦隊' + id + ': ' + deck.api_name);
+			var deck = $fdeck_list[f_id];
+			req.push('## 艦隊' + f_id + ': ' + deck.api_name);
 			var lv_sum = 0;
 			var drumcan = {ships:0, sum:0, msg:''};
-			for (var i = 0, ship; ship = $ship_list[deck.api_ship[i]]; ++i) {
+			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
 				lv_sum += ship.lv;
 				var name = ship_lv_name(ship);
 				var cond = ship.c_cond;
 				var kira_str = (cond >  49) ? '* ' : // kirakira
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
+				var hp_str = '';	// hp.
+				var rp_str = '';	// 修理.
+				if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
+					hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
+					rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
+				}
+				var ndock = $ndock_list[s_id];
+				if (ndock) {
+					var c_date = new Date(ndock.api_complete_time);
+					rp_str = '入渠' + ndock.api_id　+ ':' + c_date.toLocaleString();
+				}
 				msg.push('\t' + (i + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
 					+ '\t' + name
-					+ hp_repair_status(ship.nowhp, ship.maxhp, ship.ndock_time)	// カスダメなら空欄とする.
-//					+ '\t' + hp_status(ship.nowhp, ship.maxhp) + '\t' + msec_name(ship.ndock_time)
+					+ '\t' + hp_str
+					+ '\t' + rp_str
 					+ '\t' + slotitem_names(ship.slot)
 					);
 				var d = slotitem_count(ship.slot, 75);	// ドラム缶.
@@ -830,11 +842,19 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			on_port(json);
 		};
 	}
+	else if (api_name == '/api_get_member/ndock') {
+		// 入渠.
+		func = function(json) { // 入渠状況を更新する.
+			update_ndock_list(json.api_data);
+			on_port(json);
+		};
+	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			update_ship_list(json.api_data.api_ship, true);
 			update_fdeck_list(json.api_data.api_deck_port);
+			update_ndock_list(json.api_data.api_ndock);
 			$battle_deck_id = -1;
 			on_port(json);
 		};
