@@ -490,7 +490,9 @@ function on_port(json) {
 				lv_sum += ship.lv;
 				var name = ship_lv_name(ship);
 				var cond = ship.c_cond;
-				var kira_str = (cond >  49) ? '* ' : // kirakira
+				var kira_str = (cond >= 85) ? '*** ' : // 三重キラ.
+				               (cond >= 53) ? '** ' : // 回避向上キラ.
+				               (cond >  49) ? '* ' : // キラ.
 				               (cond == 49) ? '. ' : // normal
 				               /* cond < 49 */ '> '; // recovering
 				var hp_str = '';	// hp.
