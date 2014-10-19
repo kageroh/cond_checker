@@ -441,7 +441,7 @@ function on_port(json) {
 			lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
 				var aa = $mst_slotitem[a];
 				var bb = $mst_slotitem[b];
-				var ret = aa.api_type[2] - bb.api_type[2];　// 装備分類の大小判定.
+				var ret = aa.api_type[2] - bb.api_type[2]; // 装備分類の大小判定.
 				if (!ret) ret = aa.api_sortno - bb.api_sortno; // 分類内の大小判定.
 				// if (!ret) ret = a - b; // 種別ID値での大小判定.
 				return ret;
@@ -504,7 +504,7 @@ function on_port(json) {
 				var ndock = $ndock_list[s_id];
 				if (ndock) {
 					var c_date = new Date(ndock.api_complete_time);
-					rp_str = '入渠' + ndock.api_id　+ ':' + c_date.toLocaleString();
+					rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
 				}
 				msg.push('\t' + (i + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
 					+ '\t' + name
@@ -532,7 +532,7 @@ function on_port(json) {
 			else if (deck.api_id == $battle_deck_id) {
 				req.push('出撃中');
 			}
-			else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2)　{
+			else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2) {
 				req.push('出撃中');
 			}
 			else {
@@ -677,7 +677,7 @@ function on_battle(json) {
 	calc_damage(nowhps, d.api_hougeki2);
 	calc_damage(nowhps, d.api_hougeki3);
 	calc_damage(nowhps, d.api_raigeki, nowhps_c);
-	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3);　// 1:航空支援.
+	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
 	if (d.api_support_flag == 2) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
 	if (d.api_support_flag == 3) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
