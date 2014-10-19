@@ -8,6 +8,7 @@ var $weekly			= load_storage('weekly');
 var $slotitem_list = {};
 var $max_ship = 0;
 var $max_slotitem = 0;
+var $combined_flag = 0;
 var $fdeck_list = {};
 var $next_mapinfo = null;
 var $next_enemy = null;
@@ -410,6 +411,7 @@ function on_port(json) {
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
+			$combined_flag = basic.api_combined_flag;
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ')');
@@ -481,7 +483,7 @@ function on_port(json) {
 			msg = ['fdeck_list' + f_id];
 			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 			var deck = $fdeck_list[f_id];
-			req.push('## 艦隊' + f_id + ': ' + deck.api_name);
+			req.push(($combined_flag ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
 			var lv_sum = 0;
 			var drumcan = {ships:0, sum:0, msg:''};
 			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
@@ -525,8 +527,11 @@ function on_port(json) {
 				var id = deck.api_mission[1];
 				req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
 			}
-			else if (deck.api_id == $battle_deck_id)　{
-				req.push('出撃中');	///@todo 連合第二艦隊の判定追加.
+			else if (deck.api_id == $battle_deck_id) {
+				req.push('出撃中');
+			}
+			else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2)　{
+				req.push('出撃中');
 			}
 			else {
 				req.push('母港待機中');
