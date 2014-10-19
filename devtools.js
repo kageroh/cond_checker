@@ -1,5 +1,6 @@
 // -*- coding: utf-8 -*-
 var $ship_list		= load_storage('ship_list');
+var $enemy_list		= load_storage('enemy_list');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
@@ -65,6 +66,11 @@ function update_ship_list(list, is_all) {
 		}
 	});
 	save_storage('ship_list', $ship_list);
+}
+
+function update_enemy_list(id, fleet) {
+	$enemy_list[id] = fleet;
+	save_storage('enemy_list', $enemy_list);
 }
 
 function update_fdeck_list(list) {
@@ -553,14 +559,17 @@ function on_next_cell(json) {
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
 	if (e) {
-		var msg = e.api_enemy_id.toString(10);
-		var fleet = load_enemy_fleet(msg);
+		$enemy_id = e.api_enemy_id;
+		var msg = $enemy_id.toString(10);
+		var fleet = $enemy_list[$enemy_id];
 		if (d.api_event_id == 5) {
 			msg += '(boss)';
 			$is_boss = true;
 		}
 		$next_enemy = area + ': ' + msg;
-		msg += fleet ? ('\n' + fleet) : ' first encounter'; // $next_enemy には引き継がない
+		if (fleet) {
+			msg += '\n\t' + fleet.join('\t');
+		}
 		chrome.extension.sendRequest('## next enemy\n' + area + ': ' + msg);
 	}
 	if (g) {
@@ -580,6 +589,10 @@ function on_battle_result(json) {
 		if (d.api_ship_id) {
 			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
+		}
+		var fleet = $enemy_list[$enemy_id];
+		if (fleet) {
+			fleet[0] = e.api_deck_name + ':';
 		}
 	}
 	if (mvp) {
@@ -714,30 +727,18 @@ function on_battle(json) {
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
-	var enemy_fleet = '';
+	var enemy_fleet = ['???'];
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
 		req.push('\t' + i + '(' + name + ').\t' + hp_status(nowhps[i+6], maxhps[i+6]));
-		enemy_fleet += '\t' + i + '(' + name + ')';
+		enemy_fleet.push(name);
 	}
-	if($enemy_id) { // 演習は$enemy_idが空
-		save_enemy_fleet(enemy_fleet);
+	if ($enemy_id) { // 演習は$enemy_idが空
+		update_enemy_list($enemy_id, enemy_fleet);
 	}
 	chrome.extension.sendRequest(req);
-}
-
-function load_enemy_fleet(e_id){
-	$enemy_id = e_id;
-	var e = load_storage('enemy');
-	return e[e_id];
-}
-
-function save_enemy_fleet(enemy_fleet){
-	var e = load_storage('enemy');
-	e[$enemy_id] = enemy_fleet;
-	save_storage('enemy', e);
 }
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
