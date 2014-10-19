@@ -33,6 +33,10 @@ function Ship(data, ship) {
 	this.ship_id	= data.api_ship_id;
 }
 
+Ship.prototype.name_lv = function() {
+	return ship_name(this.ship_id) + 'Lv' + this.lv;
+};
+
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -252,10 +256,6 @@ function ship_name(id) {
 	return id.toString();
 }
 
-function ship_lv_name(ship) {
-	return ship_name(ship.ship_id) + 'Lv' + ship.lv;
-}
-
 function msec_name(msec) {
 	var sec = msec / 1000;
 	var min = sec / 60;
@@ -392,7 +392,7 @@ function on_port(json) {
 		// 未ロック艦とロック装備持ち艦を検出する.
 		for (var id in $ship_list) {
 			var ship = $ship_list[id];
-			var name = ship_lv_name(ship);
+			var name = ship.name_lv();
 			if (!ship.locked) {
 				$unlock_ship++;
 				var n = count_unless(ship.slot, -1); // スロット装備数.
@@ -491,7 +491,7 @@ function on_port(json) {
 			var drumcan = {ships:0, sum:0, msg:''};
 			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
 				lv_sum += ship.lv;
-				var name = ship_lv_name(ship);
+				var name = ship.name_lv();
 				var cond = ship.c_cond;
 				var kira_str = (cond >= 85) ? '*** ' : // 三重キラ.
 				               (cond >= 53) ? '** ' : // 回避向上キラ.
@@ -582,8 +582,7 @@ function on_battle_result(json) {
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
-		var name = ship_lv_name(ship);
-		msg += '\nMVP: ' + name;
+		msg += '\nMVP: ' + ship.name_lv();
 	}
 	if (g) {
 		msg += '\n## drop ship\n';
@@ -649,7 +648,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps) {
 		var name = '?';
 		var ship = $ship_list[fdeck.api_ship[i-1]];
 		if (ship) {
-			name = ship_lv_name(ship);
+			name = ship.name_lv();
 			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
 			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
 			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
