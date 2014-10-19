@@ -19,6 +19,20 @@ var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
 
+//-------------------------------------------------------------------------
+// Ship クラス.
+function Ship(data, ship) {
+	this.p_cond	= (ship) ? ship.c_cond : 49;
+	this.c_cond	= data.api_cond;
+	this.maxhp	= data.api_maxhp;
+	this.nowhp	= data.api_nowhp;
+	this.slot	= data.api_slot;
+	this.lv		= data.api_lv;
+	this.locked	= data.api_locked;
+	this.ndock_time	= data.api_ndock_time;
+	this.ship_id	= data.api_ship_id;
+}
+
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -37,18 +51,7 @@ function update_ship_list(list, is_all) {
 	var prev_ship_list = $ship_list;
 	if (is_all) $ship_list = {};
 	list.forEach(function(data) {
-		var ship = prev_ship_list[data.api_id];
-		$ship_list[data.api_id] = {
-			p_cond : (ship) ? ship.c_cond : 49,
-			c_cond : data.api_cond,
-			maxhp  : data.api_maxhp,
-			nowhp  : data.api_nowhp,
-			slot   : data.api_slot,
-			lv     : data.api_lv,
-			locked : data.api_locked,
-			ndock_time : data.api_ndock_time,
-			ship_id: data.api_ship_id
-		};
+		$ship_list[data.api_id] = new Ship(data, prev_ship_list[data.api_id]);
 		if (is_all) {
 			data.api_slot.forEach(function(id) {
 				// 未知の装備があれば、ダミーエントリを作って数を合わせる. 戦闘直後のship2にて、ドロップ艦がこの状況となる.
