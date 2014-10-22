@@ -20,6 +20,8 @@ var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
 var $enemy_id = null;
+var $battle_log = [];
+var $last_mission = {};
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -243,6 +245,15 @@ function search_name(id) {	///@param id	索敵結果 api_search[]
 		case 5: return '敵艦隊発見!(索敵機なし)';
 		case 6: return 'なし';
 		default: return id.toString();
+	}
+}
+
+
+function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
+	switch (cr) {
+		case 1: return '成功';
+		case 2: return '大成功';
+		default: return '失敗';
 	}
 }
 
@@ -540,13 +551,17 @@ function on_port(json) {
 				req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
 			}
 			else if (deck.api_id == $battle_deck_id) {
-				req.push('出撃中');
+				req.push('出撃中: ' + $battle_log.join(' →') + ' →');
 			}
 			else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2) {
 				req.push('出撃中');
+				$last_mission[f_id] = null; // 第一艦隊と同じ内容を表示しても意味がないので、空にしておく.
 			}
 			else {
-				req.push('母港待機中');
+				if ($last_mission[f_id])
+					req.push($last_mission[f_id]);
+				else
+					req.push('母港待機中');
 			}
 		}
 		chrome.extension.sendRequest(req);
@@ -566,7 +581,7 @@ function on_next_cell(json) {
 			msg += '(boss)';
 			$is_boss = true;
 		}
-		$next_enemy = area + ': ' + msg;
+		$next_enemy = area + ':' + msg;
 		if (fleet) {
 			msg += '\n\t' + fleet.join('\t');
 		}
@@ -594,6 +609,8 @@ function on_battle_result(json) {
 		if (fleet) {
 			fleet[0] = e.api_deck_name + ':';
 		}
+		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + d.api_win_rank);
+		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
 	}
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
@@ -701,16 +718,17 @@ function on_battle(json) {
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
 	var fdeck = $fdeck_list[d.api_deck_id];
 	$battle_deck_id = fdeck.api_id;
+	var fmt = null;
 	if (d.api_formation) {
-		$next_enemy += '\n'
-			+ formation_name(d.api_formation[0]) + '/'
+		fmt = formation_name(d.api_formation[0]) + '/'
 			+ match_name(d.api_formation[2]) + '/'
 			+ formation_name(d.api_formation[1]);
-		if (d.api_support_flag) $next_enemy += '+' + support_name(d.api_support_flag);
+		if (d.api_support_flag) fmt += '+' + support_name(d.api_support_flag);
 	}
 	var req = [];
 	req.push('# ' + ($next_mapinfo ? $next_mapinfo.api_name : '') + ' battle' + $battle_count);
 	req.push($next_enemy);
+	if (fmt) req.push(fmt);
 	if (d.api_search) {
 		req.push('索敵: ' + search_name(d.api_search[0])); // d.api_search[1] は敵索敵か??
 	}
@@ -750,7 +768,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_start2') {
 		// ゲーム開始時点.
-		func = function(json) { //　艦種表を取り込む.
+		func = function(json) { // 艦種表を取り込む.
 			update_mst_ship(json.api_data.api_mst_ship);
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
 			update_mst_mission(json.api_data.api_mst_mission);
@@ -863,7 +881,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				$quest_list = {}; // 任務総数が変わったらリストをクリアする.
 			}
 			list.forEach(function(data) {
-				if (data == -1) return; // 最終ページには埋草で-1　が入っているので除外する.
+				if (data == -1) return; // 最終ページには埋草で-1 が入っているので除外する.
 				$quest_list[data.api_no] = data;
 				if (data.api_no == 214) {
 					get_weekly().quest_state = data.api_state; // あ号任務ならば、遂行状態を記録する(1:未遂行, 2:遂行中, 3:達成)
@@ -916,6 +934,14 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			on_port(json);
 		};
 	}
+	else if (api_name == '/api_req_mission/result') {
+		// 遠征結果.
+		func = function(json) { // 成功状況を記録する.
+			var d = json.api_data;
+			var id = decode_postdata_params(request.request.postData.params).api_deck_id;
+			$last_mission[id] = '前回遠征: ' + d.api_quest_name + ' ' + mission_clear_name(d.api_clear_result);
+		};
+	}
 	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
 		// 演習相手の情報.
 		func = function(json) { // 演習相手の提督名を記憶する.
@@ -927,6 +953,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_map/start') {
 		// 海域初回選択.
 		$battle_count = 0;
+		$battle_log = [];
 		var w = get_weekly();
 		if (w.quest_state == 2) w.sortie++;
 		$is_boss = false;
@@ -961,6 +988,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_practice/battle') {
 		// 演習開始.
 		$battle_count = 1;
+		$battle_log = [];
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_practice/midnight_battle') {
