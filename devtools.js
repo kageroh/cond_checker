@@ -598,7 +598,7 @@ function on_battle_result(json) {
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
-		msg += '\nMVP: ' + ship.name_lv();
+		msg += '\nMVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp[mvp] + 'exp';
 	}
 	if (g) {
 		msg += '\n## drop ship\n';
