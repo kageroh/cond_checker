@@ -184,6 +184,7 @@ function item_name(id) {
 		case 5: return '建造材';
 		case 6: return '修復材';
 		case 7: return '開発資材';
+		case 8: return '改修資材';
 		case 10: return '家具箱小';
 		case 11: return '家具箱中';
 		case 12: return '家具箱大';
