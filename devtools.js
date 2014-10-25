@@ -63,7 +63,7 @@ function update_ship_list(list, is_all) {
 		if (is_all) {
 			data.api_slot.forEach(function(id) {
 				// 未知の装備があれば、ダミーエントリを作って数を合わせる. 戦闘直後のship2にて、ドロップ艦がこの状況となる.
-				if (id != -1 && !$slotitem_list[id]) $slotitem_list[id] = { item_id: -1, locked: 0 };
+				if (id != -1 && !$slotitem_list[id]) $slotitem_list[id] = { item_id: -1, locked: 0, level: 0 };
 			});
 		}
 	});
@@ -320,7 +320,7 @@ function add_slotitem_list(data) {
 		});
 	}
 	else if (data.api_slotitem_id) {
-		$slotitem_list[data.api_id] = { item_id: data.api_slotitem_id, locked: data.api_locked };
+		$slotitem_list[data.api_id] = { item_id: data.api_slotitem_id, locked: data.api_locked, level: data.api_level };
 	}
 }
 
@@ -397,6 +397,7 @@ function on_port(json) {
 		var lockeditem_list = {};
 		var $unlock_ship = 0;
 		var $unlock_slotitem = 0;
+		var $leveling_slotitem = 0;
 		//
 		// ロック装備を種類毎に集計する.
 		for (var id in $slotitem_list) {
@@ -405,6 +406,9 @@ function on_port(json) {
 				if (!lockeditem_list[value.item_id])
 					lockeditem_list[value.item_id] = {count:0, ship_names:[]};
 				lockeditem_list[value.item_id].count++;
+			}
+			if (value && value.level) {
+				$leveling_slotitem++;
 			}
 		}
 		//
@@ -436,7 +440,7 @@ function on_port(json) {
 			$combined_flag = basic.api_combined_flag;
 		}
 		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
-		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ')');
+		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 		//
 		// 資材変化を表示する.
 		var material = json.api_data.api_material;
@@ -821,6 +825,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 素材として使った艦娘が持つ装備を、リストから抜く.
 			var ids = decode_postdata_params(request.request.postData.params).api_id_items;
 			if (ids) ship_delete(ids.split('%2C'));
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_req_kousyou/remodel_slot') {
+		// 装備改修.
+		func = function(json) {	// 明石の改修工廠で改修した装備をリストに反映する.
+			add_slotitem_list(json.api_data.api_after_slot);
 			on_port(json);
 		};
 	}
