@@ -847,38 +847,39 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_hensei/change') {
 		// 艦隊編成.
 		var params = decode_postdata_params(request.request.postData.params);
-		var deck = $fdeck_list[params.api_id];
+		var list = $fdeck_list[params.api_id].api_ship;	// 変更艦隊リスト.
 		var id  = parseInt(params.api_ship_id, 10);		// -2:一括解除, -1:解除, 他:艦娘ID.
 		var idx = parseInt(params.api_ship_idx, 10);	// -1:一括解除, 0..N:変更位置.
 		if (id == -2) {
 			// 旗艦以外の艦を外す(-1を設定する).
-			for (var i = 1; i < deck.api_ship.length; ++i) deck.api_ship[i] = -1;
+			for (var i = 1; i < list.length; ++i) list[i] = -1;
 		}
 		else if (id == -1) {
 			// 外す.
-			deck.api_ship.splice(idx, 1);
-			deck.api_ship.push(-1);
+			list.splice(idx, 1);
+			list.push(-1);
 		}
 		else { // id = 0..N
-			// 追加または交換.
-			var old_idx = -1;
-			for (var i = 0; i < deck.api_ship.length; ++i) {
-				if (deck.api_ship[i] == id) {
-					old_idx = i;
-					break;
+			find: for (var f_id in $fdeck_list) {
+				// 艦娘IDの元の所属位置を old_list[old_idx] に得る.
+				var old_list = $fdeck_list[f_id].api_ship;
+				for (var old_idx = 0; old_idx < old_list.length; ++old_idx) {
+					if (old_list[old_idx] == id) break find;
 				}
 			}
-			if (old_idx == -1) { // 追加.
-				deck.api_ship[idx] = id;
-			}
-			else { // 交換.
-				var id2 = deck.api_ship[idx];
-				deck.api_ship[idx]     = id;
-				deck.api_ship[old_idx] = id2; // 交換.
-				if (id2 == -1) {
-					deck.api_ship.splice(old_idx, 1); // 外して前詰めする.
-					deck.api_ship.push(-1);
+			if (old_list[old_idx] == id) {
+				// 位置交換.
+				old_list[old_idx] = list[idx];
+				list[idx] = id;
+				// 元位置が空席になったら前詰めする.
+				if (old_list[old_idx] == -1) {
+					old_list.splice(old_idx, 1);
+					old_list.push(-1);
 				}
+			}
+			else {
+				// 新規追加.
+				list[idx] = id;
 			}
 		}
 		var dummy_json = { api_data: {} }; // 艦隊編成パケットは api_data を持たないので、母港表示にダミーパケットを渡す.
