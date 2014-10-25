@@ -778,6 +778,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
+			chrome.extension.sendRequest("## ロード完了");
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
