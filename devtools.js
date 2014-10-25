@@ -832,7 +832,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
 		// 装備改修.
 		func = function(json) {	// 明石の改修工廠で改修した装備をリストに反映する.
-			add_slotitem_list(json.api_data.api_after_slot);
+			add_slotitem_list(json.api_data.api_after_slot);	// 装備リストを更新する.
+			slotitem_delete(json.api_data.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
 			on_port(json);
 		};
 	}
