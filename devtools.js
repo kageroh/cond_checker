@@ -375,22 +375,24 @@ function ship_delete(list) {
 	});
 }
 
-function hp_status(nowhp, maxhp) {
-	if (nowhp < 0) nowhp = 0;
+function damage_name(nowhp, maxhp) {
 	var r = nowhp / maxhp;
-	var msg = (r == 0) ? '撃沈---'
+	return (r <= 0) ? '撃沈---'
 		: (r <= 0.25) ? '大破!!!'
 		: (r <= 0.50) ? '中破'
 		: (r <= 0.75) ? '小破'
 		: (r <= 0.85) ? '..'	// 軽微2.
 		: (r <  1.00) ? '.'		// 軽微1.
 		: '*';					// 無傷.
-	return nowhp + '/' + maxhp + ':' + msg;
+}
+
+function hp_status(nowhp, maxhp) {
+	return (nowhp < 0 ? 0 : nowhp) + '/' + maxhp + ':' + damage_name(nowhp, maxhp);
 }
 
 function hp_status_on_battle(nowhp, maxhp, beginhp) {
-	var damage = beginhp - nowhp;
-	return hp_status(nowhp, maxhp).replace(':', ' (-' + damage + '):');
+	var diff = nowhp - beginhp;
+	return (nowhp < 0 ? 0 : nowhp) + '/' + maxhp + '(' + diff + '):' + damage_name(nowhp, maxhp);
 }
 
 //------------------------------------------------------------------------
@@ -695,7 +697,7 @@ function calc_kouku_damage(airplane, hp, kouku, hc) {
 	calc_damage(hp, kouku.api_stage3_combined, hc);	// 連合第二艦隊：航空爆撃雷撃戦.
 }
 
-function push_fdeck_status(req, fdeck, maxhps, nowhps) {
+function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	req.push(fdeck.api_name);
 	for (var i = 1; i <= 6; ++i) {
 		if (maxhps[i] == -1) continue;
@@ -709,7 +711,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps) {
 			if (repair) name += '+修理要員x' + repair;
 			if (megami) name += '+修理女神x' + megami;
 		}
-		req.push('\t' + i + '(' + name + ').\t' + hp_status(nowhps[i], maxhps[i]));
+		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i], maxhps[i], beginhps[i]));
 	}
 }
 
@@ -717,9 +719,11 @@ function on_battle(json) {
 	var d = json.api_data;
 	if (!d.api_maxhps || !d.api_nowhps) return;
 	var maxhps = d.api_maxhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
-	var nowhps = d.api_nowhps.concat();			// 出撃艦隊[1..6] 敵艦隊[7..12]
+	var nowhps = d.api_nowhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
 	var maxhps_c = d.api_maxhps_combined;	// 連合第二艦隊[1..6].
 	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
+	var beginhps = nowhps.concat();
+	var beginhps_c = nowhps_c ? nowhps_c.concat() : [];
 	var airplane = {
 		seiku : null, 				// 制空権.
 		touch : d.api_touch_plane,	// 触接. 夜戦はd.にある、昼戦はd.api_kouku.state1.にある.
@@ -759,11 +763,11 @@ function on_battle(json) {
 	}
 	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
 	req.push('## friend damage');
-	push_fdeck_status(req, fdeck, maxhps, nowhps);
+	push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
 	if (nowhps_c) {
 		req.push('## friend(2nd) damage');
-		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c); // 連合第二艦隊は二番固定です.
+		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c, beginhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
 	var enemy_fleet = ['???'];
@@ -771,7 +775,7 @@ function on_battle(json) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
-		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], d.api_nowhps[i+6]));
+		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], beginhps[i+6]));
 		enemy_fleet.push(name);
 	}
 	if ($enemy_id) { // 演習は$enemy_idが空
