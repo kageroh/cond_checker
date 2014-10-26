@@ -600,10 +600,11 @@ function on_next_cell(json) {
 
 function on_battle_result(json) {
 	var d = json.api_data;
-	var e = json.api_data.api_enemy_info;
-	var g = json.api_data.api_get_ship;
-	var msg = d.api_win_rank + ':';
-	var mvp = d.api_mvp;
+	var e = d.api_enemy_info;
+	var g = d.api_get_ship;
+	var mvp  = d.api_mvp;
+	var lost = d.api_lost_flag;
+	var msg  = d.api_win_rank + ':';
 	if (e) {
 		msg += e.api_deck_name;
 		if (d.api_ship_id) {
@@ -621,6 +622,16 @@ function on_battle_result(json) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
 		msg += '\nMVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp[mvp] + 'exp';
+	}
+	if (lost) {
+		for (var i in lost) {
+			if (lost[i] == 1) {
+				var id = $fdeck_list[$battle_deck_id].api_ship[i-1];
+				var ship = $ship_list[id];
+				msg += '\nLOST: ' + ship.name_lv();
+				ship_delete([id]);
+			}
+		}
 	}
 	if (g) {
 		msg += '\n## drop ship\n';
