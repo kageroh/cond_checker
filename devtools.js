@@ -388,6 +388,11 @@ function hp_status(nowhp, maxhp) {
 	return nowhp + '/' + maxhp + ':' + msg;
 }
 
+function hp_status_on_battle(nowhp, maxhp, beginhp) {
+	var damage = beginhp - nowhp;
+	return hp_status(nowhp, maxhp).replace(':', ' (-' + damage + '):');
+}
+
 //------------------------------------------------------------------------
 // イベントハンドラ.
 //
@@ -701,7 +706,7 @@ function on_battle(json) {
 	var d = json.api_data;
 	if (!d.api_maxhps || !d.api_nowhps) return;
 	var maxhps = d.api_maxhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
-	var nowhps = d.api_nowhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
+	var nowhps = d.api_nowhps.concat();			// 出撃艦隊[1..6] 敵艦隊[7..12]
 	var maxhps_c = d.api_maxhps_combined;	// 連合第二艦隊[1..6].
 	var nowhps_c = d.api_nowhps_combined;	// 連合第二艦隊[1..6].
 	var airplane = {
@@ -755,7 +760,7 @@ function on_battle(json) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
-		req.push('\t' + i + '(' + name + ').\t' + hp_status(nowhps[i+6], maxhps[i+6]));
+		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], d.api_nowhps[i+6]));
 		enemy_fleet.push(name);
 	}
 	if ($enemy_id) { // 演習は$enemy_idが空
