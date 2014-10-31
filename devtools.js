@@ -730,13 +730,11 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
 		if(i <= 6){
-			var diff = (beginhps[i] - n);
-			f_damage_total += n < 0 ? beginhps[i] : diff;
+			f_damage_total += beginhps[i] - Math.max(0, n);
 			f_hp_total += maxhps[i];
 		} else if(i > 6){
 			++e_count;
-			var diff = (beginhps[i] - n);
-			e_damage_total += n < 0 ? beginhps[i] : diff;
+			e_damage_total += beginhps[i] - Math.max(0, n);
 			e_hp_total += maxhps[i];
 			if(n <= 0){
 				++e_lost_count;
@@ -752,7 +750,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 		}
 		return;
 	}
-	if(e_count == 6 ? e_lost_count >= 4 : e_lost_count >= e_count/2){
+	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2)) {
 		req.push('推定：A');
 		return;
 	}
