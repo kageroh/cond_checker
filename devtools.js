@@ -22,6 +22,7 @@ var $ndock_list = {};
 var $enemy_id = null;
 var $battle_log = [];
 var $last_mission = {};
+var $beginhps = null;
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -718,8 +719,6 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 function push_guess_result(req, nowhps, maxhps, beginhps) {
 	// 友軍の轟沈／護衛退避には未対応
 	// 応急修理発動時の計算も不明
-	// 夜戦に行くかどうかの参考情報のつもりなので不要とは思うが
-	// 夜戦に対応するには昼戦時のダメージ情報の引き継ぎが必要
 	var f_damage_total = 0;
 	var f_hp_total = 0;
 	var e_damage_total = 0;
@@ -821,7 +820,9 @@ function on_battle(json) {
 		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
 	}
 	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
-	push_guess_result(req, nowhps, maxhps, beginhps); // 第二艦隊はほぼ勝敗に影響しないので具体的な影響データあるまでは無視
+
+	if (!$beginhps) $beginhps = beginhps;
+	push_guess_result(req, nowhps, maxhps, $beginhps); // 第二艦隊はほぼ勝敗に影響しないので具体的な影響データあるまでは無視
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
@@ -1063,6 +1064,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		|| api_name == '/api_req_combined_battle/airbattle') {
 		// 昼戦開始.
 		$battle_count++;
+		$beginhps = null;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_battle_midnight/battle'
@@ -1074,6 +1076,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		|| api_name == '/api_req_combined_battle/sp_midnight') {
 		// 夜戦開始.
 		$battle_count++;
+		$beginhps = null;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_sortie/night_to_day') {
@@ -1083,6 +1086,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_practice/battle') {
 		// 演習開始.
 		$battle_count = 1;
+		$beginhps = null;
 		$battle_log = [];
 		func = on_battle;
 	}
