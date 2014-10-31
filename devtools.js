@@ -715,6 +715,65 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	}
 }
 
+function push_guess_result(req, nowhps, maxhps, beginhps) {
+	// 友軍の轟沈／護衛退避には未対応
+	// 応急修理発動時の計算も不明
+	// 夜戦に行くかどうかの参考情報のつもりなので不要とは思うが
+	// 夜戦に対応するには昼戦時のダメージ情報の引き継ぎが必要
+	var f_damage_total = 0;
+	var f_hp_total = 0;
+	var e_damage_total = 0;
+	var e_hp_total = 0;
+	var e_count = 0;
+	var e_lost_count = 0;
+	var e_leader_lost = false;
+	for(var i = 1; i <= 12; ++i){
+		if(maxhps[i] == -1) continue;
+		var n = nowhps[i];
+		if(i <= 6){
+			var diff = (beginhps[i] - n);
+			f_damage_total += n < 0 ? beginhps[i] : diff;
+			f_hp_total += maxhps[i];
+		} else if(i > 6){
+			++e_count;
+			var diff = (beginhps[i] - n);
+			e_damage_total += n < 0 ? beginhps[i] : diff;
+			e_hp_total += maxhps[i];
+			if(n <= 0){
+				++e_lost_count;
+				if(i == 7) e_leader_lost = true;
+			}
+		}
+	}
+	if(e_count == e_lost_count){
+		if(f_damage_total == 0) {
+			req.push('推定：完S');
+		} else {
+			req.push('推定：S');
+		}
+		return;
+	}
+	if(e_count == 6 ? e_lost_count >= 4 : e_lost_count >= e_count/2){
+		req.push('推定：A');
+		return;
+	}
+	var f_damage_rate = f_damage_total/f_hp_total;
+	var e_damage_rate = e_damage_total/e_hp_total;
+	var rate = e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
+			   f_damage_rate == 0 ? 2 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを2に
+			   e_damage_rate/f_damage_rate;
+	if(e_leader_lost || rate >= 2){
+		req.push('推定：B');
+		return;
+	} else if(rate >= 1/2){ //要検証
+		req.push('推定：C');
+		return;
+	} else {
+		req.push('推定：D');
+		return;
+	}
+}
+
 function on_battle(json) {
 	var d = json.api_data;
 	if (!d.api_maxhps || !d.api_nowhps) return;
@@ -762,6 +821,7 @@ function on_battle(json) {
 		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
 	}
 	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
+	push_guess_result(req, nowhps, maxhps, beginhps); // 第二艦隊はほぼ勝敗に影響しないので具体的な影響データあるまでは無視
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
