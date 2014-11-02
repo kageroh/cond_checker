@@ -591,18 +591,18 @@ function on_next_cell(json) {
 		var msg = $enemy_id.toString(10);
 		var fleet = $enemy_list[$enemy_id];
 		if (d.api_event_id == 5) {
-			msg += '(boss)';
+			area += '(boss)';
 			$is_boss = true;
 		}
-		$next_enemy = area + ':' + msg;
+		$next_enemy = area + ':' + $enemy_id;
 		if (fleet) {
 			msg += '\n\t' + fleet.join('\t');
 		}
-		chrome.extension.sendRequest('## next enemy\n' + area + ': ' + msg);
+		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
 	}
 	if (g) {
 		var msg = item_name(g.api_id) + 'x' + g.api_getcount;
-		chrome.extension.sendRequest('## next item\n' + area + ': ' + msg);
+		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
 	}
 }
 
