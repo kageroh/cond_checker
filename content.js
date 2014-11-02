@@ -6,7 +6,7 @@ div.style.left = '822px';
 div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>"
 	+ "<h3>ロード中...</h3>"
 	+ "ゲームスタート後に「ロード完了」が表示されない場合は[デベロッパー ツール]を起動し、画面をリロードしてゲームスタートからやり直してください\n"
-	+ "※ デベロッパーツールは、Ctrl+Shift+I または F12 で起動できます\n";
+	+ "※ デベロッパーツールは、Opt+Cmd+I(Mac), Ctrl+Shift+I, F12 キーで起動できます\n";
 
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
