@@ -27,6 +27,12 @@ Flash PlayerはChrome内蔵のほうを使用してください
 1. 戦闘画面では、画面右側に敵味方艦隊のダメージ(撃沈、大破、中破、小破)と戦果を表示します。
 1. 戦闘後や遠征帰還後の資材増減を記録して表示します。
 
+### 母港画面サンプル
+![port screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-port.png)
+
+### 戦況画面サンプル
+![battle screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-battle.png)
+
 ## 注意事項
 * 修復要員、修復女神の装備表示は、修復発動後の変動に対応していない可能性があるので、表示を鵜呑みにすると危険です。大破進撃は自己責任でお願いします。
 
