@@ -597,7 +597,7 @@ function on_next_cell(json) {
 		$next_enemy = area + ':' + $enemy_id;
 		if (fleet) {
 			msg += '\n\t' + fleet.join('\t');
-			if(msg.match(/潜水[カソヨ]級/)) msg += '\n潜水艦注意!!';
+			if(/潜水.級/.test(msg)) msg += '\n### 潜水艦注意!!';
 		}
 		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
 	}
