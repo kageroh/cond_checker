@@ -31,7 +31,8 @@ function Ship(data, ship) {
 	this.c_cond	= data.api_cond;
 	this.maxhp	= data.api_maxhp;
 	this.nowhp	= data.api_nowhp;
-	this.slot	= data.api_slot;
+	this.slot	= data.api_slot;	// []装備ID.
+	this.onslot	= data.api_onslot;	// []装備数.
 	this.lv		= data.api_lv;
 	this.locked	= data.api_locked;
 	this.ndock_time	= data.api_ndock_time;
@@ -271,8 +272,9 @@ function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
 	}
 }
 
-function slotitem_name(id) {
+function slotitem_name(id, n, max) {
 	var item = $mst_slotitem[id];
+	if (is_airplane(item) && n) return item.api_name + 'x' + n + diff_name(n, max);
 	if (item) return item.api_name;
 	return id.toString();
 }
@@ -358,13 +360,13 @@ function slotitem_use(slot, item_id) {
 	return false;
 }
 
-function slotitem_names(slot) {
+function slotitem_names(slot, onslot, maxslot) {
 	if (!slot) return '';
 	var a = [];
 	for (var i = 0; i < slot.length; ++i) {
 		var value = $slotitem_list[slot[i]];
 		if (value) {
-			a.push(slotitem_name(value.item_id));
+			a.push(slotitem_name(value.item_id, onslot[i], maxslot[i]));
 		}
 	}
 	return a.join(', ');
@@ -386,6 +388,22 @@ function ship_delete(list) {
 			delete $ship_list[id];
 		}
 	});
+}
+
+function is_airplane(item) {
+	if (!item) return false;
+	switch (item.api_type[2]) {
+	case 6:	// 艦上戦闘機.
+	case 7:	// 艦上爆撃機.
+	case 8:	// 艦上攻撃機.
+	case 9:	// 艦上偵察機.
+	case 10:// 水上爆撃機.
+	case 25:// オートジャイロ.
+	case 26:// 対潜哨戒機.
+		return true;
+	default:
+		return false;
+	}
 }
 
 function damage_name(nowhp, maxhp) {
@@ -549,7 +567,7 @@ function on_port(json) {
 					+ '\t' + ship.name_lv()
 					+ '\t' + hp_str
 					+ '\t' + rp_str
-					+ '\t' + slotitem_names(ship.slot)
+					+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
 					);
 				var d = slotitem_count(ship.slot, 75);	// ドラム缶.
 				if (d) {
