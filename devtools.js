@@ -33,6 +33,9 @@ function Ship(data, ship) {
 	this.nowhp	= data.api_nowhp;
 	this.slot	= data.api_slot;	// []装備ID.
 	this.onslot	= data.api_onslot;	// []装備数.
+	this.bull	= data.api_bull;	// 弾薬.
+	this.fuel	= data.api_fuel;	// 燃料.
+	this.id		= data.api_id;		// 背番号.
 	this.lv		= data.api_lv;
 	this.locked	= data.api_locked;
 	this.ndock_time	= data.api_ndock_time;
@@ -53,6 +56,18 @@ Ship.prototype.kira_name = function() {
 
 Ship.prototype.cond_diff_name = function() {
 	return this.c_cond + diff_name(this.c_cond, this.p_cond);
+};
+
+Ship.prototype.fuel_name = function() {
+	var max = $mst_ship[this.ship_id].api_fuel_max;
+	if (max && this.fuel < max) return Math.floor(this.fuel / max * 100) + '%';
+	return ''; // 100% or unknown
+};
+
+Ship.prototype.bull_name = function() {
+	var max = $mst_ship[this.ship_id].api_bull_max;
+	if (max && this.bull < max) return Math.floor(this.bull / max * 100) + '%';
+	return ''; // 100% or unknown
 };
 
 //------------------------------------------------------------------------
@@ -545,7 +560,7 @@ function on_port(json) {
 		// 各艦隊の情報を一覧表示する.
 		for (var f_id in $fdeck_list) {
 			msg = ['fdeck_list' + f_id];
-			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
+			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 			var deck = $fdeck_list[f_id];
 			req.push(($combined_flag ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
 			var lv_sum = 0;
@@ -567,6 +582,8 @@ function on_port(json) {
 					+ '\t' + ship.name_lv()
 					+ '\t' + hp_str
 					+ '\t' + rp_str
+					+ '\t' + ship.fuel_name()
+					+ '\t' + ship.bull_name()
 					+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
 					);
 				var d = slotitem_count(ship.slot, 75);	// ドラム缶.
@@ -578,7 +595,7 @@ function on_port(json) {
 			if (drumcan.sum) {
 				drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
 			}
-			msg.push('\t合計:\tLv' + lv_sum + '\t\t\t' + drumcan.msg);
+			msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
 			req.push(msg);
 			var mission_end = deck.api_mission[2];
 			if (mission_end > 0) {
