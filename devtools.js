@@ -42,6 +42,18 @@ Ship.prototype.name_lv = function() {
 	return ship_name(this.ship_id) + 'Lv' + this.lv;
 };
 
+Ship.prototype.kira_name = function() {
+	return (this.c_cond >= 85) ? '*** ' : // 三重キラ.
+		   (this.c_cond >= 53) ? '** ' : // 回避向上キラ.
+		   (this.c_cond >  49) ? '* ' : // キラ.
+		   (this.c_cond == 49) ? '. ' : // normal
+		 /* this.c_cond < 49 */  '> '; // recovering
+};
+
+Ship.prototype.cond_diff_name = function() {
+	return this.c_cond + diff_name(this.c_cond, this.p_cond);
+};
+
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -522,13 +534,6 @@ function on_port(json) {
 			var drumcan = {ships:0, sum:0, msg:''};
 			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
 				lv_sum += ship.lv;
-				var name = ship.name_lv();
-				var cond = ship.c_cond;
-				var kira_str = (cond >= 85) ? '*** ' : // 三重キラ.
-				               (cond >= 53) ? '** ' : // 回避向上キラ.
-				               (cond >  49) ? '* ' : // キラ.
-				               (cond == 49) ? '. ' : // normal
-				               /* cond < 49 */ '> '; // recovering
 				var hp_str = '';	// hp.
 				var rp_str = '';	// 修理.
 				if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
@@ -540,8 +545,8 @@ function on_port(json) {
 					var c_date = new Date(ndock.api_complete_time);
 					rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
 				}
-				msg.push('\t' + (i + 1) + kira_str + cond + diff_name(cond, ship.p_cond)
-					+ '\t' + name
+				msg.push('\t' + (i + 1) + ship.kira_name() + ship.cond_diff_name()
+					+ '\t' + ship.name_lv()
 					+ '\t' + hp_str
 					+ '\t' + rp_str
 					+ '\t' + slotitem_names(ship.slot)
