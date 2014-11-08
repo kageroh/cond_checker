@@ -60,13 +60,13 @@ Ship.prototype.cond_diff_name = function() {
 
 Ship.prototype.fuel_name = function() {
 	var max = $mst_ship[this.ship_id].api_fuel_max;
-	if (max && this.fuel < max) return Math.floor(this.fuel / max * 100) + '%';
+	if (max && this.fuel < max) return percent_name(this.fuel, max);
 	return ''; // 100% or unknown
 };
 
 Ship.prototype.bull_name = function() {
 	var max = $mst_ship[this.ship_id].api_bull_max;
-	if (max && this.bull < max) return Math.floor(this.bull / max * 100) + '%';
+	if (max && this.bull < max) return percent_name(this.bull, max);
 	return ''; // 100% or unknown
 };
 
@@ -196,12 +196,22 @@ function weekly_name() {
 		+ ')';
 }
 
-function diff_name(now, prev) {
+function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
 	var diff = now - prev;
 	if (!prev) return '';
 	else if (diff > 0) return '(+' + diff + ')'; // with plus sign
 	else if (diff < 0) return '(' + diff +')';   // with minus sign
 	else /* diff == 0 */ return '';
+}
+
+function percent_name(now, max) {	// now:1, prev:2 -> "50%"
+	if (!max) return '';
+	return Math.floor(100 * now / max) + '%';
+}
+
+function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
+	if (!max || now < max) return '';
+	return '(' + percent_name(now, max) + ')';
 }
 
 function item_name(id) {
@@ -277,7 +287,6 @@ function search_name(id) {	///@param id	索敵結果 api_search[]
 		default: return id.toString();
 	}
 }
-
 
 function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
 	switch (cr) {
