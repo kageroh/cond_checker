@@ -298,7 +298,7 @@ function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
 
 function slotitem_name(id, n, max) {
 	var item = $mst_slotitem[id];
-	if (is_airplane(item) && n) return item.api_name + 'x' + n + diff_name(n, max);
+	if (is_airplane(item) && n) return item.api_name + 'x' + n + percent_name_unless100(n, max);
 	if (item) return item.api_name;
 	return id.toString();
 }
