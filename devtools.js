@@ -314,6 +314,17 @@ function msec_name(msec) {
 	return sec.toFixed() + '秒';
 }
 
+function damage_name(nowhp, maxhp) {
+	var r = nowhp / maxhp;
+	return (r <= 0) ? '撃沈---'
+		: (r <= 0.25) ? '大破!!!'
+		: (r <= 0.50) ? '中破'
+		: (r <= 0.75) ? '小破'
+		: (r <= 0.85) ? '..'	// 軽微2.
+		: (r <  1.00) ? '.'		// 軽微1.
+		: '*';					// 無傷.
+}
+
 //------------------------------------------------------------------------
 // データ解析.
 //
@@ -419,17 +430,6 @@ function is_airplane(item) {
 	default:
 		return false;
 	}
-}
-
-function damage_name(nowhp, maxhp) {
-	var r = nowhp / maxhp;
-	return (r <= 0) ? '撃沈---'
-		: (r <= 0.25) ? '大破!!!'
-		: (r <= 0.50) ? '中破'
-		: (r <= 0.75) ? '小破'
-		: (r <= 0.85) ? '..'	// 軽微2.
-		: (r <  1.00) ? '.'		// 軽微1.
-		: '*';					// 無傷.
 }
 
 function hp_status(nowhp, maxhp) {
