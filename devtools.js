@@ -210,7 +210,7 @@ function percent_name(now, max) {	// now:1, prev:2 -> "50%"
 }
 
 function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
-	if (!max || now < max) return '';
+	if (!max || now == max) return '';
 	return '(' + percent_name(now, max) + ')';
 }
 
