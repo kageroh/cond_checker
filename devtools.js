@@ -775,20 +775,21 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 	var e_count = 0;
 	var e_lost_count = 0;
 	var e_leader_lost = false;
-	for(var i = 1; i <= 12; ++i){
+	for(var i = 1; i <= 6; ++i){
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
-		if(i <= 6){
-			f_damage_total += beginhps[i] - Math.max(0, n);
-			f_hp_total += beginhps[i];
-		} else if(i > 6){
-			++e_count;
-			e_damage_total += beginhps[i] - Math.max(0, n);
-			e_hp_total += beginhps[i];
-			if(n <= 0){
-				++e_lost_count;
-				if(i == 7) e_leader_lost = true;
-			}
+		f_damage_total += beginhps[i] - Math.max(0, n);
+		f_hp_total += beginhps[i];
+	}
+	for(var i = 7; i <= 12; ++i){
+		if(maxhps[i] == -1) continue;
+		var n = nowhps[i];
+		++e_count;
+		e_damage_total += beginhps[i] - Math.max(0, n);
+		e_hp_total += beginhps[i];
+		if(n <= 0){
+			++e_lost_count;
+			if(i == 7) e_leader_lost = true;
 		}
 	}
 	if(e_count == e_lost_count){
