@@ -661,18 +661,21 @@ function on_battle_result(json) {
 	var g = d.api_get_ship;
 	var mvp  = d.api_mvp;
 	var lost = d.api_lost_flag;
-	var msg  = d.api_win_rank + ':';
+	var msg  = '';
 	if (e) {
+		var rank = d.api_win_rank;
 		msg += e.api_deck_name;
 		if (d.api_ship_id) {
 			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
+			if (rank == 'S' && d.api_dests == total) rank = '完S';
 		}
+		msg += ':' + rank;
 		var fleet = $enemy_list[$enemy_id];
 		if (fleet) {
 			fleet[0] = e.api_deck_name + ':';
 		}
-		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + d.api_win_rank);
+		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + rank);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
 	}
 	if (mvp) {
