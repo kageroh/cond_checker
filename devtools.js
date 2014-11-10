@@ -770,18 +770,24 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 	// 応急修理発動時の計算も不明
 	var f_damage_total = 0;
 	var f_hp_total = 0;
+	var f_lost_count = 0;
 	var e_damage_total = 0;
 	var e_hp_total = 0;
 	var e_count = 0;
 	var e_lost_count = 0;
 	var e_leader_lost = false;
 	for(var i = 1; i <= 6; ++i){
+		// 友軍被害集計.
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
 		f_damage_total += beginhps[i] - Math.max(0, n);
 		f_hp_total += beginhps[i];
+		if (n <= 0) {
+			++f_lost_count;
+		}
 	}
 	for(var i = 7; i <= 12; ++i){
+		// 敵艦被害集計.
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
 		++e_count;
@@ -792,7 +798,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 			if(i == 7) e_leader_lost = true;
 		}
 	}
-	if(e_count == e_lost_count){
+	if (e_count == e_lost_count && f_lost_count == 0) {
 		if(f_damage_total == 0) {
 			req.push('推定：完S');
 		} else {
@@ -800,7 +806,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 		}
 		return;
 	}
-	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2)) {
+	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
 		req.push('推定：A');
 		return;
 	}
@@ -809,7 +815,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 	var rate = e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
 			   f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
 			   e_damage_rate/f_damage_rate;
-	if(e_leader_lost || rate >= 2.5){
+	if ((e_leader_lost && f_lost_count < e_lost_count) || rate >= 2.5) {
 		req.push('推定：B');
 		return;
 	} else if(rate >= 1){ //要検証
