@@ -49,16 +49,8 @@ Ship.prototype.name_lv = function() {
 	return ship_name(this.ship_id) + 'Lv' + this.lv;
 };
 
-Ship.prototype.kira_name = function() {
-	return (this.c_cond >= 85) ? '*** ' : // 三重キラ.
-		   (this.c_cond >= 53) ? '** ' : // 回避向上キラ.
-		   (this.c_cond >  49) ? '* ' : // キラ.
-		   (this.c_cond == 49) ? '. ' : // normal
-		 /* this.c_cond < 49 */  '> '; // recovering
-};
-
-Ship.prototype.cond_diff_name = function() {
-	return this.c_cond + diff_name(this.c_cond, this.p_cond);
+Ship.prototype.kira_cond_diff_name = function() {
+	return kira_name(this.c_cond) + this.c_cond + diff_name(this.c_cond, this.p_cond);
 };
 
 Ship.prototype.fuel_name = function() {
@@ -216,6 +208,14 @@ function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
 	if (!max || now == max) return '';
 	return '(' + percent_name(now, max) + ')';
 }
+
+function kira_name(cond) {
+	return (cond >= 85) ? '*** ' : // 三重キラ.
+		   (cond >= 53) ? '** ' : // 回避向上キラ.
+		   (cond >  49) ? '* ' : // キラ.
+		   (cond == 49) ? '. ' : // normal
+		 /* cond < 49 */  '> '; // recovering
+};
 
 function item_name(id) {
 	switch (id) {
@@ -458,6 +458,10 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 function on_port(json) {
 		var req = [];
 		var unlock_names = [];
+		var lock_condlist = {};
+		var cond85 = 0;
+		var cond53 = 0;
+		var cond50 = 0;
 		var lockeditem_list = {};
 		var $unlock_slotitem = 0;
 		var $leveling_slotitem = 0;
@@ -475,7 +479,7 @@ function on_port(json) {
 			}
 		}
 		//
-		// 未ロック艦とロック装備持ち艦を検出する.
+		// ロック艦のcond別一覧、未ロック艦一覧、ロック装備持ち艦を検出する.
 		for (var id in $ship_list) {
 			var ship = $ship_list[id];
 			var name = ship.name_lv();
@@ -483,6 +487,14 @@ function on_port(json) {
 				var n = count_unless(ship.slot, -1); // スロット装備数.
 				$unlock_slotitem += n;
 				unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
+			}
+			else {	// locked
+				var cond = ship.c_cond;
+				if (!lock_condlist[cond]) lock_condlist[cond] = [];
+				lock_condlist[cond].push(name);
+				if      (cond >= 85) cond85++; // 三重キラ.
+				else if (cond >= 53) cond53++; // 回避向上キラ.
+				else if (cond >  49) cond50++; // キラ.
 			}
 			if (ship.slot) {
 				ship.slot.forEach(function(id) {
@@ -522,6 +534,16 @@ function on_port(json) {
 		if (unlock_names.length > 0) {
 			req.push('## 未ロック艦一覧(' + unlock_names.length + ')');
 			req.push(['unlock_names', unlock_names.join(', ')]);
+		}
+		// ロック艦cond別一覧.
+		if (Object.keys(lock_condlist).length > 0) {
+			req.push('## ロック艦一覧 ***(' + cond85 + ') **(' + cond53 + ') *(' + cond50 + ')');
+			msg = ['lock_condlist', '\t==cond\t==艦名'];
+			for (var cond = 100; cond >= 0; --cond) {
+				var a = lock_condlist[cond];
+				if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + a.join(', '));
+			}
+			req.push(msg);
 		}
 		// ロック装備一覧.
 		var lockeditem_ids = Object.keys(lockeditem_list);
@@ -587,7 +609,7 @@ function on_port(json) {
 					var c_date = new Date(ndock.api_complete_time);
 					rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
 				}
-				msg.push('\t' + (i + 1) + ship.kira_name() + ship.cond_diff_name()
+				msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
 					+ '\t' + ship.name_lv()
 					+ '\t' + hp_str
 					+ '\t' + rp_str
