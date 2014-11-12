@@ -459,7 +459,6 @@ function on_port(json) {
 		var req = [];
 		var unlock_names = [];
 		var lockeditem_list = {};
-		var $unlock_ship = 0;
 		var $unlock_slotitem = 0;
 		var $leveling_slotitem = 0;
 		//
@@ -481,7 +480,6 @@ function on_port(json) {
 			var ship = $ship_list[id];
 			var name = ship.name_lv();
 			if (!ship.locked) {
-				$unlock_ship++;
 				var n = count_unless(ship.slot, -1); // スロット装備数.
 				$unlock_slotitem += n;
 				unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
@@ -503,7 +501,7 @@ function on_port(json) {
 			$max_slotitem = basic.api_max_slotitem + 3;
 			$combined_flag = basic.api_combined_flag;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship + '(未ロック艦:' + $unlock_ship + ')');
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
 		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 		//
 		// 資材変化を表示する.
@@ -522,7 +520,7 @@ function on_port(json) {
 		//
 		// 未ロック艦一覧.
 		if (unlock_names.length > 0) {
-			req.push('## 未ロック艦一覧');
+			req.push('## 未ロック艦一覧(' + unlock_names.length + ')');
 			req.push(['unlock_names', unlock_names.join(', ')]);
 		}
 		// ロック装備一覧.
