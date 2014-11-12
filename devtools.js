@@ -23,6 +23,9 @@ var $enemy_id = null;
 var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
+var $f_damage_rate = 0;
+var $e_damage_rate = 0;
+
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -668,7 +671,7 @@ function on_battle_result(json) {
 		if (d.api_ship_id) {
 			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
-			if (rank == 'S' && d.api_dests == total) rank = '完S';
+			if (rank == 'S' && $f_damage_rate == 0) rank = '完S';
 		}
 		msg += ':' + rank;
 		var fleet = $enemy_list[$enemy_id];
@@ -801,6 +804,8 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 			if(i == 7) e_leader_lost = true;
 		}
 	}
+	$f_damage_rate = f_damage_total / f_hp_total;
+	$e_damage_rate = e_damage_total / e_hp_total;
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		if(f_damage_total == 0) {
 			req.push('推定：完S');
@@ -813,11 +818,9 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 		req.push('推定：A');
 		return;
 	}
-	var f_damage_rate = f_damage_total/f_hp_total;
-	var e_damage_rate = e_damage_total/e_hp_total;
-	var rate = e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
-			   f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
-			   e_damage_rate/f_damage_rate;
+	var rate = $e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
+			   $f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
+			   $e_damage_rate / $f_damage_rate;
 	if ((e_leader_lost && f_lost_count < e_lost_count) || rate >= 2.5) {
 		req.push('推定：B');
 		return;
