@@ -599,7 +599,7 @@ function on_port(json) {
 			var msg = ['YPS_fdeck_list' + f_id];
 			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 			var deck = $fdeck_list[f_id];
-			req.push(($combined_flag ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
+			req.push(($combined_flag && f_id <= 2 ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
 			var lv_sum = 0;
 			var drumcan = {ships:0, sum:0, msg:''};
 			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
