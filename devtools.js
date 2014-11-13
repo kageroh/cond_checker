@@ -16,6 +16,7 @@ var $next_enemy = null;
 var $is_boss = false;
 var $material = {};
 var $quest_count = 0;
+var $quest_exec_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
@@ -582,7 +583,7 @@ function on_port(json) {
 				}
 			}
 			if (msg.length > 1) {
-				req.push('## 任務');
+				req.push('## 任務(' + $quest_exec_count + '/' + $quest_count + ')');
 				req.push(msg);
 			}
 		}
@@ -1055,6 +1056,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var list = json.api_data.api_list;
 			if (!list) return;
 			$quest_count = json.api_data.api_count;
+			$quest_exec_count = json.api_data.api_exec_count;
 			if (json.api_data.api_disp_page == 1 && $quest_count != Object.keys($quest_list).length) {
 				$quest_list = {}; // 任務総数が変わったらリストをクリアする.
 			}
