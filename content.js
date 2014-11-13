@@ -81,7 +81,7 @@ function parse_markdown(a) {
 			if (end_tag != null)
 				html = insert_string(html, html.length - end_tag[0].length, toggle_button(id)); // 直前の終了タグの内側にトグルボタンを入れる.
 			else
-				html += toggle_button(id);
+				html = html.replace(/\n$/, "") + toggle_button(id) + "\n";
 			html += toggle_div(id);
 			html += parse_markdown(s);
 			html += '</div>';

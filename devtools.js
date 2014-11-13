@@ -507,15 +507,13 @@ function on_port(json) {
 		}
 		unlock_names.reverse();	// 最新の艦を先頭にする.
 		//
-		// 艦娘と装備の数を表示する.
+		// 艦娘と装備数を検出する.
 		var basic = json.api_data.api_basic;
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
 			$combined_flag = basic.api_combined_flag;
 		}
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship);
-		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem + '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 		//
 		// 資材変化を表示する.
 		var material = json.api_data.api_material;
@@ -531,22 +529,28 @@ function on_port(json) {
 		}
 		req.push('資材増減数:' + msg.join(', '));
 		//
-		// 未ロック艦一覧.
+		// 艦娘保有数、未ロック艦一覧、ロック艦キラ付一覧を表示する.
+		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship
+			+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+		var msg = ['YPS_ship_list'];
 		if (unlock_names.length > 0) {
-			req.push('## 未ロック艦一覧(' + unlock_names.length + ')');
-			req.push(['unlock_names', unlock_names.join(', ')]);
+			msg.push('## 未ロック艦一覧');
+			msg.push('\t|' + unlock_names.join(', '));
 		}
-		// ロック艦cond別一覧.
 		if (Object.keys(lock_condlist).length > 0) {
-			req.push('## ロック艦一覧 ***(' + cond85 + ') **(' + cond53 + ') *(' + cond50 + ')');
-			msg = ['lock_condlist', '\t==cond\t==艦名'];
+			msg.push('## ロック艦一覧');
+			msg.push('\t==cond\t==艦名'); // 表ヘッダ
 			for (var cond = 100; cond >= 0; --cond) {
 				var a = lock_condlist[cond];
 				if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + a.join(', '));
 			}
-			req.push(msg);
 		}
-		// ロック装備一覧.
+		msg.push('---');
+		if (msg.length > 2) req.push(msg);
+		//
+		// 装備数、ロック装備一覧を表示する.
+		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem
+			+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 		var lockeditem_ids = Object.keys(lockeditem_list);
 		if (lockeditem_ids.length > 0) {
 			lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
@@ -557,19 +561,20 @@ function on_port(json) {
 				// if (!ret) ret = a - b; // 種別ID値での大小判定.
 				return ret;
 			});
-			msg = ['lockeditem_list'];
+			var msg = ['YPS_lockeditem_list'];
+			msg.push('## ロック装備一覧');
 			msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
 			lockeditem_ids.forEach(function(id) {
 				var item = lockeditem_list[id];
 				msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
 			});
-			req.push('## ロック装備一覧');
+			msg.push('---');
 			req.push(msg);
 		}
 		//
 		// 遂行中任務を一覧表示する.
 		if (Object.keys($quest_list).length > 0) {
-			msg = ['quest_list'];
+			var msg = ['YPS_quest_list'];
 			for (var id in $quest_list) {
 				var quest = $quest_list[id];
 				if (quest.api_state > 1) {
@@ -583,7 +588,7 @@ function on_port(json) {
 				}
 			}
 			if (msg.length > 1) {
-				req.push('## 任務(' + $quest_exec_count + '/' + $quest_count + ')');
+				req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count);
 				req.push(msg);
 			}
 		}
@@ -591,7 +596,7 @@ function on_port(json) {
 		//
 		// 各艦隊の情報を一覧表示する.
 		for (var f_id in $fdeck_list) {
-			msg = ['fdeck_list' + f_id];
+			var msg = ['YPS_fdeck_list' + f_id];
 			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 			var deck = $fdeck_list[f_id];
 			req.push(($combined_flag ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
