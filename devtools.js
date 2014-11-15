@@ -896,9 +896,9 @@ function on_battle(json) {
 	calc_kouku_damage(airplane, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
 	calc_damage(nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
-	calc_damage(nowhps, d.api_hougeki1, $is_water ? null : nowhps_c);
+	calc_damage(nowhps, d.api_hougeki1, $combined_flag == 2 ? null : nowhps_c);
 	calc_damage(nowhps, d.api_hougeki2);
-	calc_damage(nowhps, d.api_hougeki3, $is_water ? nowhps_c : null);
+	calc_damage(nowhps, d.api_hougeki3, $combined_flag == 2 ? nowhps_c : null);
 	calc_damage(nowhps, d.api_raigeki, nowhps_c);
 	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
 	if (d.api_support_flag == 2) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
@@ -1174,7 +1174,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		$battle_count++;
 		$beginhps = null;
 		$beginhps_c = null;
-		$is_water = /water/.test(api_name);
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_battle_midnight/battle'
