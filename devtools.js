@@ -24,6 +24,7 @@ var $enemy_id = null;
 var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
+var $beginhps_c = null;
 var $f_damage_rate = 0;
 var $e_damage_rate = 0;
 
@@ -803,7 +804,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	}
 }
 
-function push_guess_result(req, nowhps, maxhps, beginhps) {
+function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c) {
 	// 友軍の轟沈／護衛退避には未対応
 	// 応急修理発動時の計算も不明
 	var f_damage_total = 0;
@@ -820,6 +821,16 @@ function push_guess_result(req, nowhps, maxhps, beginhps) {
 		var n = nowhps[i];
 		f_damage_total += beginhps[i] - Math.max(0, n);
 		f_hp_total += beginhps[i];
+		if (n <= 0) {
+			++f_lost_count;
+		}
+	}
+	for (var i = 1; i <= 6; ++i) {
+		// 連合第二友軍被害集計.
+		if(!maxhps_c || maxhps_c[i] == -1) continue;
+		var n = nowhps_c[i];
+		f_damage_total += beginhps_c[i] - Math.max(0, n);
+		f_hp_total += beginhps_c[i];
 		if (n <= 0) {
 			++f_lost_count;
 		}
@@ -916,7 +927,8 @@ function on_battle(json) {
 	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
 
 	if (!$beginhps) $beginhps = beginhps;
-	push_guess_result(req, nowhps, maxhps, $beginhps); // 第二艦隊はほぼ勝敗に影響しないので具体的な影響データあるまでは無視
+	if (!$beginhps_c) $beginhps_c = beginhps_c;
+	push_guess_result(req, nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
@@ -1161,6 +1173,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 昼戦開始.
 		$battle_count++;
 		$beginhps = null;
+		$beginhps_c = null;
 		$is_water = /water/.test(api_name);
 		func = on_battle;
 	}
@@ -1174,6 +1187,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 夜戦開始.
 		$battle_count++;
 		$beginhps = null;
+		$beginhps_c = null;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_sortie/night_to_day') {
@@ -1184,6 +1198,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 演習開始.
 		$battle_count = 1;
 		$beginhps = null;
+		$beginhps_c = null;
 		$battle_log = [];
 		func = on_battle;
 	}
