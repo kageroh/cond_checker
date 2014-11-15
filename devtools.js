@@ -688,8 +688,9 @@ function on_battle_result(json) {
 	var d = json.api_data;
 	var e = d.api_enemy_info;
 	var g = d.api_get_ship;
-	var mvp  = d.api_mvp;
-	var lost = d.api_lost_flag;
+	var mvp   = d.api_mvp;
+	var mvp_c = d.api_mvp_combined;
+	var lost  = d.api_lost_flag;
 	var msg  = '';
 	if (e) {
 		var rank = d.api_win_rank;
@@ -711,6 +712,11 @@ function on_battle_result(json) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
 		msg += '\nMVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp[mvp] + 'exp';
+	}
+	if (mvp_c) {
+		var id = $fdeck_list[2].api_ship[mvp_c-1];
+		var ship = $ship_list[id];
+		msg += '\nMVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp_combined[mvp_c] + 'exp';
 	}
 	if (lost) {
 		for (var i in lost) {
