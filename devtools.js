@@ -512,7 +512,7 @@ function on_port(json) {
 		if (basic) {
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
-			$combined_flag = basic.api_combined_flag;
+			$combined_flag = json.api_data.api_combined_flag;
 		}
 		//
 		// 資材変化を表示する.
