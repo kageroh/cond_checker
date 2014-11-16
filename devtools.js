@@ -636,8 +636,19 @@ function on_port(json) {
 		var msg = ['YPS_fdeck_list' + f_id];
 		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 		var deck = $fdeck_list[f_id];
-		req.push(($combined_flag && f_id <= 2 ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
-		push_fleet_status(msg, deck);
+		if ($combined_flag && f_id == 1) {
+			var deck2 = $fdeck_list[2];	// 連合第二艦隊は2固定.
+			push_fleet_status(msg, deck);
+			push_fleet_status(msg, deck2);
+			req.push('## 連合艦隊1+2: ' + deck.api_name + ' + ' + deck2.api_name);
+		}
+		else if ($combined_flag && f_id == 2) {
+			continue;	// f_id == 1 にてまとめて表示済み.
+		}
+		else {
+			push_fleet_status(msg, deck);
+			req.push('## 艦隊' + f_id + ': ' + deck.api_name);
+		}
 		req.push(msg);
 		var mission_end = deck.api_mission[2];
 		if (mission_end > 0) {
@@ -647,10 +658,6 @@ function on_port(json) {
 		}
 		else if (deck.api_id == $battle_deck_id) {
 			req.push('出撃中: ' + $battle_log.join(' →') + ' →');
-		}
-		else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2) {
-			req.push('出撃中');
-			$last_mission[f_id] = null; // 第一艦隊と同じ内容を表示しても意味がないので、空にしておく.
 		}
 		else {
 			if ($last_mission[f_id])
