@@ -454,6 +454,42 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 	return (nowhp < 0 ? 0 : nowhp) + '/' + maxhp + diff_name(nowhp, beginhp) + ':' + damage_name(nowhp, maxhp);
 }
 
+function push_fleet_status(msg, deck) {
+	var lv_sum = 0;
+	var drumcan = {ships:0, sum:0, msg:''};
+	for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
+		lv_sum += ship.lv;
+		var hp_str = '';	// hp.
+		var rp_str = '';	// 修理.
+		if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
+			hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
+			rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
+		}
+		var ndock = $ndock_list[s_id];
+		if (ndock) {
+			var c_date = new Date(ndock.api_complete_time);
+			rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
+		}
+		msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
+			+ '\t' + ship.name_lv()
+			+ '\t' + hp_str
+			+ '\t' + rp_str
+			+ '\t' + ship.fuel_name()
+			+ '\t' + ship.bull_name()
+			+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
+			);
+		var d = slotitem_count(ship.slot, 75);	// ドラム缶.
+		if (d) {
+			drumcan.ships++;
+			drumcan.sum += d;
+		}
+	}
+	if (drumcan.sum) {
+		drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
+	}
+	msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+}
+
 //------------------------------------------------------------------------
 // イベントハンドラ.
 //
@@ -601,39 +637,7 @@ function on_port(json) {
 		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 		var deck = $fdeck_list[f_id];
 		req.push(($combined_flag && f_id <= 2 ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
-		var lv_sum = 0;
-		var drumcan = {ships:0, sum:0, msg:''};
-		for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
-			lv_sum += ship.lv;
-			var hp_str = '';	// hp.
-			var rp_str = '';	// 修理.
-			if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
-				hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
-				rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
-			}
-			var ndock = $ndock_list[s_id];
-			if (ndock) {
-				var c_date = new Date(ndock.api_complete_time);
-				rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
-			}
-			msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
-				+ '\t' + ship.name_lv()
-				+ '\t' + hp_str
-				+ '\t' + rp_str
-				+ '\t' + ship.fuel_name()
-				+ '\t' + ship.bull_name()
-				+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
-				);
-			var d = slotitem_count(ship.slot, 75);	// ドラム缶.
-			if (d) {
-				drumcan.ships++;
-				drumcan.sum += d;
-			}
-		}
-		if (drumcan.sum) {
-			drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
-		}
-		msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+		push_fleet_status(msg, deck);
 		req.push(msg);
 		var mission_end = deck.api_mission[2];
 		if (mission_end > 0) {
