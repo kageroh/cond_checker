@@ -456,8 +456,10 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 
 function push_fleet_status(msg, deck) {
 	var lv_sum = 0;
+	var fleet_ships = 0;
 	var drumcan = {ships:0, sum:0, msg:''};
 	for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
+		fleet_ships++;
 		lv_sum += ship.lv;
 		var hp_str = '';	// hp.
 		var rp_str = '';	// 修理.
@@ -470,7 +472,7 @@ function push_fleet_status(msg, deck) {
 			var c_date = new Date(ndock.api_complete_time);
 			rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
 		}
-		msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
+		msg.push('\t' + ship.kira_cond_diff_name()
 			+ '\t' + ship.name_lv()
 			+ '\t' + hp_str
 			+ '\t' + rp_str
@@ -487,7 +489,7 @@ function push_fleet_status(msg, deck) {
 	if (drumcan.sum) {
 		drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
 	}
-	msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
 }
 
 //------------------------------------------------------------------------
