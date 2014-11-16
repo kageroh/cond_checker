@@ -510,9 +510,13 @@ function on_port(json) {
 	for (var id in $slotitem_list) {
 		var value = $slotitem_list[id];
 		if (value && value.locked) {
-			if (!lockeditem_list[value.item_id])
-				lockeditem_list[value.item_id] = {count:0, ship_names:[]};
-			lockeditem_list[value.item_id].count++;
+			var i = value.item_id;
+			var lv = value.level;
+			if (!lockeditem_list[i])
+				lockeditem_list[i] = [];
+			if (!lockeditem_list[i][lv])
+				lockeditem_list[i][lv] = {count:0, ship_names:[]};
+			lockeditem_list[i][lv].count++;
 		}
 		if (value && value.level) {
 			$leveling_slotitem++;
@@ -540,7 +544,7 @@ function on_port(json) {
 			ship.slot.forEach(function(id) {
 				var value = $slotitem_list[id];
 				if (value && value.locked)
-					lockeditem_list[value.item_id].ship_names.push(name);
+					lockeditem_list[value.item_id][value.level].ship_names.push(name);
 			});
 		}
 	}
@@ -604,8 +608,11 @@ function on_port(json) {
 		msg.push('## ロック装備一覧');
 		msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
 		lockeditem_ids.forEach(function(id) {
-			var item = lockeditem_list[id];
-			msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
+			for (lv in lockeditem_list[id]) {
+				var item = lockeditem_list[id][lv];
+				var lv_name = (lv > 0) ? '★+'+lv : '';
+				msg.push('\t' + slotitem_name(id) + lv_name + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', '));
+			}
 		});
 		msg.push('---');
 		req.push(msg);
