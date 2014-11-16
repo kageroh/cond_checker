@@ -458,204 +458,204 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 // イベントハンドラ.
 //
 function on_port(json) {
-		var req = [];
-		var unlock_names = [];
-		var lock_condlist = {};
-		var cond85 = 0;
-		var cond53 = 0;
-		var cond50 = 0;
-		var lockeditem_list = {};
-		var $unlock_slotitem = 0;
-		var $leveling_slotitem = 0;
-		//
-		// ロック装備を種類毎に集計する.
-		for (var id in $slotitem_list) {
-			var value = $slotitem_list[id];
-			if (value && value.locked) {
-				if (!lockeditem_list[value.item_id])
-					lockeditem_list[value.item_id] = {count:0, ship_names:[]};
-				lockeditem_list[value.item_id].count++;
-			}
-			if (value && value.level) {
-				$leveling_slotitem++;
-			}
+	var req = [];
+	var unlock_names = [];
+	var lock_condlist = {};
+	var cond85 = 0;
+	var cond53 = 0;
+	var cond50 = 0;
+	var lockeditem_list = {};
+	var $unlock_slotitem = 0;
+	var $leveling_slotitem = 0;
+	//
+	// ロック装備を種類毎に集計する.
+	for (var id in $slotitem_list) {
+		var value = $slotitem_list[id];
+		if (value && value.locked) {
+			if (!lockeditem_list[value.item_id])
+				lockeditem_list[value.item_id] = {count:0, ship_names:[]};
+			lockeditem_list[value.item_id].count++;
 		}
-		//
-		// ロック艦のcond別一覧、未ロック艦一覧、ロック装備持ち艦を検出する.
-		for (var id in $ship_list) {
-			var ship = $ship_list[id];
-			var name = ship.name_lv();
-			if (!ship.locked) {
-				var n = count_unless(ship.slot, -1); // スロット装備数.
-				$unlock_slotitem += n;
-				unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
-			}
-			else {	// locked
-				var cond = ship.c_cond;
-				if (!lock_condlist[cond]) lock_condlist[cond] = [];
-				lock_condlist[cond].push(name);
-				if      (cond >= 85) cond85++; // 三重キラ.
-				else if (cond >= 53) cond53++; // 回避向上キラ.
-				else if (cond >  49) cond50++; // キラ.
-			}
-			if (ship.slot) {
-				ship.slot.forEach(function(id) {
-					var value = $slotitem_list[id];
-					if (value && value.locked)
-						lockeditem_list[value.item_id].ship_names.push(name);
-				});
-			}
+		if (value && value.level) {
+			$leveling_slotitem++;
 		}
-		unlock_names.reverse();	// 最新の艦を先頭にする.
-		//
-		// 艦娘と装備数を検出する.
-		var basic = json.api_data.api_basic;
-		if (basic) {
-			$max_ship     = basic.api_max_chara;
-			$max_slotitem = basic.api_max_slotitem + 3;
-			$combined_flag = json.api_data.api_combined_flag;
+	}
+	//
+	// ロック艦のcond別一覧、未ロック艦一覧、ロック装備持ち艦を検出する.
+	for (var id in $ship_list) {
+		var ship = $ship_list[id];
+		var name = ship.name_lv();
+		if (!ship.locked) {
+			var n = count_unless(ship.slot, -1); // スロット装備数.
+			$unlock_slotitem += n;
+			unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
 		}
-		//
-		// 資材変化を表示する.
-		var material = json.api_data.api_material;
-		var msg = [];
-		if (material) {
-			material.forEach(function(data) {
-				var id = data.api_id;
-				var value = data.api_value;
-				var diff  = diff_name(value, $material[id]);
-				$material[id] = value;
-				if (diff.length) msg.push(item_name(id) + diff);
+		else {	// locked
+			var cond = ship.c_cond;
+			if (!lock_condlist[cond]) lock_condlist[cond] = [];
+			lock_condlist[cond].push(name);
+			if      (cond >= 85) cond85++; // 三重キラ.
+			else if (cond >= 53) cond53++; // 回避向上キラ.
+			else if (cond >  49) cond50++; // キラ.
+		}
+		if (ship.slot) {
+			ship.slot.forEach(function(id) {
+				var value = $slotitem_list[id];
+				if (value && value.locked)
+					lockeditem_list[value.item_id].ship_names.push(name);
 			});
 		}
-		req.push('資材増減数:' + msg.join(', '));
-		//
-		// 艦娘保有数、未ロック艦一覧、ロック艦キラ付一覧を表示する.
-		req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship
-			+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
-		var msg = ['YPS_ship_list'];
-		if (unlock_names.length > 0) {
-			msg.push('## 未ロック艦一覧');
-			msg.push('\t|' + unlock_names.join(', '));
+	}
+	unlock_names.reverse();	// 最新の艦を先頭にする.
+	//
+	// 艦娘と装備数を検出する.
+	var basic = json.api_data.api_basic;
+	if (basic) {
+		$max_ship     = basic.api_max_chara;
+		$max_slotitem = basic.api_max_slotitem + 3;
+		$combined_flag = json.api_data.api_combined_flag;
+	}
+	//
+	// 資材変化を表示する.
+	var material = json.api_data.api_material;
+	var msg = [];
+	if (material) {
+		material.forEach(function(data) {
+			var id = data.api_id;
+			var value = data.api_value;
+			var diff  = diff_name(value, $material[id]);
+			$material[id] = value;
+			if (diff.length) msg.push(item_name(id) + diff);
+		});
+	}
+	req.push('資材増減数:' + msg.join(', '));
+	//
+	// 艦娘保有数、未ロック艦一覧、ロック艦キラ付一覧を表示する.
+	req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship
+		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+	var msg = ['YPS_ship_list'];
+	if (unlock_names.length > 0) {
+		msg.push('## 未ロック艦一覧');
+		msg.push('\t|' + unlock_names.join(', '));
+	}
+	if (Object.keys(lock_condlist).length > 0) {
+		msg.push('## ロック艦一覧');
+		msg.push('\t==cond\t==艦名'); // 表ヘッダ
+		for (var cond = 100; cond >= 0; --cond) {
+			var a = lock_condlist[cond];
+			if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + a.join(', '));
 		}
-		if (Object.keys(lock_condlist).length > 0) {
-			msg.push('## ロック艦一覧');
-			msg.push('\t==cond\t==艦名'); // 表ヘッダ
-			for (var cond = 100; cond >= 0; --cond) {
-				var a = lock_condlist[cond];
-				if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + a.join(', '));
-			}
-		}
+	}
+	msg.push('---');
+	if (msg.length > 2) req.push(msg);
+	//
+	// 装備数、ロック装備一覧を表示する.
+	req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem
+		+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
+	var lockeditem_ids = Object.keys(lockeditem_list);
+	if (lockeditem_ids.length > 0) {
+		lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
+			var aa = $mst_slotitem[a];
+			var bb = $mst_slotitem[b];
+			var ret = aa.api_type[2] - bb.api_type[2]; // 装備分類の大小判定.
+			if (!ret) ret = aa.api_sortno - bb.api_sortno; // 分類内の大小判定.
+			// if (!ret) ret = a - b; // 種別ID値での大小判定.
+			return ret;
+		});
+		var msg = ['YPS_lockeditem_list'];
+		msg.push('## ロック装備一覧');
+		msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
+		lockeditem_ids.forEach(function(id) {
+			var item = lockeditem_list[id];
+			msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
+		});
 		msg.push('---');
-		if (msg.length > 2) req.push(msg);
-		//
-		// 装備数、ロック装備一覧を表示する.
-		req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem
-			+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
-		var lockeditem_ids = Object.keys(lockeditem_list);
-		if (lockeditem_ids.length > 0) {
-			lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
-				var aa = $mst_slotitem[a];
-				var bb = $mst_slotitem[b];
-				var ret = aa.api_type[2] - bb.api_type[2]; // 装備分類の大小判定.
-				if (!ret) ret = aa.api_sortno - bb.api_sortno; // 分類内の大小判定.
-				// if (!ret) ret = a - b; // 種別ID値での大小判定.
-				return ret;
-			});
-			var msg = ['YPS_lockeditem_list'];
-			msg.push('## ロック装備一覧');
-			msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
-			lockeditem_ids.forEach(function(id) {
-				var item = lockeditem_list[id];
-				msg.push('\t' + slotitem_name(id) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', ')); 
-			});
-			msg.push('---');
+		req.push(msg);
+	}
+	//
+	// 遂行中任務を一覧表示する.
+	if (Object.keys($quest_list).length > 0) {
+		var msg = ['YPS_quest_list'];
+		for (var id in $quest_list) {
+			var quest = $quest_list[id];
+			if (quest.api_state > 1) {
+				var progress = (quest.api_state == 3) ? '* 達成!!'
+					: (quest.api_progress_flag == 2) ? '* 遂行80%'
+					: (quest.api_progress_flag == 1) ? '* 遂行50%'
+					: '* 遂行中';
+				var title = quest.api_title;
+				if (quest.api_no == 214) title += weekly_name();
+				msg.push(progress + ':' + title);
+			}
+		}
+		if (msg.length > 1) {
+			req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count);
 			req.push(msg);
 		}
-		//
-		// 遂行中任務を一覧表示する.
-		if (Object.keys($quest_list).length > 0) {
-			var msg = ['YPS_quest_list'];
-			for (var id in $quest_list) {
-				var quest = $quest_list[id];
-				if (quest.api_state > 1) {
-					var progress = (quest.api_state == 3) ? '* 達成!!'
-						: (quest.api_progress_flag == 2) ? '* 遂行80%'
-						: (quest.api_progress_flag == 1) ? '* 遂行50%'
-						: '* 遂行中';
-					var title = quest.api_title;
-					if (quest.api_no == 214) title += weekly_name();
-					msg.push(progress + ':' + title);
-				}
+	}
+	if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
+	//
+	// 各艦隊の情報を一覧表示する.
+	for (var f_id in $fdeck_list) {
+		var msg = ['YPS_fdeck_list' + f_id];
+		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
+		var deck = $fdeck_list[f_id];
+		req.push(($combined_flag && f_id <= 2 ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
+		var lv_sum = 0;
+		var drumcan = {ships:0, sum:0, msg:''};
+		for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
+			lv_sum += ship.lv;
+			var hp_str = '';	// hp.
+			var rp_str = '';	// 修理.
+			if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
+				hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
+				rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
 			}
-			if (msg.length > 1) {
-				req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count);
-				req.push(msg);
+			var ndock = $ndock_list[s_id];
+			if (ndock) {
+				var c_date = new Date(ndock.api_complete_time);
+				rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
 			}
-		}
-		if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
-		//
-		// 各艦隊の情報を一覧表示する.
-		for (var f_id in $fdeck_list) {
-			var msg = ['YPS_fdeck_list' + f_id];
-			msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
-			var deck = $fdeck_list[f_id];
-			req.push(($combined_flag && f_id <= 2 ? '## 連合艦隊' : '## 艦隊') + f_id + ': ' + deck.api_name);
-			var lv_sum = 0;
-			var drumcan = {ships:0, sum:0, msg:''};
-			for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
-				lv_sum += ship.lv;
-				var hp_str = '';	// hp.
-				var rp_str = '';	// 修理.
-				if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
-					hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
-					rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
-				}
-				var ndock = $ndock_list[s_id];
-				if (ndock) {
-					var c_date = new Date(ndock.api_complete_time);
-					rp_str = '入渠' + ndock.api_id + ':' + c_date.toLocaleString();
-				}
-				msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
-					+ '\t' + ship.name_lv()
-					+ '\t' + hp_str
-					+ '\t' + rp_str
-					+ '\t' + ship.fuel_name()
-					+ '\t' + ship.bull_name()
-					+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
-					);
-				var d = slotitem_count(ship.slot, 75);	// ドラム缶.
-				if (d) {
-					drumcan.ships++;
-					drumcan.sum += d;
-				}
-			}
-			if (drumcan.sum) {
-				drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
-			}
-			msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
-			req.push(msg);
-			var mission_end = deck.api_mission[2];
-			if (mission_end > 0) {
-				var d = new Date(mission_end);
-				var id = deck.api_mission[1];
-				req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
-			}
-			else if (deck.api_id == $battle_deck_id) {
-				req.push('出撃中: ' + $battle_log.join(' →') + ' →');
-			}
-			else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2) {
-				req.push('出撃中');
-				$last_mission[f_id] = null; // 第一艦隊と同じ内容を表示しても意味がないので、空にしておく.
-			}
-			else {
-				if ($last_mission[f_id])
-					req.push($last_mission[f_id]);
-				else
-					req.push('母港待機中');
+			msg.push('\t' + (i + 1) + ship.kira_cond_diff_name()
+				+ '\t' + ship.name_lv()
+				+ '\t' + hp_str
+				+ '\t' + rp_str
+				+ '\t' + ship.fuel_name()
+				+ '\t' + ship.bull_name()
+				+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
+				);
+			var d = slotitem_count(ship.slot, 75);	// ドラム缶.
+			if (d) {
+				drumcan.ships++;
+				drumcan.sum += d;
 			}
 		}
-		chrome.extension.sendRequest(req);
+		if (drumcan.sum) {
+			drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
+		}
+		msg.push('\t合計:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+		req.push(msg);
+		var mission_end = deck.api_mission[2];
+		if (mission_end > 0) {
+			var d = new Date(mission_end);
+			var id = deck.api_mission[1];
+			req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
+		}
+		else if (deck.api_id == $battle_deck_id) {
+			req.push('出撃中: ' + $battle_log.join(' →') + ' →');
+		}
+		else if ($combined_flag && $battle_deck_id == 1 && deck.api_id == 2) {
+			req.push('出撃中');
+			$last_mission[f_id] = null; // 第一艦隊と同じ内容を表示しても意味がないので、空にしておく.
+		}
+		else {
+			if ($last_mission[f_id])
+				req.push($last_mission[f_id]);
+			else
+				req.push('母港待機中');
+		}
+	}
+	chrome.extension.sendRequest(req);
 }
 
 function on_next_cell(json) {
