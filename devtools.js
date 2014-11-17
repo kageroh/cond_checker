@@ -21,6 +21,7 @@ var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
 var $enemy_id = null;
+var $enemy_formation_id = 0;
 var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
@@ -724,7 +725,7 @@ function on_battle_result(json) {
 		msg += ':' + rank;
 		var fleet = $enemy_list[$enemy_id];
 		if (fleet) {
-			fleet[0] = e.api_deck_name + fleet[0] + ':';
+			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
 		}
 		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + rank);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
@@ -928,6 +929,7 @@ function on_battle(json) {
 	$battle_deck_id = fdeck.api_id;
 	var fmt = null;
 	if (d.api_formation) {
+		$enemy_formation_id = d.api_formation[1];
 		fmt = formation_name(d.api_formation[0]) + '/'
 			+ match_name(d.api_formation[2]) + '/'
 			+ formation_name(d.api_formation[1]);
@@ -957,7 +959,7 @@ function on_battle(json) {
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c, beginhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
-	var enemy_fleet = ['(' + formation_name(d.api_formation[1]) + ')'];
+	var enemy_fleet = ['???'];
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
