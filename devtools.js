@@ -440,7 +440,8 @@ function is_airplane(item) {
 	case 7:	// 艦上爆撃機.
 	case 8:	// 艦上攻撃機.
 	case 9:	// 艦上偵察機.
-	case 10:// 水上爆撃機.
+	case 10:// 水上偵察機.
+	case 11:// 水上爆撃機.
 	case 25:// オートジャイロ.
 	case 26:// 対潜哨戒機.
 		return true;
@@ -493,6 +494,21 @@ function push_fleet_status(msg, deck) {
 		drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
 	}
 	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+}
+
+//------------------------------------------------------------------------
+// デバッグダンプ.
+//
+function debug_print_mst() {
+	var msg = ['YPS_mst_slotitem', '\t==id\t==name\t==type0\t==type1\t==type2\t==type3'];
+	for (var id in $mst_slotitem) {
+		var item = $mst_slotitem[id];
+		msg.push('\t' + item.api_id + '\t' + item.api_name + '\t' + item.api_type.join('\t'));
+	}
+	var req = [];
+	req.push('## DEBUG mst_slotitem');
+	req.push(msg);
+	chrome.extension.sendRequest(req);
 }
 
 //------------------------------------------------------------------------
@@ -1006,6 +1022,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			chrome.extension.sendRequest("## ロード完了");
+			// debug_print_mst();
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
