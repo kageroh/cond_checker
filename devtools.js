@@ -917,9 +917,23 @@ function on_battle(json) {
 	calc_kouku_damage(airplane, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
 	calc_damage(nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(nowhps, d.api_hougeki, nowhps_c);	// midnight
-	calc_damage(nowhps, d.api_hougeki1, $combined_flag == 2 ? null : nowhps_c);
-	calc_damage(nowhps, d.api_hougeki2);
-	calc_damage(nowhps, d.api_hougeki3, $combined_flag == 2 ? nowhps_c : null);
+	switch ($combined_flag) {
+	default:// 不明.
+	case 0: // 通常艦隊.
+		calc_damage(nowhps, d.api_hougeki1);	//　第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃二巡目.
+		break;
+	case 1: // 連合艦隊(機動部隊).
+		calc_damage(nowhps, d.api_hougeki1, nowhps_c);	// 第二艦隊砲撃.
+		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki3);	//　第一艦隊砲撃二巡目.
+		break;
+	case 2: // 連合艦隊(水上部隊).
+		calc_damage(nowhps, d.api_hougeki1);	//　第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃二順目.
+		calc_damage(nowhps, d.api_hougeki3, nowhps_c);	// 第二艦隊砲撃.
+		break;
+	}
 	calc_damage(nowhps, d.api_raigeki, nowhps_c);
 	if (d.api_support_flag == 1) calc_damage(nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
 	if (d.api_support_flag == 2) calc_damage(nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
