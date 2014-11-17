@@ -302,11 +302,13 @@ function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
 	}
 }
 
-function slotitem_name(id, n, max) {
+function slotitem_name(id, lv, n, max) {
 	var item = $mst_slotitem[id];
-	if (is_airplane(item) && n) return item.api_name + 'x' + n + percent_name_unless100(n, max);
-	if (item) return item.api_name;
-	return id.toString();
+	if (!item) return id.toString();	// unknown slotitem.
+	var name = item.api_name;
+	if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
+	if (is_airplane(item) && n) name += 'x' + n + percent_name_unless100(n, max);	// 航空機なら、機数と搭載割合を追加する.
+	return name;
 }
 
 function ship_name(id) {
@@ -407,7 +409,7 @@ function slotitem_names(slot, onslot, maxslot) {
 	for (var i = 0; i < slot.length; ++i) {
 		var value = $slotitem_list[slot[i]];
 		if (value) {
-			a.push(slotitem_name(value.item_id, onslot[i], maxslot[i]));
+			a.push(slotitem_name(value.item_id, value.level, onslot[i], maxslot[i]));
 		}
 	}
 	return a.join(', ');
@@ -609,10 +611,9 @@ function on_port(json) {
 		msg.push('## ロック装備一覧');
 		msg.push('\t==装備名\t==個数\t==使用艦名'); // 表ヘッダ.
 		lockeditem_ids.forEach(function(id) {
-			for (lv in lockeditem_list[id]) {
+			for (var lv in lockeditem_list[id]) {
 				var item = lockeditem_list[id][lv];
-				var lv_name = (lv > 0) ? '★+'+lv : '';
-				msg.push('\t' + slotitem_name(id) + lv_name + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', '));
+				msg.push('\t' + slotitem_name(id, lv) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', '));
 			}
 		});
 		msg.push('---');
