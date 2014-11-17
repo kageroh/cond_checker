@@ -831,6 +831,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 	var f_damage_total = 0;
 	var f_hp_total = 0;
 	var f_lost_count = 0;
+	var f_count = 0;
 	var e_damage_total = 0;
 	var e_hp_total = 0;
 	var e_count = 0;
@@ -840,6 +841,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 		// 友軍被害集計.
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
+		++f_count;
 		f_damage_total += beginhps[i] - Math.max(0, n);
 		f_hp_total += beginhps[i];
 		if (n <= 0) {
@@ -850,6 +852,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 		// 連合第二友軍被害集計.
 		if(!maxhps_c || maxhps_c[i] == -1) continue;
 		var n = nowhps_c[i];
+		++f_count;
 		f_damage_total += beginhps_c[i] - Math.max(0, n);
 		f_hp_total += beginhps_c[i];
 		if (n <= 0) {
@@ -891,7 +894,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 	} else if(rate >= 1){ //要検証
 		req.push('推定：C');
 		return;
-	} else {
+	} else if (f_lost_count < f_count/2) { // 要検証.
 		req.push('推定：D');
 		return;
 	}
