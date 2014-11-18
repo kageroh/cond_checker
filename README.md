@@ -1,4 +1,4 @@
-# 艦これ余所見プレイ支援 KanColle-YPS
+# 艦これ余所見プレイ支援 KanColleYPS
 * 開発サイト: https://github.com/hkuno9000/KanColle-YPS
 * 公開サイト: http://hkuno9000.github.io/KanColle-YPS
 
@@ -32,6 +32,9 @@ Flash PlayerはChrome内蔵のほうを使用してください
 
 ### 戦況画面サンプル
 ![battle screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-battle.png)
+
+### 帰港画面サンプル
+![battle screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-ret.png)
 
 ### ロック艦一覧（cond降順)サンプル
 ![locked ship screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-cond-list.png)
