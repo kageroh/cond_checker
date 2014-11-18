@@ -33,6 +33,12 @@ Flash PlayerはChrome内蔵のほうを使用してください
 ### 戦況画面サンプル
 ![battle screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-battle.png)
 
+### ロック艦一覧（cond降順)サンプル
+![locked ship screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-cond-list.png)
+
+### ロック装備一覧（改修中★とレベル数付)サンプル
+![locked slotitem screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-slotitem-list.png)
+
 ## 注意事項
 * 修復要員、修復女神の装備表示は、修復発動後の変動に対応していない可能性があるので、表示を鵜呑みにすると危険です。大破進撃は自己責任でお願いします。
 
