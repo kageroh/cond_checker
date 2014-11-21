@@ -520,6 +520,7 @@ function on_port(json) {
 	var cond85 = 0;
 	var cond53 = 0;
 	var cond50 = 0;
+	var unlock_lv10 = 0;
 	var lockeditem_list = {};
 	var $unlock_slotitem = 0;
 	var $leveling_slotitem = 0;
@@ -549,6 +550,7 @@ function on_port(json) {
 			var n = count_unless(ship.slot, -1); // スロット装備数.
 			$unlock_slotitem += n;
 			unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
+			if (ship.lv >= 10) unlock_lv10++;
 		}
 		else {	// locked
 			var cond = ship.c_cond;
@@ -594,6 +596,7 @@ function on_port(json) {
 	var ships = Object.keys($ship_list).length;
 	if ($max_ship <= ships)          req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
 	else if ($max_ship - ships <= 5) req.push('### @!!艦娘保有数が上限に近いです!!@'); // 警告表示. 
+	if (unlock_lv10)　req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
