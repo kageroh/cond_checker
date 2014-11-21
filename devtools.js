@@ -596,7 +596,7 @@ function on_port(json) {
 	var ships = Object.keys($ship_list).length;
 	if ($max_ship <= ships)          req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
 	else if ($max_ship - ships <= 5) req.push('### @!!艦娘保有数が上限に近いです!!@'); // 警告表示. 
-	if (unlock_lv10)　req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
+	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
@@ -617,8 +617,8 @@ function on_port(json) {
 	//
 	// 装備数、ロック装備一覧を表示する.
 	var items = Object.keys($slotitem_list).length;
-	if ($max_slotitem　<= items)           req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
-	else if ($max_slotitem　- items <= 20) req.push('### @!!装備保有数が上限に近いです!!@'); // 警告表示. 
+	if ($max_slotitem <= items)           req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
+	else if ($max_slotitem - items <= 20) req.push('### @!!装備保有数が上限に近いです!!@'); // 警告表示. 
 	req.push('装備保有数:' + items + '/' + $max_slotitem
 		+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 	var lockeditem_ids = Object.keys(lockeditem_list);
@@ -950,17 +950,17 @@ function on_battle(json) {
 	switch ($combined_flag) {
 	default:// 不明.
 	case 0: // 通常艦隊.
-		calc_damage(nowhps, d.api_hougeki1);	//　第一艦隊砲撃一巡目.
-		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃二巡目.
+		calc_damage(nowhps, d.api_hougeki1);	// 第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki2);	// 第一艦隊砲撃二巡目.
 		break;
 	case 1: // 連合艦隊(機動部隊).
 		calc_damage(nowhps, d.api_hougeki1, nowhps_c);	// 第二艦隊砲撃.
-		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃一巡目.
-		calc_damage(nowhps, d.api_hougeki3);	//　第一艦隊砲撃二巡目.
+		calc_damage(nowhps, d.api_hougeki2);	// 第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki3);	// 第一艦隊砲撃二巡目.
 		break;
 	case 2: // 連合艦隊(水上部隊).
-		calc_damage(nowhps, d.api_hougeki1);	//　第一艦隊砲撃一巡目.
-		calc_damage(nowhps, d.api_hougeki2);	//　第一艦隊砲撃二順目.
+		calc_damage(nowhps, d.api_hougeki1);	// 第一艦隊砲撃一巡目.
+		calc_damage(nowhps, d.api_hougeki2);	// 第一艦隊砲撃二順目.
 		calc_damage(nowhps, d.api_hougeki3, nowhps_c);	// 第二艦隊砲撃.
 		break;
 	}
