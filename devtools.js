@@ -97,8 +97,7 @@ function update_ship_list(list, is_all) {
 	save_storage('ship_list', $ship_list);
 }
 
-function update_enemy_list(id, fleet) {
-	$enemy_list[id] = fleet;
+function update_enemy_list() {
 	save_storage('enemy_list', $enemy_list);
 }
 
@@ -743,6 +742,7 @@ function on_battle_result(json) {
 		var fleet = $enemy_list[$enemy_id];
 		if (fleet) {
 			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
+			update_enemy_list();
 		}
 		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + rank);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
@@ -993,7 +993,7 @@ function on_battle(json) {
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c, beginhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
-	var enemy_fleet = ['???'];
+	var enemy_fleet = [$enemy_list[$enemy_id] ? $enemy_list[$enemy_id][0] : '???'];
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
@@ -1002,7 +1002,8 @@ function on_battle(json) {
 		enemy_fleet.push(name);
 	}
 	if ($enemy_id) { // 演習は$enemy_idが空
-		update_enemy_list($enemy_id, enemy_fleet);
+		$enemy_list[$enemy_id] = enemy_fleet;
+		update_enemy_list();
 	}
 	chrome.extension.sendRequest(req);
 }
