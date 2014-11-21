@@ -591,7 +591,10 @@ function on_port(json) {
 	req.push('資材増減数:' + msg.join(', '));
 	//
 	// 艦娘保有数、未ロック艦一覧、ロック艦キラ付一覧を表示する.
-	req.push('艦娘保有数:' + Object.keys($ship_list).length + '/' + $max_ship
+	var ships = Object.keys($ship_list).length;
+	if ($max_ship <= ships)          req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
+	else if ($max_ship - ships <= 5) req.push('### @!!艦娘保有数が上限に近いです!!@'); // 警告表示. 
+	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
@@ -610,7 +613,10 @@ function on_port(json) {
 	if (msg.length > 2) req.push(msg);
 	//
 	// 装備数、ロック装備一覧を表示する.
-	req.push('装備保有数:' + Object.keys($slotitem_list).length + '/' + $max_slotitem
+	var items = Object.keys($slotitem_list).length;
+	if ($max_slotitem　<= items)           req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
+	else if ($max_slotitem　- items <= 20) req.push('### @!!装備保有数が上限に近いです!!@'); // 警告表示. 
+	req.push('装備保有数:' + items + '/' + $max_slotitem
 		+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 	var lockeditem_ids = Object.keys(lockeditem_list);
 	if (lockeditem_ids.length > 0) {
@@ -636,7 +642,8 @@ function on_port(json) {
 	}
 	//
 	// 遂行中任務を一覧表示する.
-	if (Object.keys($quest_list).length > 0) {
+	var quests = Object.keys($quest_list).length;
+	if (quests > 0) {
 		var msg = ['YPS_quest_list'];
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
@@ -655,7 +662,7 @@ function on_port(json) {
 			req.push(msg);
 		}
 	}
-	if (Object.keys($quest_list).length != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
+	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 	//
 	// 各艦隊の情報を一覧表示する.
 	for (var f_id in $fdeck_list) {

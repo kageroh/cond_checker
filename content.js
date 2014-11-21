@@ -94,6 +94,7 @@ function parse_markdown(a) {
 		// 色付け.
 		s = s.replace(/撃沈---/g, '<span style="color:steelblue">$&</span>');
 		s = s.replace(/大破!!!/g, '<span style="color:red">$&</span>');
+		s = s.replace(/@!!(.+)!!@/g, '<span style="color:red">$1</span>');
 		// markdown書式を変換する.
 		if      (/^--+/.test(s))	t = "<hr>";
 		else if (/^#### /.test(s))	t = s.replace(/^#+ (.+)/, '<h5 class="markdown">$1</h5>');
