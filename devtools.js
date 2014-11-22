@@ -321,6 +321,13 @@ function ship_name(id) {
 	return id.toString();
 }
 
+function shiplist_names(list) {	// Shipの配列をlv降順に並べて、","区切りの艦名Lv文字列化する.
+	list.sort(function(a, b) { return b.lv - a.lv; });
+	var names = [];
+	for (var i in list) names.push(list[i].name_lv());
+	return names.join(', ');
+}
+
 function msec_name(msec) {
 	var sec = msec / 1000;
 	var min = sec / 60;
@@ -534,7 +541,7 @@ function on_port(json) {
 			if (!lockeditem_list[i])
 				lockeditem_list[i] = [];
 			if (!lockeditem_list[i][lv])
-				lockeditem_list[i][lv] = {count:0, ship_names:[]};
+				lockeditem_list[i][lv] = {count:0, shiplist:[]};
 			lockeditem_list[i][lv].count++;
 		}
 		if (value && value.level) {
@@ -545,17 +552,18 @@ function on_port(json) {
 	// ロック艦のcond別一覧、未ロック艦一覧、ロック装備持ち艦を検出する.
 	for (var id in $ship_list) {
 		var ship = $ship_list[id];
-		var name = ship.name_lv();
 		if (!ship.locked) {
 			var n = count_unless(ship.slot, -1); // スロット装備数.
 			$unlock_slotitem += n;
-			unlock_names.push(name + (n ? "*" : "")); // 装備持ちなら、名前の末尾に"*"を付ける.
+			var name = ship.name_lv();
+			if (n > 0) name += "*"; // 装備持ちなら、名前の末尾に"*"を付ける.
+			unlock_names.push(name);
 			if (ship.lv >= 10) unlock_lv10++;
 		}
 		else {	// locked
 			var cond = ship.c_cond;
 			if (!lock_condlist[cond]) lock_condlist[cond] = [];
-			lock_condlist[cond].push(name);
+			lock_condlist[cond].push(ship);
 			if      (cond >= 85) cond85++; // 三重キラ.
 			else if (cond >= 53) cond53++; // 回避向上キラ.
 			else if (cond >  49) cond50++; // キラ.
@@ -564,7 +572,7 @@ function on_port(json) {
 			ship.slot.forEach(function(id) {
 				var value = $slotitem_list[id];
 				if (value && value.locked)
-					lockeditem_list[value.item_id][value.level].ship_names.push(name);
+					lockeditem_list[value.item_id][value.level].shiplist.push(ship);
 			});
 		}
 	}
@@ -609,7 +617,7 @@ function on_port(json) {
 		msg.push('\t==cond\t==艦名'); // 表ヘッダ
 		for (var cond = 100; cond >= 0; --cond) {
 			var a = lock_condlist[cond];
-			if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + a.join(', '));
+			if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + shiplist_names(a));
 		}
 	}
 	msg.push('---');
@@ -637,7 +645,7 @@ function on_port(json) {
 		lockeditem_ids.forEach(function(id) {
 			for (var lv in lockeditem_list[id]) {
 				var item = lockeditem_list[id][lv];
-				msg.push('\t' + slotitem_name(id, lv) + '\t' + item.ship_names.length + '/' + item.count + '\t|' + item.ship_names.join(', '));
+				msg.push('\t' + slotitem_name(id, lv) + '\t' + item.shiplist.length + '/' + item.count + '\t|' + shiplist_names(item.shiplist));
 			}
 		});
 		msg.push('---');
