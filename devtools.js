@@ -619,8 +619,9 @@ function on_port(json) {
 	//
 	// 艦娘保有数、未ロック艦一覧、改造可能艦一覧、ロック艦キラ付一覧を表示する.
 	var ships = Object.keys($ship_list).length;
-	if ($max_ship <= ships)          req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
-	else if ($max_ship - ships <= 5) req.push('### @!!艦娘保有数が上限に近いです!!@'); // 警告表示. 
+	var space = $max_ship - ships;
+	if (space <= 0)      req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
+	else if (space <= 5) req.push('### @!!艦娘保有数の上限まで残り' + space + '!!@'); // 警告表示. 
 	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length + ', 改造可能:' + kaizou_list.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
@@ -646,8 +647,9 @@ function on_port(json) {
 	//
 	// 装備数、ロック装備一覧を表示する.
 	var items = Object.keys($slotitem_list).length;
-	if ($max_slotitem <= items)           req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
-	else if ($max_slotitem - items <= 20) req.push('### @!!装備保有数が上限に近いです!!@'); // 警告表示. 
+	var space = $max_slotitem - items;
+	if (space <= 0)       req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
+	else if (space <= 20) req.push('### @!!装備保有数の上限まで残り' + space + '!!@'); // 警告表示. 
 	req.push('装備保有数:' + items + '/' + $max_slotitem
 		+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
 	var lockeditem_ids = Object.keys(lockeditem_list);
