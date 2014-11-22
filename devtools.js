@@ -68,6 +68,11 @@ Ship.prototype.bull_name = function() {
 	return ''; // 100% or unknown
 };
 
+Ship.prototype.can_kaizou = function() {
+	var afterlv = $mst_ship[this.ship_id].api_afterlv;
+	return afterlv && afterlv <= this.lv;
+};
+
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -538,6 +543,7 @@ function on_port(json) {
 	var cond53 = 0;
 	var cond50 = 0;
 	var unlock_lv10 = 0;
+	var kaizou_list = [];
 	var lockeditem_list = {};
 	var $unlock_slotitem = 0;
 	var $leveling_slotitem = 0;
@@ -585,6 +591,7 @@ function on_port(json) {
 					lockeditem_list[value.item_id][value.level].shiplist.push(ship);
 			});
 		}
+		if (ship.can_kaizou()) kaizou_list.push(ship);
 	}
 	unlock_names.reverse();	// 最新の艦を先頭にする.
 	//
@@ -610,17 +617,21 @@ function on_port(json) {
 	}
 	req.push('資材増減数:' + msg.join(', '));
 	//
-	// 艦娘保有数、未ロック艦一覧、ロック艦キラ付一覧を表示する.
+	// 艦娘保有数、未ロック艦一覧、改造可能艦一覧、ロック艦キラ付一覧を表示する.
 	var ships = Object.keys($ship_list).length;
 	if ($max_ship <= ships)          req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
 	else if ($max_ship - ships <= 5) req.push('### @!!艦娘保有数が上限に近いです!!@'); // 警告表示. 
 	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
-		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+		+ '(未ロック:' + unlock_names.length + ', 改造可能:' + kaizou_list.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧');
 		msg.push('\t|' + unlock_names.join(', '));
+	}
+	if (kaizou_list.length > 0) {
+		msg.push('## 改造可能艦一覧');
+		msg.push('\t|' + shiplist_names(kaizou_list));
 	}
 	if (Object.keys(lock_condlist).length > 0) {
 		msg.push('## ロック艦一覧');
