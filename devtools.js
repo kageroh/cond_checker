@@ -322,9 +322,19 @@ function ship_name(id) {
 }
 
 function shiplist_names(list) {	// Shipの配列をlv降順に並べて、","区切りの艦名Lv文字列化する.
-	list.sort(function(a, b) { return b.lv - a.lv; });
+	list.sort(function(a, b) { return (b.lv == a.lv) ? a.id - b.id : b.lv - a.lv; }); // lv降順、同一lvならid昇順(古い順)でソートする.
 	var names = [];
-	for (var i in list) names.push(list[i].name_lv());
+	var last = null;
+	for (var i in list) {
+		if (!last || last.ship != list[i]) names.push(last = {count:0, ship:list[i]});
+		last.count++;
+	}
+	for (var i in names) {
+		var e = names[i];
+		var name = e.ship.name_lv();
+		if (e.count > 1) name += "x" + e.count;	// 同一艦は x N で束ねる.
+		names[i] = name;
+	}
 	return names.join(', ');
 }
 
