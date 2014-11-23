@@ -46,6 +46,7 @@ function Ship(data, ship) {
 	this.locked	= data.api_locked;
 	this.ndock_time	= data.api_ndock_time;
 	this.ship_id	= data.api_ship_id;
+	this.kyouka	= data.api_kyouka;	// 近代化改修による強化値[火力,雷装,対空,装甲,運].
 }
 
 Ship.prototype.name_lv = function() {
@@ -73,6 +74,16 @@ Ship.prototype.can_kaizou = function() {
 	return afterlv && afterlv <= this.lv;
 };
 
+Ship.prototype.max_kyouka = function() {
+	var mst = $mst_ship[this.ship_id];
+	return [
+		mst.api_houg[1] - mst.api_houg[0],	// 火力.
+		mst.api_raig[1] - mst.api_raig[0],	// 雷装.
+		mst.api_tyku[1] - mst.api_tyku[0],	// 対空.
+		mst.api_souk[1] - mst.api_souk[0],	// 装甲.
+		mst.api_luck[1] - mst.api_luck[0]	// 運.
+	];
+};
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -539,6 +550,7 @@ function on_port(json) {
 	var req = [];
 	var unlock_names = [];
 	var lock_condlist = {};
+	var lock_kyoukalist = {};
 	var cond85 = 0;
 	var cond53 = 0;
 	var cond50 = 0;
@@ -583,6 +595,11 @@ function on_port(json) {
 			if      (cond >= 85) cond85++; // 三重キラ.
 			else if (cond >= 53) cond53++; // 回避向上キラ.
 			else if (cond >  49) cond50++; // キラ.
+			var max_k = ship.max_kyouka();
+			for (var i in max_k) {
+				if (!lock_kyoukalist[i]) lock_kyoukalist[i] = [];
+				if (max_k[i] > ship.kyouka[i]) lock_kyoukalist[i].push(ship);
+			}
 		}
 		if (ship.slot) {
 			ship.slot.forEach(function(id) {
@@ -624,15 +641,11 @@ function on_port(json) {
 	else if (space <= 5) req.push('### @!!艦娘保有数の上限まで残り' + space + '!!@'); // 警告表示. 
 	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
-		+ '(未ロック:' + unlock_names.length + ', 改造可能:' + kaizou_list.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧');
 		msg.push('\t|' + unlock_names.join(', '));
-	}
-	if (kaizou_list.length > 0) {
-		msg.push('## 改造可能艦一覧');
-		msg.push('\t|' + shiplist_names(kaizou_list));
 	}
 	if (Object.keys(lock_condlist).length > 0) {
 		msg.push('## ロック艦一覧');
@@ -674,6 +687,26 @@ function on_port(json) {
 		msg.push('---');
 		req.push(msg);
 	}
+	//
+	// 改造可能一覧、近代化改修一可能覧を表示する.
+	req.push('改造可能艦数:' +　kaizou_list.length
+			+ ', 近代化改修可能艦数('
+			+   '火力:' + lock_kyoukalist[0].length
+			+ ', 雷装:' + lock_kyoukalist[1].length
+			+ ', 装甲:' + lock_kyoukalist[3].length
+			+ ', 対空:' + lock_kyoukalist[2].length
+			+ ', 運:'   + lock_kyoukalist[4].length
+			+ ')');
+	var msg = ['YPS_kai_list'];
+	if (kaizou_list.length > 0) msg.push('## 改造可能艦一覧', '\t|' + shiplist_names(kaizou_list));
+	msg.push('## 近代化改修可能艦一覧(ロック艦のみ)');
+	var a = lock_kyoukalist[0]; if (a.length > 0) msg.push('### 火力', '\t|' + shiplist_names(a));
+	var a = lock_kyoukalist[1]; if (a.length > 0) msg.push('### 雷装', '\t|' + shiplist_names(a));
+	var a = lock_kyoukalist[3]; if (a.length > 0) msg.push('### 装甲', '\t|' + shiplist_names(a));
+	var a = lock_kyoukalist[2]; if (a.length > 0) msg.push('### 対空', '\t|' + shiplist_names(a));
+	var a = lock_kyoukalist[4]; if (a.length > 0) msg.push('### 運',   '\t|' + shiplist_names(a));
+	msg.push('---');
+	if (msg.length > 3) req.push(msg);
 	//
 	// 遂行中任務を一覧表示する.
 	var quests = Object.keys($quest_list).length;
