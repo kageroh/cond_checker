@@ -11,6 +11,7 @@ var $max_ship = 0;
 var $max_slotitem = 0;
 var $combined_flag = 0;
 var $fdeck_list = {};
+var $ship_fdeck = {};
 var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
@@ -120,8 +121,13 @@ function update_enemy_list() {
 function update_fdeck_list(list) {
 	if (!list) return;
 	$fdeck_list = {};
+	$ship_fdeck = {};
 	list.forEach(function(deck) {
 		$fdeck_list[deck.api_id] = deck;
+		for (var i in deck.api_ship) {
+			var ship_id = deck.api_ship[i];
+			if (ship_id != -1) $ship_fdeck[ship_id] = deck.api_id;
+		}
 	});
 }
 
@@ -348,6 +354,8 @@ function shiplist_names(list) {	// Shipの配列をlv降順に並べて、","区
 	for (var i in names) {
 		var e = names[i];
 		var name = e.ship.name_lv();
+		var fdeck = $ship_fdeck[e.ship.id];
+		if (fdeck) name = '(艦隊' + fdeck + ')' + name; // 頭に艦隊番号を付ける.
 		if (e.count > 1) name += "x" + e.count;	// 同一艦は x N で束ねる.
 		names[i] = name;
 	}
