@@ -557,6 +557,7 @@ function on_port(json) {
 	var unlock_lv10 = 0;
 	var kaizou_list = [];
 	var lockeditem_list = {};
+	var lockeditem_count = 0;
 	var $unlock_slotitem = 0;
 	var $leveling_slotitem = 0;
 	//
@@ -571,6 +572,7 @@ function on_port(json) {
 			if (!lockeditem_list[i][lv])
 				lockeditem_list[i][lv] = {count:0, shiplist:[]};
 			lockeditem_list[i][lv].count++;
+			lockeditem_count++;
 		}
 		if (value && value.level) {
 			$leveling_slotitem++;
@@ -641,10 +643,12 @@ function on_port(json) {
 	else if (space <= 5) req.push('### @!!艦娘保有数の上限まで残り' + space + '!!@'); // 警告表示. 
 	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
-		+ '(未ロック:' + unlock_names.length + ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+		+ '(未ロック:' + unlock_names.length
+		+ ', ロック:' + (ships - unlock_names.length)
+		+ ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
-		msg.push('## 未ロック艦一覧');
+		msg.push('## 未ロック艦一覧(装備数*' + $unlock_slotitem + ')');
 		msg.push('\t|' + unlock_names.join(', '));
 	}
 	if (Object.keys(lock_condlist).length > 0) {
@@ -664,7 +668,9 @@ function on_port(json) {
 	if (space <= 0)       req.push('### @!!装備保有数が満杯です!!@'); // 警告表示. 
 	else if (space <= 20) req.push('### @!!装備保有数の上限まで残り' + space + '!!@'); // 警告表示. 
 	req.push('装備保有数:' + items + '/' + $max_slotitem
-		+ '(未ロック艦装備:' + $unlock_slotitem + ', 改修中装備:' + $leveling_slotitem + ')');
+		+ '(未ロック:' + (items - lockeditem_count)
+		+ ', ロック:' + lockeditem_count
+		+ ', 改修中:' + $leveling_slotitem + ')');
 	var lockeditem_ids = Object.keys(lockeditem_list);
 	if (lockeditem_ids.length > 0) {
 		lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
@@ -689,7 +695,7 @@ function on_port(json) {
 	}
 	//
 	// 改造可能一覧、近代化改修一可能覧を表示する.
-	req.push('改造可能艦数:' +　kaizou_list.length
+	req.push('改造可能艦数:' + kaizou_list.length
 			+ ', 近代化改修可能艦数('
 			+   '火力:' + lock_kyoukalist[0].length
 			+ ', 雷装:' + lock_kyoukalist[1].length
