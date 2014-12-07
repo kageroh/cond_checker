@@ -21,6 +21,7 @@ var $quest_exec_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
+var $kdock_list = {};
 var $enemy_id = null;
 var $enemy_formation_id = 0;
 var $battle_log = [];
@@ -137,6 +138,15 @@ function update_ndock_list(list) {
 	list.forEach(function(data) {
 		var ship_id = data.api_ship_id;
 		if (ship_id) $ndock_list[ship_id] = data;
+	});
+}
+
+function update_kdock_list(list) {
+	if (!list) return;
+	$kdock_list = {};
+	list.forEach(function(data) {
+		// state: -1:未開放, 0:空き, 1:不明, 2:建造中, 3:完成.
+		if (data.api_state >= 2) $kdock_list[data.api_id] = data;
 	});
 }
 
@@ -722,6 +732,29 @@ function on_port(json) {
 	msg.push('---');
 	if (msg.length > 3) req.push(msg);
 	//
+	// 建造ドック一覧表示する.
+	var kdocks = Object.keys($kdock_list).length;
+	if (kdocks > 0) {
+		var msg = ['YPS_kdock_list'];
+		msg.push('\t==進捗\t==艦名\t==燃料\t==弾薬\t==鋼材\t==ボーキ\t==開発資材\t==完成時刻'); // 表ヘッダ.
+		for (var id in $kdock_list) {
+			var k = $kdock_list[id];
+			var c_date = new Date(k.api_complete_time);
+			var complete = (k.api_state == 3 || c_date.getTime() < Date.now());	// api_state 3:完成, 2:建造中, 1:???, 0:空き, -1:未開放. ※ 1以下は$kdock_listに載せない.
+			msg.push('\t' + (complete ? '完成!!' : '建造中')
+				+ '\t' + ship_name(k.api_created_ship_id)
+				+ '\t' + k.api_item1
+				+ '\t' + k.api_item2
+				+ '\t' + k.api_item3
+				+ '\t' + k.api_item4
+				+ '\t' + k.api_item5
+				+ '\t' + (complete ? '' : c_date.toLocaleString())
+				);
+		}
+		req.push('建造中:' + kdocks);
+		req.push(msg);
+	}
+	//
 	// 遂行中任務を一覧表示する.
 	var quests = Object.keys($quest_list).length;
 	if (quests > 0) {
@@ -1121,6 +1154,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			add_slotitem_list(json.api_data);
 		};
 	}
+	else if (api_name == '/api_get_member/kdock') {
+		// 建造一覧表(ログイン直後、建造直後).
+		func = function(json) { // 建造状況を更新する.
+			update_kdock_list(json.api_data);
+		};
+	}
 	else if (api_name == '/api_req_kousyou/createitem') {
 		// 装備開発.
 		func = function(json) { // 開発した装備を、リストに加える.
@@ -1133,6 +1172,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kousyou/getship') {
 		// 新艦建造成功.
 		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
+			update_kdock_list(json.api_data.api_kdock);
 			update_ship_list([json.api_data.api_ship], false);
 			add_slotitem_list(json.api_data.api_slotitem);
 			on_port(json);
