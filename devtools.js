@@ -732,6 +732,28 @@ function on_port(json) {
 	msg.push('---');
 	if (msg.length > 3) req.push(msg);
 	//
+	// 入渠(修理)一覧表示する.
+	var ndocks = Object.keys($ndock_list).length;
+	if (ndocks > 0) {
+		var msg = ['YPS_ndock_list'];
+		msg.push('\t==艦名Lv\t==燃料\t==弾薬\t==鋼材\t==ボーキ\t==完了時刻'); // 表ヘッダ.
+		for (var id in $ndock_list) {
+			var d = $ndock_list[id];
+			var ship = $ship_list[id];
+			var c_date = new Date(d.api_complete_time);
+			msg.push('\t' + ship.name_lv() 
+				+ '\t' + d.api_item1
+				+ '\t' + d.api_item2
+				+ '\t' + d.api_item3
+				+ '\t' + d.api_item4
+				+ '\t' + c_date.toLocaleString()
+				);
+		}
+		req.push('修理中:' + ndocks);
+		req.push(msg);
+		msg.push('---');
+	}
+	//
 	// 建造ドック一覧表示する.
 	var kdocks = Object.keys($kdock_list).length;
 	if (kdocks > 0) {
@@ -753,6 +775,7 @@ function on_port(json) {
 		}
 		req.push('建造中:' + kdocks);
 		req.push(msg);
+		msg.push('---');
 	}
 	//
 	// 遂行中任務を一覧表示する.
