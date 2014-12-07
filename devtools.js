@@ -241,16 +241,16 @@ function kira_name(cond) {
 		 /* cond < 49 */  '> '; // recovering
 };
 
-function item_name(id) {
+function material_name(id) {
 	switch (id) {
 		case 1: return '燃料';
 		case 2: return '弾薬';
 		case 3: return '鋼材';
 		case 4: return 'ボーキ';
-		case 5: return '建造材';
-		case 6: return '修復材';
-		case 7: return '開発資材';
-		case 8: return '改修資材';
+		case 5: return '高速建造材';	// バーナー.
+		case 6: return '高速修復材';	// バケツ.
+		case 7: return '開発資材';	// 歯車.
+		case 8: return '改修資材';	// ネジ.
 		case 10: return '家具箱小';
 		case 11: return '家具箱中';
 		case 12: return '家具箱大';
@@ -639,7 +639,7 @@ function on_port(json) {
 			var value = data.api_value;
 			var diff  = diff_name(value, $material[id]);
 			$material[id] = value;
-			if (diff.length) msg.push(item_name(id) + diff);
+			if (diff.length) msg.push(material_name(id) + diff);
 		});
 	}
 	req.push('資材増減数:' + msg.join(', '));
@@ -805,7 +805,7 @@ function on_next_cell(json) {
 		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
 	}
 	if (g) {
-		var msg = item_name(g.api_id) + 'x' + g.api_getcount;
+		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
 		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
 	}
 }
