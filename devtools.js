@@ -30,6 +30,7 @@ var $beginhps = null;
 var $beginhps_c = null;
 var $f_damage_rate = 0;
 var $e_damage_rate = 0;
+var $guess_win_rank = '?';
 
 
 //-------------------------------------------------------------------------
@@ -1049,7 +1050,7 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	}
 }
 
-function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c) {
+function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c) {
 	// 友軍の轟沈／護衛退避には未対応
 	// 応急修理発動時の計算も不明
 	var f_damage_total = 0;
@@ -1061,7 +1062,7 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 	var e_count = 0;
 	var e_lost_count = 0;
 	var e_leader_lost = false;
-	for(var i = 1; i <= 6; ++i){
+	for (var i = 1; i <= 6; ++i) {
 		// 友軍被害集計.
 		if(maxhps[i] == -1) continue;
 		var n = nowhps[i];
@@ -1098,32 +1099,24 @@ function push_guess_result(req, nowhps, maxhps, beginhps, nowhps_c, maxhps_c, be
 	$f_damage_rate = f_damage_total / f_hp_total;
 	$e_damage_rate = e_damage_total / e_hp_total;
 	if (e_count == e_lost_count && f_lost_count == 0) {
-		if(f_damage_total == 0) {
-			req.push('推定：完S');
-		} else {
-			req.push('推定：S');
-		}
-		return;
+		return (f_damage_total == 0) ? '完S' : 'S';
 	}
 	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
-		req.push('推定：A');
-		return;
+		return 'A';
 	}
 	var rate = $e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
 			   $f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
 			   $e_damage_rate / $f_damage_rate;
 	if ((e_leader_lost && f_lost_count < e_lost_count) || rate >= 2.5) {
-		req.push('推定：B');
-		return;
-	} else if(rate >= 1){ //要検証
-		req.push('推定：C');
-		return;
-	} else if (f_lost_count < f_count/2) { // 要検証.
-		req.push('推定：D');
-		return;
+		return 'B';
 	}
-	req.push('推定：E');
-	return;
+	if (rate >= 1) { //要検証
+		return 'C';
+	}
+	if (f_lost_count < f_count/2) { // 要検証.
+		return 'D';
+	}
+	return 'E';
 }
 
 function on_battle(json) {
@@ -1191,7 +1184,9 @@ function on_battle(json) {
 
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
-	push_guess_result(req, nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
+	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
+	req.push('勝敗推定:' + $guess_win_rank);
+
 	req.push('## friend damage');
 	push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps);
 	req.push('被撃墜数: ' + airplane.f_lostcount);
