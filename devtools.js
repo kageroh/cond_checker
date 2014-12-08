@@ -86,6 +86,11 @@ Ship.prototype.max_kyouka = function() {
 		mst.api_luck[1] - mst.api_luck[0]	// 運.
 	];
 };
+
+Ship.prototype.begin_shipid = function() {
+	var mst = $mst_ship[this.ship_id];
+	return mst.yps_begin_shipid ? mst.yps_begin_shipid : this.ship_id;
+};
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -153,9 +158,21 @@ function update_kdock_list(list) {
 function update_mst_ship(list) {
 	if (!list) return;
 	$mst_ship = {};
+	var before = {};
 	list.forEach(function(data) {
 		$mst_ship[data.api_id] = data;
+		if (data.api_aftershipid)
+			before[data.api_aftershipid] = data.api_id;
 	});
+	for (var id in $mst_ship) {
+		var b = before[id];
+		if (b) {
+			$mst_ship[id].yps_before_shipid = b; // 改装前の艦種ID.
+			do {
+				$mst_ship[id].yps_begin_shipid = b; // 未改装の艦種ID.
+			} while (b = before[b]);
+		}
+	}
 	save_storage('mst_ship', $mst_ship);
 }
 
@@ -569,6 +586,7 @@ function on_port(json) {
 	var unlock_names = [];
 	var lock_condlist = {};
 	var lock_kyoukalist = {};
+	var lock_beginlist = {};
 	var lock_repairlist = [];
 	var cond85 = 0;
 	var cond53 = 0;
@@ -633,6 +651,9 @@ function on_port(json) {
 				else                damage_N++; // 軽微.
 				lock_repairlist.push(ship);
 			}
+			var b = ship.begin_shipid();
+			if (!lock_beginlist[b]) lock_beginlist[b] = [];
+			lock_beginlist[b].push(ship);
 		}
 		if (ship.slot) {
 			ship.slot.forEach(function(id) {
@@ -644,6 +665,11 @@ function on_port(json) {
 		if (ship.can_kaizou()) kaizou_list.push(ship);
 	}
 	unlock_names.reverse();	// 最新の艦を先頭にする.
+	var double_count = 0;
+	for (var id in lock_beginlist) {
+		var a = lock_beginlist[id];
+		if (a.length > 1) double_count += a.length - 1; // ダブリ艦数を集計する.
+	}
 	//
 	// 艦娘と装備数を検出する.
 	var basic = json.api_data.api_basic;
@@ -676,14 +702,22 @@ function on_port(json) {
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length
 		+ ', ロック:' + (ships - unlock_names.length)
+		+ ', ダブリ:' + double_count
 		+ ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧(装備数*' + $unlock_slotitem + ')');
 		msg.push('\t|' + unlock_names.join(', '));
 	}
+	if (double_count > 0)  {
+		msg.push('## ロック艦ダブリ一覧');
+		for (var id in lock_beginlist) {
+			var a = lock_beginlist[id];
+			if (a.length > 1) msg.push('\t|' + shiplist_names(a));
+		}
+	}
 	if (Object.keys(lock_condlist).length > 0) {
-		msg.push('## ロック艦一覧');
+		msg.push('## ロック艦cond降順');
 		msg.push('\t==cond\t==艦名'); // 表ヘッダ
 		for (var cond = 100; cond >= 0; --cond) {
 			var a = lock_condlist[cond];
