@@ -1075,7 +1075,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		var n = nowhps[i];
 		++f_count;
 		f_damage_total += beginhps[i] - Math.max(0, n);
-		f_hp_total += beginhps[i];
+		f_hp_total += maxhps[i];
 		if (n <= 0) {
 			++f_lost_count;
 		}
@@ -1086,7 +1086,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		var n = nowhps_c[i];
 		++f_count;
 		f_damage_total += beginhps_c[i] - Math.max(0, n);
-		f_hp_total += beginhps_c[i];
+		f_hp_total += maxhps_c[i];
 		if (n <= 0) {
 			++f_lost_count;
 		}
@@ -1097,7 +1097,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		var n = nowhps[i];
 		++e_count;
 		e_damage_total += beginhps[i] - Math.max(0, n);
-		e_hp_total += beginhps[i];
+		e_hp_total += maxhps[i];
 		if(n <= 0){
 			++e_lost_count;
 			if(i == 7) e_leader_lost = true;
@@ -1115,6 +1115,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	var rate = $e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
 			   $f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
 			   $e_damage_rate / $f_damage_rate;
+	$guess_info_str += ', rate:' + rate;
 	if ((e_leader_lost && f_lost_count < e_lost_count) || rate >= 2.5) {
 		return 'B';
 	}
