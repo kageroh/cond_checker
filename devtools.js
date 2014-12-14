@@ -28,8 +28,7 @@ var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
 var $beginhps_c = null;
-var $f_damage_rate = 0;
-var $e_damage_rate = 0;
+var $f_damage = 0;
 var $guess_win_rank = '?';
 var $guess_info_str = '';
 
@@ -253,7 +252,7 @@ function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
 
 function percent_name(now, max) {	// now:1, prev:2 -> "50%"
 	if (!max) return '';
-	return Math.floor(100 * now / max) + '%';
+	return Math.round(100 * now / max) + '%';
 }
 
 function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
@@ -948,7 +947,7 @@ function on_battle_result(json) {
 		if (d.api_ship_id) {
 			var total = count_unless(d.api_ship_id, -1);
 			msg += '(' + d.api_dests + '/' + total + ')';
-			if (rank == 'S' && $f_damage_rate == 0) rank = '完S';
+			if (rank == 'S' && $f_damage == 0) rank = '完S';
 		}
 		msg += ':' + rank;
 		if (rank != $guess_win_rank) {
@@ -1098,13 +1097,14 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		++e_count;
 		e_damage_total += beginhps[i] - Math.max(0, n);
 		e_hp_total += beginhps[i];
-		if(n <= 0){
+		if (n <= 0) {
 			++e_lost_count;
 			if(i == 7) e_leader_lost = true;
 		}
 	}
-	$f_damage_rate = f_damage_total / f_hp_total;
-	$e_damage_rate = e_damage_total / e_hp_total;
+	$f_damage = f_damage_total;
+	var f_damage_percent = Math.round(100 * f_damage_total / f_hp_total);
+	var e_damage_percent = Math.round(100 * e_damage_total / e_hp_total);
 	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total);
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		return (f_damage_total == 0) ? '完S' : 'S';
@@ -1112,10 +1112,10 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
 		return 'A';
 	}
-	var rate = $e_damage_rate == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
-			   $f_damage_rate == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
-			   $e_damage_rate / $f_damage_rate;
-	if ((e_leader_lost && f_lost_count < e_lost_count) || rate >= 2.5) {
+	var rate = e_damage_total == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
+			   f_damage_total == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
+			   e_damage_percent / f_damage_percent;
+	if ((e_leader_lost && f_lost_count < e_lost_count) || rate > 2.5) {
 		return 'B';
 	}
 	if (rate >= 1) { //要検証
