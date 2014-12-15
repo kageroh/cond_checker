@@ -1118,7 +1118,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if ((e_leader_lost && f_lost_count < e_lost_count) || rate > 2.5) {
 		return 'B';
 	}
-	if (rate >= 1) { //要検証
+	if (rate > 0.9) { //要検証
 		return 'C';
 	}
 	if (f_lost_count < f_count/2) { // 要検証.
