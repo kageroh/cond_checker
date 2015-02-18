@@ -544,7 +544,7 @@ function push_fleet_status(msg, deck) {
 			rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
 		}
 		if ($ship_escape[s_id]) {
-			hp_str += '退避';
+			hp_str = '退避';
 		}
 		var ndock = $ndock_list[s_id];
 		if (ndock) {
@@ -937,6 +937,21 @@ function on_next_cell(json) {
 	}
 }
 
+/// 護衛退避艦リストに艦IDを追加する. idx = 1..6, 7..12
+function add_ship_escape(idx) {
+	if (idx >= 7)
+		$ship_escape[$fdeck_list[2].api_ship[idx-7]] = 1; // 第ニ艦隊から退避.
+	else if (idx >= 1)
+		$ship_escape[$fdeck_list[1].api_ship[idx-1]] = 1; // 第一艦隊から退避.
+}
+
+/// 護衛退避実行. 退避可能リストから１艦、護衛可能リストから１艦、合計2艦のみ退避できる.
+function on_goback_port() {
+	if (!$escape_info) return;
+	add_ship_escape($escape_info.api_escape_idx[0]);	// 退避可能艦一覧の最初の艦を退避リストに追加する.
+	add_ship_escape($escape_info.api_tow_idx[0]);		// 護衛可能艦一覧の最初の艦を退避リストに追加する.
+}
+
 function on_battle_result(json) {
 	var d = json.api_data;
 	var e = d.api_enemy_info;
@@ -945,6 +960,7 @@ function on_battle_result(json) {
 	var mvp_c = d.api_mvp_combined;
 	var lost  = d.api_lost_flag;
 	var msg  = '';
+	$escape_info = d.api_escape;	// on_goback_port()で使用する.
 	if (e) {
 		var rank = d.api_win_rank;
 		msg += e.api_deck_name;
@@ -1196,17 +1212,14 @@ function on_battle(json) {
 
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
-	$ship_escape = {};
 	if (d.api_escape_idx) {
 		d.api_escape_idx.forEach(function(idx) {
 			maxhps[idx] = -1;	// 護衛退避した艦を艦隊リストから抜く. idx=1..6
-			$ship_escape[fdeck.api_ship[idx-1]] = 1;
 		});
 	}
 	if (d.api_escape_idx_combined) {
 		d.api_escape_idx_combined.forEach(function(idx) {
 			maxhps_c[idx] = -1;	// 護衛退避した艦を第二艦隊リストから抜く. idx=1..6
-			$ship_escape[$fdeck_list[2].api_ship[idx-1]] = 1;
 		});
 	}
 	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
@@ -1517,6 +1530,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_practice/battle_result') {
 		// 演習結果.
 		func = on_battle_result;
+	}
+	else if (api_name == '/api_req_combined_battle/goback_port') {
+		// 護衛退避.
+		on_goback_port();
 	}
 	if (!func) return;
 	request.getContent(function (content) {
