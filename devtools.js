@@ -12,6 +12,7 @@ var $max_slotitem = 0;
 var $combined_flag = 0;
 var $fdeck_list = {};
 var $ship_fdeck = {};
+var $ship_escape = {};	// 護衛退避したshipidのマップ.
 var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
@@ -541,6 +542,9 @@ function push_fleet_status(msg, deck) {
 		if (ship.nowhp / ship.maxhp <= 0.75) { // 小破以上なら値を設定する.
 			hp_str = hp_status(ship.nowhp, ship.maxhp);	// ダメージ.
 			rp_str = msec_name(ship.ndock_time);		// 修理所要時間.
+		}
+		if ($ship_escape[s_id]) {
+			hp_str += '退避';
 		}
 		var ndock = $ndock_list[s_id];
 		if (ndock) {
@@ -1192,6 +1196,19 @@ function on_battle(json) {
 
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
+	$ship_escape = {};
+	if (d.api_escape_idx) {
+		d.api_escape_idx.forEach(function(idx) {
+			maxhps[idx] = -1;	// 護衛退避した艦を艦隊リストから抜く. idx=1..6
+			$ship_escape[fdeck.api_ship[idx-1]] = 1;
+		});
+	}
+	if (d.api_escape_idx_combined) {
+		d.api_escape_idx_combined.forEach(function(idx) {
+			maxhps_c[idx] = -1;	// 護衛退避した艦を第二艦隊リストから抜く. idx=1..6
+			$ship_escape[$fdeck_list[2].api_ship[idx-1]] = 1;
+		});
+	}
 	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
 	req.push('勝敗推定:' + $guess_win_rank);
 
@@ -1382,6 +1399,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_fdeck_list(json.api_data.api_deck_port);
 			update_ndock_list(json.api_data.api_ndock);
 			$battle_deck_id = -1;
+			$ship_escape = {};
 			on_port(json);
 		};
 	}
