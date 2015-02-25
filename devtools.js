@@ -924,6 +924,7 @@ function on_next_cell(json) {
 	var d = json.api_data;
 	var e = json.api_data.api_enemy;
 	var g = json.api_data.api_itemget;
+	var h = json.api_data.api_happening;
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
 	if (e) {
@@ -944,6 +945,11 @@ function on_next_cell(json) {
 	if (g) {
 		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
 		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
+	}
+	if (h) {
+		var msg = material_name(h.api_mst_id) + 'x' + h.api_count;
+		if (h.api_dentan) msg += '(電探により軽減あり)';
+		chrome.extension.sendRequest('## next loss\n' + area + ':' + msg);
 	}
 }
 
