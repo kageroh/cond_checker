@@ -4,6 +4,7 @@ var $enemy_list		= load_storage('enemy_list');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
+var $mst_useitem	= load_storage('mst_useitem');
 var $mst_mapinfo	= load_storage('mst_mapinfo');
 var $weekly			= load_storage('weekly');
 var $slotitem_list = {};
@@ -193,6 +194,15 @@ function update_mst_mission(list) {
 		$mst_mission[data.api_id] = data;
 	});
 	save_storage('mst_mission', $mst_mission);
+}
+
+function update_mst_useitem(list) {
+	if (!list) return;
+	$mst_useitem = {};
+	list.forEach(function(data) {
+		$mst_useitem[data.api_id] = data;
+	});
+	save_storage('mst_useitem', $mst_useitem);
 }
 
 function update_mst_mapinfo(list) {
@@ -956,6 +966,7 @@ function on_battle_result(json) {
 	var d = json.api_data;
 	var e = d.api_enemy_info;
 	var g = d.api_get_ship;
+	var h = d.api_get_useitem;
 	var mvp   = d.api_mvp;
 	var mvp_c = d.api_mvp_combined;
 	var lost  = d.api_lost_flag;
@@ -1004,6 +1015,10 @@ function on_battle_result(json) {
 	if (g) {
 		msg += '\n## drop ship\n';
 		msg += g.api_ship_type + ':' + g.api_ship_name;
+	}
+	if (h) {
+		msg += '\n## drop item\n';
+		msg += $mst_useitem[h.api_useitem_id];
 	}
 	chrome.extension.sendRequest('## battle result\n' + msg);
 }
