@@ -1275,6 +1275,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 艦種表を取り込む.
 			update_mst_ship(json.api_data.api_mst_ship);
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
+			update_mst_useitem(json.api_data.api_mst_useitem);
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			chrome.extension.sendRequest("## ロード完了");
