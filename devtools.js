@@ -1024,7 +1024,7 @@ function on_battle_result(json) {
 	}
 	if (h) {
 		msg += '\n## drop item\n';
-		msg += $mst_useitem[h.api_useitem_id];
+		msg += $mst_useitem[h.api_useitem_id].api_name;
 	}
 	chrome.extension.sendRequest('## battle result\n' + msg);
 }
