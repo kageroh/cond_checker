@@ -924,6 +924,7 @@ function on_next_cell(json) {
 	var d = json.api_data;
 	var e = json.api_data.api_enemy;
 	var g = json.api_data.api_itemget;
+	var h = json.api_data.api_happening;
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
 	if (e) {
@@ -944,6 +945,11 @@ function on_next_cell(json) {
 	if (g) {
 		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
 		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
+	}
+	if (h) {
+		var msg = material_name(h.api_mst_id) + 'x' + h.api_count;
+		if (h.api_dentan) msg += '(電探により軽減あり)';
+		chrome.extension.sendRequest('## next loss\n' + area + ':' + msg);
 	}
 }
 
@@ -1275,6 +1281,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 艦種表を取り込む.
 			update_mst_ship(json.api_data.api_mst_ship);
 			update_mst_slotitem(json.api_data.api_mst_slotitem);
+			update_mst_useitem(json.api_data.api_mst_useitem);
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			chrome.extension.sendRequest("## ロード完了");
