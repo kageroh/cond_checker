@@ -1144,22 +1144,22 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		}
 	}
 	$f_damage = f_damage_total;
-	var f_damage_percent = Math.round(100 * f_damage_total / f_hp_total);
-	var e_damage_percent = Math.round(100 * e_damage_total / e_hp_total);
-	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total);
+	var f_damage_rate = f_damage_total / f_hp_total;
+	var e_damage_rate = e_damage_total / e_hp_total;
+	var rate = e_damage_total == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
+			   f_damage_total == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
+			   Math.round(e_damage_rate / f_damage_rate * 10) / 10; // 小数部2桁目を四捨五入で丸める.
+	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + ', rate:' + rate;
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		return (f_damage_total == 0) ? '完S' : 'S';
 	}
 	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
 		return 'A';
 	}
-	var rate = e_damage_total == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
-			   f_damage_total == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
-			   e_damage_percent / f_damage_percent;
 	if ((e_leader_lost && f_lost_count < e_lost_count) || rate > 2.5) {
 		return 'B';
 	}
-	if (rate > 0.9) { //要検証
+	if (rate >= 1.0) {
 		return 'C';
 	}
 	if (f_lost_count < f_count/2) { // 要検証.
