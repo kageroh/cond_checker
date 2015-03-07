@@ -7,6 +7,7 @@ var $mst_mission	= load_storage('mst_mission');
 var $mst_useitem	= load_storage('mst_useitem');
 var $mst_mapinfo	= load_storage('mst_mapinfo');
 var $weekly			= load_storage('weekly');
+var $logbook		= load_storage('logbook', []);
 var $slotitem_list = {};
 var $max_ship = 0;
 var $max_slotitem = 0;
@@ -96,9 +97,10 @@ Ship.prototype.begin_shipid = function() {
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
-function load_storage(name) {
+function load_storage(name, def) {
+	if (!def) def = {};
 	var v = localStorage[name];
-	return v ? JSON.parse(v) : {};
+	return v ? JSON.parse(v) : def;
 }
 
 function save_storage(name, v) {
@@ -232,6 +234,11 @@ function get_weekly() {
 
 function save_weekly() {
 	save_storage('weekly', $weekly);
+}
+
+function push_to_logbook(log) {
+	if ($logbook.push(log) > 50) $logbook.shift(); // 50を超えたら古いものから削除する.
+	save_storage('logbook', $logbook);
 }
 
 function fraction_name(num, denom) {
@@ -857,6 +864,14 @@ function on_port(json) {
 		req.push('建造中:' + kdocks);
 		req.push(msg);
 		msg.push('---');
+	}
+	//
+	// 記録を表示する.
+	if ($logbook.length > 0) {
+		req.push('記録');
+		var msg = ['YPS_logbook'];
+		msg = msg.concat($logbook);
+		req.push(msg);
 	}
 	//
 	// 遂行中任務を一覧表示する.
