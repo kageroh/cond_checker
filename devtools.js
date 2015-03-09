@@ -992,6 +992,8 @@ function on_battle_result(json) {
 	var mvp_c = d.api_mvp_combined;
 	var lost  = d.api_lost_flag;
 	var msg  = '';
+	var drop_ship_name = g ? g.api_ship_type + ':' + g.api_ship_name : null;
+	var drop_item_name = h ? $mst_useitem[h.api_useitem_id].api_name : null;
 	$escape_info = d.api_escape;	// on_goback_port()で使用する.
 	if (e) {
 		var rank = d.api_win_rank;
@@ -1010,7 +1012,14 @@ function on_battle_result(json) {
 			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
 			update_enemy_list();
 		}
-		$battle_log.push($next_enemy + '(' + e.api_deck_name + '):' + rank);
+		var log = $next_enemy + '(' + e.api_deck_name + '):' + rank;
+		if (drop_ship_name) {
+			log += '+' + g.api_ship_name; // drop_ship_name; 艦種を付けると冗長すぎるので艦名のみとする.
+		}
+		if (drop_item_name) {
+			log += '+' + drop_item_name;
+		}
+		$battle_log.push(log);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
 		if (rank == 'B' || rank == 'C' || rank == 'D') ///@DEBUG check B/C/D
 			push_to_logbook($next_enemy + ', ' + rank + '/' + $guess_win_rank + ', ' + $guess_info_str);
@@ -1035,13 +1044,11 @@ function on_battle_result(json) {
 			}
 		}
 	}
-	if (g) {
-		msg += '\n## drop ship\n';
-		msg += g.api_ship_type + ':' + g.api_ship_name;
+	if (drop_ship_name) {
+		msg += '\n## drop ship\n' + drop_ship_name;
 	}
-	if (h) {
-		msg += '\n## drop item\n';
-		msg += $mst_useitem[h.api_useitem_id].api_name;
+	if (drop_item_name) {
+		msg += '\n## drop item\n' + drop_item_name;
 	}
 	chrome.extension.sendRequest('## battle result\n' + msg);
 }
