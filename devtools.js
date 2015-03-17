@@ -1021,8 +1021,6 @@ function on_battle_result(json) {
 		}
 		$battle_log.push(log);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
-		if (rank == 'B' || rank == 'C' || rank == 'D') ///@DEBUG check B/C/D
-			push_to_logbook($next_enemy + ', ' + rank + '/' + $guess_win_rank + ', ' + $guess_info_str);
 	}
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
@@ -1277,7 +1275,6 @@ function on_battle(json) {
 		});
 	}
 	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
-	req.push($guess_info_str); ///@DEBUG
 	req.push('勝敗推定:' + $guess_win_rank);
 
 	req.push('## friend damage');
