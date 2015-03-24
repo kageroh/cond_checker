@@ -270,7 +270,7 @@ function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
 
 function percent_name(now, max) {	// now:1, prev:2 -> "50%"
 	if (!max) return '';
-	return Math.round(100 * now / max) + '%';
+	return Math.ceil(100 * now / max) + '%';
 }
 
 function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
@@ -1166,13 +1166,13 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		}
 	}
 	$f_damage = f_damage_total;
-	var f_damage_rate = f_damage_total / f_hp_total;
-	var e_damage_rate = e_damage_total / e_hp_total;
-	f_damage_rate = Math.ceil(f_damage_rate * 100) / 100; // 少数部3桁目を切り上げる.
-	e_damage_rate = Math.ceil(e_damage_rate * 100) / 100; // 少数部3桁目を切り上げる. 
+	var f_damage_percent = 100 * f_damage_total / f_hp_total;
+	var e_damage_percent = 100 * e_damage_total / e_hp_total;
+	f_damage_percent = Math.ceil(f_damage_percent); // 少数部を切り上げる.
+	e_damage_percent = Math.ceil(e_damage_percent); // 少数部を切り上げる. 
 	var rate = e_damage_total == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
 			   f_damage_total == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
-			   e_damage_rate / f_damage_rate;
+			   e_damage_percent / f_damage_percent;
 	rate = Math.ceil(rate * 10) / 10; // 小数部2桁目を切り上げる.
 	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']'
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
@@ -1187,7 +1187,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if (e_leader_lost && f_lost_count < e_lost_count) {
 		return 'B';
 	}
-	if (e_damage_rate >= 0.25 && rate >= 2.5) { // 要検証.
+	if (rate >= 2.5) { // 要検証.
 		return 'B';
 	}
 	if (rate >= 1.0) {
