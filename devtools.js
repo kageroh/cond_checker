@@ -1009,6 +1009,8 @@ function on_battle_result(json) {
 			$guess_info_str += '/' + $guess_win_rank + ' MISS!!';
 			msg += '\n### @!!勝敗推定ミス!!@ ' + $guess_info_str;
 		}
+		if (/[BCDE]/.test(rank))	///@debug B勝利以下のみ記録する.
+			push_to_logbook($next_enemy + ', ' + $guess_info_str);
 		var fleet = $enemy_list[$enemy_id];
 		if (fleet) {
 			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
