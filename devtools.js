@@ -1004,7 +1004,9 @@ function on_battle_result(json) {
 			if (rank == 'S' && $f_damage == 0) rank = '完S';
 		}
 		msg += ':' + rank;
+		$guess_info_str += ', rank:' + rank;
 		if (rank != $guess_win_rank) {
+			$guess_info_str += '/' + $guess_win_rank + ' MISS!!';
 			msg += '\n### @!!勝敗推定ミス!!@ ' + $guess_info_str;
 		}
 		var fleet = $enemy_list[$enemy_id];
