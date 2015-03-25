@@ -1119,9 +1119,9 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	}
 }
 
-function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c) {
-	// 友軍の轟沈／護衛退避には未対応
-	// 応急修理発動時の計算も不明
+function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c, isChase) {
+	// 友軍の轟沈／護衛退避には未対応.
+	// 応急修理発動時の計算も不明.
 	var f_damage_total = 0;
 	var f_hp_total = 0;
 	var f_lost_count = 0;
@@ -1176,7 +1176,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	rate = Math.ceil(rate * 10) / 10; // 小数部2桁目を切り上げる.
 	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']'
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
-				+ ', rate:' + rate
+				+ (isChase ? ', chase_rate:' : ', rate:') + rate
 				;
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		return (f_damage_total == 0) ? '完S' : 'S';
@@ -1262,6 +1262,7 @@ function on_battle(json) {
 	}
 	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
 
+	if ($beginhps) req.push('緒戦被害:' + $guess_info_str + ', 推定:' + $guess_win_rank);
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
 	if (d.api_escape_idx) {
@@ -1274,7 +1275,8 @@ function on_battle(json) {
 			maxhps_c[idx] = -1;	// 護衛退避した艦を第二艦隊リストから抜く. idx=1..6
 		});
 	}
-	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c);
+	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c, $beginhps != beginhps)
+	req.push('戦闘被害:' + $guess_info_str);
 	req.push('勝敗推定:' + $guess_win_rank);
 
 	req.push('## friend damage');
