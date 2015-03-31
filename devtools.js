@@ -1128,6 +1128,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	// 応急修理発動時の計算も不明.
 	var f_damage_total = 0;
 	var f_hp_total = 0;
+	var f_maxhp_total = 0;
 	var f_lost_count = 0;
 	var f_count = 0;
 	var e_damage_total = 0;
@@ -1142,6 +1143,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		++f_count;
 		f_damage_total += beginhps[i] - Math.max(0, n);
 		f_hp_total += beginhps[i];
+		f_maxhp_total += maxhps[i];
 		if (n <= 0) {
 			++f_lost_count;
 		}
@@ -1153,6 +1155,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		++f_count;
 		f_damage_total += beginhps_c[i] - Math.max(0, n);
 		f_hp_total += beginhps_c[i];
+		f_maxhp_total += maxhps_c[i];
 		if (n <= 0) {
 			++f_lost_count;
 		}
@@ -1174,11 +1177,11 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	var e_damage_percent = 100 * e_damage_total / e_hp_total;
 	f_damage_percent = Math.ceil(f_damage_percent); // 少数部を切り上げる.
 	e_damage_percent = Math.ceil(e_damage_percent); // 少数部を切り上げる. 
-	var rate = e_damage_total == 0 ? 0 : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先
-			   f_damage_total == 0 ? 3 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを3に
+	var rate = e_damage_total == 0 ? 0   : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先する(f_damage_total==0でも100にしない)
+			   f_damage_total == 0 ? 100 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを100にする.
 			   e_damage_percent / f_damage_percent;
 	rate = Math.ceil(rate * 10) / 10; // 小数部2桁目を切り上げる.
-	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']'
+	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']' + f_maxhp_total
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
 				+ (isChase ? ', chase_rate:' : ', rate:') + rate
 				;
