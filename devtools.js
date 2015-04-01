@@ -1173,6 +1173,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 		}
 	}
 	$f_damage = f_damage_total;
+	// %%% CUT HERE FOR TEST %%%
 	var f_damage_percent = 100 * f_damage_total / f_hp_total;
 	var e_damage_percent = 100 * e_damage_total / e_hp_total;
 	f_damage_percent = Math.ceil(f_damage_percent); // 少数部を切り上げる.

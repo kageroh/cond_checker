@@ -2,62 +2,24 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<script type="text/javascript" language="javascript" src="devtools.js"></script>
 <script type="text/javascript" language="javascript">
-var f_damage_total = 0;
-var f_hp_total = 0;
-var f_lost_count = 0;
-var f_count = 0;
-var e_damage_total = 0;
-var e_hp_total = 0;
-var e_count = 0;
-var e_lost_count = 0;
-var e_leader_lost = false;
-var isChase = false;
-var f_maxhp_total = 0;
-function percent_name(now, max) {	// now:1, prev:2 -> "50%"
-	if (!max) return '';
-	return Math.ceil(100 * now / max) + '%';
-}
-
-function fraction_percent_name(now, max) {	// now:1, max:2 -> "1/2(50%)"
-	return now + '/' + max + '(' + percent_name(now, max) + ')';
-}
-
-function guess_win_rank2() {
-	var f_damage_percent = 100 * f_damage_total / f_hp_total;
-	var e_damage_percent = 100 * e_damage_total / e_hp_total;
-	f_damage_percent = Math.ceil(f_damage_percent); // 少数部を切り上げる.
-	e_damage_percent = Math.ceil(e_damage_percent); // 少数部を切り上げる. 
-	var rate = e_damage_total == 0 ? 0   : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先する(f_damage_total==0でも100にしない)
-			   f_damage_total == 0 ? 100 : // 0除算回避／こちらが無傷なら1ダメ以上与えていればBなのでrateを100にする.
-			   e_damage_percent / f_damage_percent;
-	rate = Math.ceil(rate * 10) / 10; // 小数部2桁目を切り上げる.
-	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']' + f_maxhp_total
-				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
-				+ (isChase ? ', chase_rate:' : ', rate:') + rate
-				;
-	if (e_count == e_lost_count && f_lost_count == 0) {
-		return (f_damage_total == 0) ? '完S' : 'S';
-	}
-	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
-		return 'A';
-	}
-	if (e_leader_lost && f_lost_count < e_lost_count) {
-		return 'B';
-	}
-	if (rate >= 2.5) { // 要検証.
-		return 'B';
-	}
-	if (rate >= 1.0) {
-		return 'C';
-	}
-	if (f_lost_count < f_count/2) { // 要検証.
-		return 'D';
-	}
-	return 'E';
-}
-
 function parse_input() {
+	var f_damage_total = 0;
+	var f_hp_total = 0;
+	var f_lost_count = 0;
+	var f_count = 0;
+	var e_damage_total = 0;
+	var e_hp_total = 0;
+	var e_count = 0;
+	var e_lost_count = 0;
+	var e_leader_lost = false;
+	var isChase = false;
+	var f_maxhp_total = 0;
+	// guess_win_rank()を抜き出して、guess_win_rank2()を作成する.
+	var s = guess_win_rank.toString().replace(/^function[\s\S]+%%% CUT HERE FOR TEST %%%/, "function guess_win_rank2() {");
+	eval(s);
+	// 入力を解析する.
 	var state = '';
 	var enemy = '';
 	var match = null;
