@@ -1538,7 +1538,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_sortie/battle'
 		|| api_name == '/api_req_combined_battle/battle'
 		|| api_name == '/api_req_combined_battle/battle_water'
-		|| api_name == '/api_req_combined_battle/airbattle') {
+		|| api_name == '/api_req_combined_battle/airbattle'
+		|| api_name == '/api_req_sortie/airbattle') {
 		// 昼戦開始.
 		$battle_count++;
 		$beginhps = null;
