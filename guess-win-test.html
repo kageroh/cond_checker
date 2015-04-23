@@ -85,7 +85,7 @@ function parse_input() {
 			// 勝敗推定ミス f_damage:54/201(27%)[0/6]210, e_damage:217/321(68%)[3/6], rate:2.5
 			if (match = /f_damage:(\d+)\/(\d+)\(\d+\%\)\[(\d+)\/(\d+)\](\d+)?/.exec(s)) {
 				f_damage_total = match[1]; f_hp_total = match[2]; f_lost_count = match[3]; f_count = match[4];
-				f_maxhp_total = match[5];
+				if (match[5]) f_maxhp_total = match[5];
 				isChase = /chase_rate/.test(s);
 			}
 			if (match = /e_damage:(\d+)\/(\d+).\d+\%.\[(\x?)(\d+)\/(\d+)\]/.exec(s)) {
@@ -101,6 +101,7 @@ function parse_input() {
 			output.push($guess_info_str + ' => rank:' + msg);
 			r_rank = g_rank = g_rank2 = undefined;
 			isChase = false;
+			f_maxhp_total = 0;
 		}
 	});
 	var result = document.getElementById('result');
