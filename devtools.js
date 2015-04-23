@@ -270,7 +270,7 @@ function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
 
 function percent_name(now, max) {	// now:1, prev:2 -> "50%"
 	if (!max) return '';
-	return Math.ceil(100 * now / max) + '%';
+	return Math.floor(100 * now / max) + '%';
 }
 
 function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
