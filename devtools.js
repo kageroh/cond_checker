@@ -935,6 +935,25 @@ function on_port(json) {
 	chrome.extension.sendRequest(req);
 }
 
+function on_mission_check(category) {
+	var req = ['## 任務'];
+	for (var id in $quest_list) {
+		var quest = $quest_list[id];
+		if (quest.api_category == category) {	// 1:編成, 2:出撃, 3:演習, 4:遠征, 5:補給入渠, 6:工廠.
+			var progress = (quest.api_state == 3) ? '達成!!'
+				:         (quest.api_state == 1) ? '@!!未チェック!!@'
+				: (quest.api_progress_flag == 2) ? '遂行80%'
+				: (quest.api_progress_flag == 1) ? '遂行50%'
+				: '遂行中';
+			req.push('\t' + progress + '\t' + quest.api_title);
+		}
+	}
+	var n = Object.keys($quest_list).length;
+	if (n == 0) req.push('### 任務なし!!');
+	else if (n != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
+	if (req.length > 1) chrome.extension.sendRequest(req);
+}
+
 function on_next_cell(json) {
 	var d = json.api_data;
 	var e = json.api_data.api_enemy;
@@ -1465,7 +1484,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 入渠.
 		func = function(json) { // 入渠状況を更新する.
 			update_ndock_list(json.api_data);
-			on_port(json);
+			on_mission_check(5);
 		};
 	}
 	else if (api_name == '/api_port/port') {
@@ -1499,6 +1518,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			on_port(json);
 		};
 	}
+	else if (api_name == '/api_get_member/mission') {
+		// 遠征メニュー.
+		func = function(json) { // 遠征任務の受諾をチェックする.
+			on_mission_check(4);
+		};
+	}
 	else if (api_name == '/api_get_member/deck') {
 		// 遠征出発.
 		func = function(json) { // 艦隊一覧を更新してcond表示する.
@@ -1512,6 +1537,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var d = json.api_data;
 			var id = decode_postdata_params(request.request.postData.params).api_deck_id;
 			$last_mission[id] = '前回遠征: ' + d.api_quest_name + ' ' + mission_clear_name(d.api_clear_result);
+		};
+	}
+	else if (api_name == '/api_get_member/practice') {
+		// 演習メニュー.
+		func = function(json) { // 演習任務の受諾をチェックする.
+			on_mission_check(3);
 		};
 	}
 	else if (api_name == '/api_req_member/get_practice_enemyinfo') {
