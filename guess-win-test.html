@@ -17,8 +17,8 @@ function parse_input() {
 	var isChase = false;
 	var f_maxhp_total = 0;
 	// guess_win_rank()を抜き出して、guess_win_rank2()を作成する.
-	var s = guess_win_rank.toString().replace(/^function[\s\S]+%%% CUT HERE FOR TEST %%%/, "function guess_win_rank2() {");
-	eval(s);
+	var es = guess_win_rank.toString().replace(/^function[\s\S]+%%% CUT HERE FOR TEST %%%/, "function guess_win_rank2() {");
+	eval(es);
 	// 入力を解析する.
 	var state = '';
 	var enemy = '';
@@ -45,7 +45,7 @@ function parse_input() {
 		}
 		else if (state == 'f' && /^[1-6]\(/.test(s)) {
 			++f_count;
-			if (match = / \d+\/(\d+)/.exec(s)) { f_maxhp_total += parseInt(match[1]); }
+			if (match = /\s\d+\/(\d+)/.exec(s)) { f_maxhp_total += parseInt(match[1]); }
 			if (/:撃沈/.test(s)) { ++f_lost_count; }
 		}
 		else if (state == 'e' && /^[1-6]\(/.test(s)) {
