@@ -94,6 +94,21 @@ Ship.prototype.begin_shipid = function() {
 	var mst = $mst_ship[this.ship_id];
 	return mst.yps_begin_shipid ? mst.yps_begin_shipid : this.ship_id;
 };
+
+Ship.prototype.slot_names = function() {
+	var slot = this.slot;
+	var onslot = this.onslot;
+	var maxslot = $mst_ship[this.ship_id].api_maxeq;
+	var a = [];
+	for (var i = 0; i < slot.length; ++i) {
+		var value = $slotitem_list[slot[i]];
+		if (value) {
+			a.push(slotitem_name(value.item_id, value.level, onslot[i], maxslot[i]));
+		}
+	}
+	return a.join(', ');
+}
+
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
@@ -381,6 +396,14 @@ function slotitem_name(id, lv, n, max) {
 	return name;
 }
 
+function slotitem_names(idlist) {
+	if (!idlist) return '';
+	var a = idlist.map(function(id) {
+		return slotitem_name(id);
+	});
+	return a.join();
+}
+
 function ship_name(id) {
 	var ship = $mst_ship[id];
 	if (ship) {
@@ -492,18 +515,6 @@ function slotitem_use(slot, item_id) {
 	return false;
 }
 
-function slotitem_names(slot, onslot, maxslot) {
-	if (!slot) return '';
-	var a = [];
-	for (var i = 0; i < slot.length; ++i) {
-		var value = $slotitem_list[slot[i]];
-		if (value) {
-			a.push(slotitem_name(value.item_id, value.level, onslot[i], maxslot[i]));
-		}
-	}
-	return a.join(', ');
-}
-
 function slotitem_delete(slot) {
 	if (!slot) return;
 	slot.forEach(function(id) {
@@ -574,7 +585,7 @@ function push_fleet_status(msg, deck) {
 			+ '\t' + rp_str
 			+ '\t' + ship.fuel_name()
 			+ '\t' + ship.bull_name()
-			+ '\t' + slotitem_names(ship.slot, ship.onslot, $mst_ship[ship.ship_id].api_maxeq)
+			+ '\t' + ship.slot_names()
 			);
 		var d = slotitem_count(ship.slot, 75);	// ドラム缶.
 		if (d) {
@@ -1302,9 +1313,7 @@ function on_battle(json) {
 			api_ship = fdeck.api_ship[idx];
 		}
 		var ship = $ship_list[api_ship];
-		req.push('対空カットイン(' + air_fire.api_kind + '): ' + ship.name_lv() + '[' + air_fire.api_use_items.map(function(e){
-			return slotitem_name(e);
-		}).join() + ']');
+		req.push('対空カットイン(' + air_fire.api_kind + '): ' + ship.name_lv() + '[' + slotitem_names(air_fire.api_use_items) + ']');
 	}
 
 	if ($beginhps) req.push('緒戦被害:' + $guess_info_str + ', 推定:' + $guess_win_rank);
