@@ -18,6 +18,8 @@ style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭�
 	+ "h5.markdown { margin:0px 1em;}"
 	;
 
+document.getElementById('w').style.textAlign = 'left';
+document.getElementById('w').style.width = '820px';
 document.getElementById('area-game').style.textAlign = 'left';
 document.getElementById('game_frame').width = '820px';
 document.getElementsByTagName('head')[0].appendChild(style);
