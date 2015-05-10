@@ -746,6 +746,7 @@ function on_port(json) {
 	if (unlock_lv10) req.push('### @!!Lv10以上の未ロック艦があります!!@'); // 警告表示.
 	req.push('艦娘保有数:' + ships + '/' + $max_ship
 		+ '(未ロック:' + unlock_names.length
+		+ ($unlock_slotitem ? '*' : '')
 		+ ', ロック:' + (ships - unlock_names.length)
 		+ ', ダブリ:' + double_count
 		+ ', 未保有:' + unowned_names.length
