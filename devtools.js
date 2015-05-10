@@ -624,6 +624,8 @@ function on_port(json) {
 	var lock_kyoukalist = {};
 	var lock_beginlist = {};
 	var lock_repairlist = [];
+	var unowned_names = [];
+	var owned_ship_idset = {};
 	var cond85 = 0;
 	var cond53 = 0;
 	var cond50 = 0;
@@ -659,6 +661,7 @@ function on_port(json) {
 	// ロック艦のcond別一覧、未ロック艦一覧、ロック装備持ち艦を検出する.
 	for (var id in $ship_list) {
 		var ship = $ship_list[id];
+		owned_ship_idset[ship.begin_shipid()] = true;
 		if (!ship.locked) {
 			var n = count_unless(ship.slot, -1); // スロット装備数.
 			$unlock_slotitem += n;
@@ -706,6 +709,12 @@ function on_port(json) {
 		var a = lock_beginlist[id];
 		if (a.length > 1) double_count += a.length - 1; // ダブリ艦数を集計する.
 	}
+	for (var id in $mst_ship) {
+		var mst = $mst_ship[id];
+		if (mst.yps_begin_shipid) continue; // 改造型を除外する.
+		if (!mst.api_afterlv) continue; // 改造不能型（季節艦、深海棲艦）を除外する.
+		if (!owned_ship_idset[id]) unowned_names.push(ship_name(id)); // 未所有艦名をリストに加える.
+	}
 	//
 	// 艦娘と装備数を検出する.
 	var basic = json.api_data.api_basic;
@@ -739,11 +748,16 @@ function on_port(json) {
 		+ '(未ロック:' + unlock_names.length
 		+ ', ロック:' + (ships - unlock_names.length)
 		+ ', ダブリ:' + double_count
+		+ ', 未保有:' + unowned_names.length
 		+ ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧(装備数*' + $unlock_slotitem + ')');
 		msg.push('\t|' + unlock_names.join(', '));
+	}
+	if (unowned_names.length > 0) {
+		msg.push('## 未保有艦一覧');
+		msg.push('\t|' + unowned_names.join(', '));
 	}
 	if (double_count > 0)  {
 		msg.push('## ロック艦ダブリ一覧');
