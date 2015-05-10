@@ -1222,14 +1222,11 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	}
 	$f_damage = f_damage_total;
 	// %%% CUT HERE FOR TEST %%%
-	var f_damage_percent = 100 * f_damage_total / f_hp_total;
-	var e_damage_percent = 100 * e_damage_total / e_hp_total;
-	f_damage_percent = Math.floor(f_damage_percent); // 少数部を切り捨てる.
-	e_damage_percent = Math.floor(e_damage_percent); // 少数部を切り捨てる. 
-	var rate = e_damage_total == 0 ? 0   : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先する(f_damage_total==0でも100にしない)
-			   f_damage_total == 0 ? 100 : // こちらが無傷なら1ダメ以上与えていればBなのでrateを100にする.
-			   e_damage_percent / (f_damage_percent == 0 ? 1 : f_damage_percent); // 0除算回避. 要検証!!! 敵味方とも1%未満の微ダメージのときの処理が曖昧.
-//	rate = Math.ceil(rate * 10) / 10; // 小数部2桁目を切り上げる.
+	var f_damage_percent = Math.floor(100 * f_damage_total / f_hp_total); // 敵ダメージ百分率. 小数点以下切り捨て.
+	var e_damage_percent = Math.floor(100 * e_damage_total / e_hp_total); // 自ダメージ百分率. 小数点以下切り捨て.
+	var rate = e_damage_percent == 0 ? 0   : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先する.
+			   f_damage_percent == 0 ? 100 : // ゼロ除算回避、こちらが無傷なら1ダメ以上与えていればBなのでrateを100にする.
+			   e_damage_percent / f_damage_percent;
 	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']' + f_maxhp_total
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
 				+ (isChase ? ', chase_rate:' : ', rate:') + Math.round(rate * 10000) / 10000
