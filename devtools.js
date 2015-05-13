@@ -1053,9 +1053,11 @@ function on_battle_result(json) {
 		if (rank != $guess_win_rank) {
 			$guess_info_str += '/' + $guess_win_rank + ' MISS!!';
 			msg += '\n### @!!勝敗推定ミス!!@ ' + $guess_info_str;
-		}
-		if (/[BCDE]/.test(rank))	///@debug B勝利以下のみ記録する.
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
+		}
+		else if (/[DE]/.test(rank) || $guess_debug_log) {
+			push_to_logbook($next_enemy + ', ' + $guess_info_str);
+		}
 		var fleet = $enemy_list[$enemy_id];
 		if (fleet) {
 			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
@@ -1222,14 +1224,19 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	}
 	$f_damage = f_damage_total;
 	// %%% CUT HERE FOR TEST %%%
-	var f_damage_percent = Math.floor(100 * f_damage_total / f_hp_total); // 敵ダメージ百分率. 小数点以下切り捨て.
-	var e_damage_percent = Math.floor(100 * e_damage_total / e_hp_total); // 自ダメージ百分率. 小数点以下切り捨て.
+	var f_damage_percent = Math.floor(100 * f_damage_total / f_hp_total); // 自ダメージ百分率. 小数点以下切り捨て.
+	var e_damage_percent = Math.floor(100 * e_damage_total / e_hp_total); // 敵ダメージ百分率. 小数点以下切り捨て.
 	var rate = e_damage_percent == 0 ? 0   : // 潜水艦お見合い等ではDになるので敵ダメ判定を優先する.
 			   f_damage_percent == 0 ? 100 : // ゼロ除算回避、こちらが無傷なら1ダメ以上与えていればBなのでrateを100にする.
 			   e_damage_percent / f_damage_percent;
 	$guess_info_str = 'f_damage:' + fraction_percent_name(f_damage_total, f_hp_total) + '[' + f_lost_count + '/' + f_count + ']' + f_maxhp_total
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
 				+ (isChase ? ', chase_rate:' : ', rate:') + Math.round(rate * 10000) / 10000
+				;
+	$guess_debug_log = (rate >= 2.49 && rate <= 2.51) // B/C判定閾値検証.
+				|| (rate >= 0.8864 && rate <= 0.9038) // C/D判定閾値検証.
+				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
+				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
 				;
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		return (f_damage_total == 0) ? '完S' : 'S';
@@ -1243,7 +1250,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if (rate > 2.5) { // ほぼ確定. rate == 2.5 でC判定を確認済み.
 		return 'B';
 	}
-	if (rate > 0.9) { // 要検証!!! r == 0.958 でC判定を確認. rate == 0.8169 でD判定を確認済み. 0.817～0.957 の区間に閾値がある. 
+	if (rate > 0.9) { // 要検証!!! r == 0.9038 でC判定を確認. rate == 0.8864 でD判定を確認済み. 0.8864～0.9038 の区間に閾値がある.
 		return 'C';
 	}
 	if (f_lost_count < f_count/2) { // 要検証.
