@@ -1,8 +1,8 @@
 {
 	"manifest_version": 2,
-	"name": "KanColle Cond Checker",
+	"name": "KanColle-YPS",
 	"version": "0.0.4",
-	"description": "艦これの艦娘疲労度を数値で表示する",
+	"description": "艦これの余所見プレイを支援する(cond_checker改造版)",
 	"background": {
 		"scripts": ["background.js"]
 	},
