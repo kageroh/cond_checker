@@ -143,10 +143,12 @@ function update_enemy_list() {
 	save_storage('enemy_list', $enemy_list);
 }
 
-function update_fdeck_list(list) {
+function update_fdeck_list(list, is_diff) {
 	if (!list) return;
-	$fdeck_list = {};
-	$ship_fdeck = {};
+	if (!is_diff) {
+		$fdeck_list = {};
+		$ship_fdeck = {};
+	}
 	list.forEach(function(deck) {
 		$fdeck_list[deck.api_id] = deck;
 		for (var i in deck.api_ship) {
@@ -1549,6 +1551,14 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			update_ship_list(json.api_data, true);
 			update_fdeck_list(json.api_data_deck);
+			on_port(json);
+		};
+	}
+	else if (api_name == '/api_get_member/ship_deck') {
+		// 進撃. 2015-5-18メンテにて、ship2が廃止されて置き換わった.
+		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
+			update_ship_list(json.api_data.api_ship_data, false);
+			update_fdeck_list(json.api_data.api_deck_data, true);
 			on_port(json);
 		};
 	}
