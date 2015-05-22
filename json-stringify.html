@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" language="javascript">
+function repXX(key, value) {
+	switch (key) {
+	case "api_nickname":
+	case "api_nickname_id":
+	case "api_comment":
+	case "api_comment_id":
+		return "xxxx";
+	}
+	return value;
+}
+function parse_input() {
+	var input = document.fm.input.value;
+	input = input.replace(/^svdata=/,"")
+	input = JSON.parse(input);
+	var result = document.getElementById('result');
+	result.textContent = JSON.stringify(input, repXX, 2);
+}
+</script>
+</head>
+
+<body>
+<h1>JSON stringify</h1>
+<h2>input</h2>
+<form name="fm">
+<textarea name="input" rows="20" cols="100">
+</textarea>
+<input type="button" value="stringify" onclick="parse_input()"></input>
+</form>
+<h2>output</h2>
+<textarea id="result" rows="20" cols="100">結果</textarea>
+</body>
+</html>
