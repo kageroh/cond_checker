@@ -1076,6 +1076,21 @@ function on_battle_result(json) {
 		$battle_log.push(log);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
 	}
+	if (g) {
+		var drop_ship = {
+			api_id: -$battle_count - 1000, // 通常の背番号(1以上)と衝突しないように負の仮番号を作る. 母港に戻れば保有艦一覧が全体更新されるので、正しい背番号になる.
+			api_ship_id: g.api_ship_id,
+			api_cond: 49,
+			api_lv: 1,
+			api_maxhp: 1,
+			api_nowhp: 1,
+			api_locked: 0,
+			api_slot: [-1,-1,-1,-1,-1],	// デフォルト装備が取れないので空にしておく. ドロップ艦は装備を持っている筈なので、母港に戻るまで装備一覧は正しくないことになる.
+			api_onslot: [0,0,0,0,0],
+			api_kyouka: [0,0,0,0,0]
+		};
+		update_ship_list([drop_ship]);
+	}
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
 		var ship = $ship_list[id];
