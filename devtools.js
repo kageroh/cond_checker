@@ -129,12 +129,6 @@ function update_ship_list(list, is_all) {
 	if (is_all) $ship_list = {};
 	list.forEach(function(data) {
 		$ship_list[data.api_id] = new Ship(data, prev_ship_list[data.api_id]);
-		if (is_all) {
-			data.api_slot.forEach(function(id) {
-				// 未知の装備があれば、ダミーエントリを作って数を合わせる. 戦闘直後のship2にて、ドロップ艦がこの状況となる.
-				if (id != -1 && !$slotitem_list[id]) $slotitem_list[id] = { item_id: -1, locked: 0, level: 0 };
-			});
-		}
 	});
 	save_storage('ship_list', $ship_list);
 }
@@ -1558,14 +1552,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_ndock_list(json.api_data.api_ndock);
 			$battle_deck_id = -1;
 			$ship_escape = {};
-			on_port(json);
-		};
-	}
-	else if (api_name == '/api_get_member/ship2') {
-		// 進撃.
-		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			update_ship_list(json.api_data, true);
-			update_fdeck_list(json.api_data_deck);
 			on_port(json);
 		};
 	}
