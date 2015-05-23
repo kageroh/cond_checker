@@ -122,24 +122,28 @@ function save_storage(name, v) {
 	localStorage[name] = JSON.stringify(v);
 }
 
-function update_ship_list(list, is_all) {
+function update_ship_list(list, is_delta) {
 	if (!list) return;
 	// update ship_list
 	var prev_ship_list = $ship_list;
-	if (is_all) $ship_list = {};
+	if (!is_delta) $ship_list = {};
 	list.forEach(function(data) {
 		$ship_list[data.api_id] = new Ship(data, prev_ship_list[data.api_id]);
 	});
 	save_storage('ship_list', $ship_list);
 }
 
+function delta_update_ship_list(list) {
+	update_ship_list(list, true);
+}
+
 function update_enemy_list() {
 	save_storage('enemy_list', $enemy_list);
 }
 
-function update_fdeck_list(list, is_diff) {
+function update_fdeck_list(list, is_delta) {
 	if (!list) return;
-	if (!is_diff) {
+	if (!is_delta) {
 		$fdeck_list = {};
 		$ship_fdeck = {};
 	}
@@ -150,6 +154,10 @@ function update_fdeck_list(list, is_diff) {
 			if (ship_id != -1) $ship_fdeck[ship_id] = deck.api_id;
 		}
 	});
+}
+
+function delta_update_fdeck_list(list) {
+	update_fdeck_list(list, true);
 }
 
 function update_ndock_list(list) {
@@ -1083,7 +1091,7 @@ function on_battle_result(json) {
 			api_onslot: [0,0,0,0,0],
 			api_kyouka: [0,0,0,0,0]
 		};
-		update_ship_list([drop_ship]);
+		delta_update_ship_list([drop_ship]);
 	}
 	if (mvp) {
 		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
@@ -1432,7 +1440,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 新艦建造成功.
 		func = function(json) { // 建造艦が持つ初期装備配列を、リストに加える.
 			update_kdock_list(json.api_data.api_kdock);
-			update_ship_list([json.api_data.api_ship], false);
+			delta_update_ship_list([json.api_data.api_ship]);
 			add_slotitem_list(json.api_data.api_slotitem);
 			on_port(json);
 		};
@@ -1547,7 +1555,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			update_ship_list(json.api_data.api_ship, true);
+			update_ship_list(json.api_data.api_ship);
 			update_fdeck_list(json.api_data.api_deck_port);
 			update_ndock_list(json.api_data.api_ndock);
 			$battle_deck_id = -1;
@@ -1558,19 +1566,18 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_get_member/ship_deck') {
 		// 進撃. 2015-5-18メンテにて、ship2が廃止されて置き換わった.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			update_ship_list(json.api_data.api_ship_data, false);
-			update_fdeck_list(json.api_data.api_deck_data, true);
+			delta_update_ship_list(json.api_data.api_ship_data);
+			delta_update_fdeck_list(json.api_data.api_deck_data);
 			on_port(json);
 		};
 	}
 	else if (api_name == '/api_get_member/ship3') {
 		// 装備換装.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
-			var is_all = true;
-			if (decode_postdata_params(request.request.postData.params).api_shipid) {
-				is_all = false; // 装備解除時は差分のみ.
-			}
-			update_ship_list(json.api_data.api_ship_data, is_all);
+			if (decode_postdata_params(request.request.postData.params).api_shipid)
+				delta_update_ship_list(json.api_data.api_ship_data); // 装備解除時は差分のみ.
+			else
+				update_ship_list(json.api_data.api_ship_data);
 			update_fdeck_list(json.api_data.api_deck_data);
 			on_port(json);
 		};
