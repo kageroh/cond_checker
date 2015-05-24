@@ -34,6 +34,7 @@ var $beginhps_c = null;
 var $f_damage = 0;
 var $guess_win_rank = '?';
 var $guess_info_str = '';
+var $request = null;
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -474,6 +475,17 @@ function decode_postdata_params(params) {
 	return r;
 }
 
+function request_date_time() {
+	var d = $request.startedDateTime;	// PC側の日時(POST).
+	var s = d.toLocaleString();
+	var h = $request.response.headers;
+	if (h && h[0].name == 'Date') {
+		d = new Date(h[0].value);		// サーバ側の日時(RESP).
+		s += ', server:' + d.toLocaleString();
+	}
+	return s;
+}
+
 function count_if(a, value) {
 	if (a instanceof Array)
 		return a.reduce(function(count, x) { return count + (x == value); }, 0);
@@ -625,7 +637,7 @@ function debug_print_mst() {
 // イベントハンドラ.
 //
 function on_port(json) {
-	var req = [];
+	var req = [request_date_time()];
 	var unlock_names = [];
 	var lock_condlist = {};
 	var lock_kyoukalist = {};
@@ -1332,7 +1344,7 @@ function on_battle(json) {
 			+ formation_name(d.api_formation[1]);
 		if (d.api_support_flag) fmt += '+' + support_name(d.api_support_flag);
 	}
-	var req = [];
+	var req = [request_date_time()];
 	req.push('# ' + ($next_mapinfo ? $next_mapinfo.api_name : '') + ' battle' + $battle_count);
 	req.push($next_enemy);
 	if (fmt) req.push(fmt);
@@ -1557,6 +1569,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
+		$request = request;
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			update_ship_list(json.api_data.api_ship);
 			update_fdeck_list(json.api_data.api_deck_port);
@@ -1568,6 +1581,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_get_member/ship_deck') {
 		// 進撃. 2015-5-18メンテにて、ship2が廃止されて置き換わった.
+		$request = request;
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			delta_update_ship_list(json.api_data.api_ship_data);
 			delta_update_fdeck_list(json.api_data.api_deck_data);
@@ -1576,6 +1590,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_get_member/ship3') {
 		// 装備換装.
+		$request = request;
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			if (decode_postdata_params(request.request.postData.params).api_shipid)
 				delta_update_ship_list(json.api_data.api_ship_data); // 装備解除時は差分のみ.
@@ -1639,6 +1654,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		|| api_name == '/api_req_combined_battle/battle_water'
 		|| api_name == '/api_req_combined_battle/airbattle') {
 		// 昼戦開始.
+		$request = request;
 		$battle_count++;
 		$beginhps = null;
 		$beginhps_c = null;
@@ -1647,11 +1663,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_battle_midnight/battle'
 		|| api_name == '/api_req_combined_battle/midnight_battle') {
 		// 昼戦→夜戦追撃.
+		$request = request;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_battle_midnight/sp_midnight'
 		|| api_name == '/api_req_combined_battle/sp_midnight') {
 		// 夜戦開始.
+		$request = request;
 		$battle_count++;
 		$beginhps = null;
 		$beginhps_c = null;
@@ -1659,10 +1677,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_sortie/night_to_day') {
 		// 夜戦→昼戦追撃.
+		$request = request;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_practice/battle') {
 		// 演習開始.
+		$request = request;
 		$battle_count = 1;
 		$beginhps = null;
 		$beginhps_c = null;
@@ -1671,6 +1691,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_practice/midnight_battle') {
 		// 夜演習継続.
+		$request = request;
 		func = on_battle;
 	}
 	else if (api_name == '/api_req_sortie/battleresult'
