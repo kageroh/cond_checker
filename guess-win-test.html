@@ -83,12 +83,12 @@ function parse_input() {
 			// 緒戦被害:f_damage:48/111(44%)[0/4], e_damage:138/289(48%)[1/5], rate:1.1, 推定:C
 			// 戦闘被害:f_damage:52/111(47%)[0/4], e_damage:196/289(68%)[1/5], chase_rate:1.5
 			// 勝敗推定ミス f_damage:54/201(27%)[0/6]210, e_damage:217/321(68%)[3/6], rate:2.5
-			if (match = /f_damage:(\d+)\/(\d+)\(\d+\%\)\[(\d+)\/(\d+)\](\d+)?/.exec(s)) {
+			if (match = /f_damage:(\d+)\/(\d+).[\d\.]+\%.\[(\d+)\/(\d+)\](\d+)?/.exec(s)) {
 				f_damage_total = match[1]; f_hp_total = match[2]; f_lost_count = match[3]; f_count = match[4];
 				if (match[5]) f_maxhp_total = match[5];
 				isChase = /chase_rate/.test(s);
 			}
-			if (match = /e_damage:(\d+)\/(\d+).\d+\%.\[(\x?)(\d+)\/(\d+)\]/.exec(s)) {
+			if (match = /e_damage:(\d+)\/(\d+).[\d\.]+\%.\[(\x?)(\d+)\/(\d+)\]/.exec(s)) {
 				e_damage_total = match[1]; e_hp_total = match[2]; e_lost_count = match[4]; e_count = match[5];
 				e_leader_lost = (match[3] == 'x');
 			}

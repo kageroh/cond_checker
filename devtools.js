@@ -287,18 +287,20 @@ function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
 	else /* diff == 0 */ return '';
 }
 
-function percent_name(now, max) {	// now:1, prev:2 -> "50%"
+function percent_name(now, max, decimal_digits) {	// now:1, max:2 -> "50%"
 	if (!max) return '';
-	return Math.floor(100 * now / max) + '%';
+	var pow10 = decimal_digits ? Math.pow(10, decimal_digits) : 1;
+	return Math.floor(100 * pow10 * now / max) / pow10 + '%';
 }
 
-function percent_name_unless100(now, max) {	// now:1, max:2 -> "(50%)"
+function percent_name_unless100(now, max, decimal_digits) {	// now:1, max:2 -> "(50%)"
 	if (!max || now == max) return '';
-	return '(' + percent_name(now, max) + ')';
+	return '(' + percent_name(now, max, decimal_digits) + ')';
 }
 
 function fraction_percent_name(now, max) {	// now:1, max:2 -> "1/2(50%)"
-	return now + '/' + max + '(' + percent_name(now, max) + ')';
+	var d = (100 * now / max < 1) ? 1 : 0; // 1%未満なら小数部2桁目を切り捨て、1%以上なら小数部切り捨て.
+	return now + '/' + max + '(' + percent_name(now, max, d) + ')';
 }
 
 function kira_name(cond) {
