@@ -8,7 +8,7 @@ var $mst_useitem	= load_storage('mst_useitem');
 var $mst_mapinfo	= load_storage('mst_mapinfo');
 var $weekly			= load_storage('weekly');
 var $logbook		= load_storage('logbook', []);
-var $slotitem_list = {};
+var $slotitem_list	= load_storage('slotitem_list');
 var $max_ship = 0;
 var $max_slotitem = 0;
 var $combined_flag = 0;
@@ -1419,6 +1419,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 保有する装備配列をリストに記録する.
 			$slotitem_list = {};
 			add_slotitem_list(json.api_data);
+			save_storage('slotitem_list', $slotitem_list);
 		};
 	}
 	else if (api_name == '/api_get_member/kdock') {
