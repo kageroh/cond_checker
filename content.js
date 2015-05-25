@@ -96,6 +96,8 @@ function parse_markdown(a) {
 		// 色付け.
 		s = s.replace(/撃沈---/g, '<span style="color:steelblue">$&</span>');
 		s = s.replace(/大破!!!/g, '<span style="color:red">$&</span>');
+		s = s.replace(/MISS!!/g, '<span style="color:red">$&</span>'); // 判定ミスを着色する.
+		s = s.replace(/\(0\.\d+\%\)/g, '<span style="color:red">$&</span>'); // 微小ダメージを着色する.
 		s = s.replace(/@!!(.+)!!@/g, '<span style="color:red">$1</span>');
 		// markdown書式を変換する.
 		if      (/^--+/.test(s))	t = "<hr>";
