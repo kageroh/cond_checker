@@ -19,7 +19,7 @@ var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
 var $material = {};
-var $quest_count = 0;
+var $quest_count = -1;
 var $quest_exec_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
@@ -993,9 +993,8 @@ function on_mission_check(category) {
 			req.push('\t' + progress + '\t' + quest.api_title);
 		}
 	}
-	var n = Object.keys($quest_list).length;
-	if (n == 0) req.push('### 任務なし!!');
-	else if (n != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
+	var quests = Object.keys($quest_list).length;
+	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
 	if (req.length > 1) chrome.extension.sendRequest(req);
 }
 
