@@ -1081,7 +1081,7 @@ function on_battle_result(json) {
 			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
 			update_enemy_list();
 		}
-		var log = $next_enemy + '(' + e.api_deck_name + '):' + rank;
+		var log = $next_enemy + '(' + e.api_deck_name + '):' + $battle_info + ':' + rank;
 		if (drop_ship_name) {
 			log += '+' + g.api_ship_name; // drop_ship_name; 艦種を付けると冗長すぎるので艦名のみとする.
 		}
@@ -1342,6 +1342,7 @@ function on_battle(json) {
 			+ match_name(d.api_formation[2]) + '/'
 			+ formation_name(d.api_formation[1]);
 		if (d.api_support_flag) fmt += '+' + support_name(d.api_support_flag);
+		$battle_info = fmt;
 	}
 	var req = [request_date_time()];
 	req.push('# ' + ($next_mapinfo ? $next_mapinfo.api_name : '') + ' battle' + $battle_count);
@@ -1354,7 +1355,11 @@ function on_battle(json) {
 		var t0 = airplane.touch[0]; if (t0 != -1) req.push('触接中: ' + slotitem_name(t0));
 		var t1 = airplane.touch[1]; if (t1 != -1) req.push('被触接中: ' + slotitem_name(t1));
 	}
-	if (airplane.seiku != null) req.push(seiku_name(airplane.seiku));
+	if (airplane.seiku != null) {
+		var s = seiku_name(airplane.seiku);
+		req.push(s);
+		$battle_info += '/' + s;
+	}
 	if (airplane.air_fire != null) {
 		var air_fire = airplane.air_fire;
 		var idx = air_fire.api_idx;
