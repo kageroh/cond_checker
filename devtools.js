@@ -1373,7 +1373,10 @@ function on_battle(json) {
 		req.push('対空カットイン(' + air_fire.api_kind + '): ' + ship.name_lv() + '[' + slotitem_names(air_fire.api_use_items) + ']');
 	}
 
-	if ($beginhps) req.push('緒戦被害:' + $guess_info_str + ', 推定:' + $guess_win_rank);
+	if ($beginhps) {
+		req.push('緒戦被害:' + $guess_info_str + ', 推定:' + $guess_win_rank);
+		$battle_info += '/追撃';
+	}
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
 	if (d.api_escape_idx) {
