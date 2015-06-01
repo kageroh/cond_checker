@@ -9,6 +9,8 @@ var $mst_mapinfo	= load_storage('mst_mapinfo');
 var $weekly			= load_storage('weekly');
 var $logbook		= load_storage('logbook', []);
 var $slotitem_list	= load_storage('slotitem_list');
+var $tmp_ship_id = -1000;	// ドロップ艦の仮ID.
+var $tmp_slot_id = -1000;	// ドロップ艦装備の仮ID.
 var $max_ship = 0;
 var $max_slotitem = 0;
 var $combined_flag = 0;
@@ -35,6 +37,7 @@ var $f_damage = 0;
 var $guess_win_rank = '?';
 var $guess_info_str = '';
 var $request = null;
+var $newship_slots = null;
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -129,9 +132,34 @@ function update_ship_list(list, is_delta) {
 	var prev_ship_list = $ship_list;
 	if (!is_delta) $ship_list = {};
 	list.forEach(function(data) {
-		$ship_list[data.api_id] = new Ship(data, prev_ship_list[data.api_id]);
+		var prev = prev_ship_list[data.api_id];
+		var ship = new Ship(data, prev);
+		$ship_list[data.api_id] = ship;
+		if ($newship_slots && !prev) {
+			// ship2廃止によりドロップ艦の装備数が母港帰還まで反映できなくなったので、母港帰還時に新規入手艦の装備数を記録保存し、
+			// ドロップ時に装備数分のダミー装備IDを用意する. 初入手艦など未記録の艦は装備数0となるので、装備数が少なく表示される場合がある.
+			if (ship.id < 0) {	// on_battle_result で仮登録するドロップ艦の場合.
+				for (var slots = $newship_slots[ship.ship_id]; slots; --slots) { // 装備数未登録なら何もしない(装備数合計が少なく表示される)
+					ship.slot.push($tmp_slot_id--); // 初期装備数分のダミー装備IDを載せる. 母港帰還(portパケット)により正しい値に上書きされる.
+				}
+			}
+			else if (ship.lv == 1) {	// 海域ドロップ、報酬、建造などにより新規入手したLv1艦の場合.
+				$newship_slots[ship.ship_id] = count_unless(ship.slot, -1); // 初期装備数を記録する.
+			}
+		}
 	});
+	if (!$newship_slots) {
+		// ゲーム開始直後の保有艦リスト更新では、別環境で入手済みの既存Lv1艦(装備変更の可能性あり)も新規入手扱いになるので都合が悪い.
+		// よって $newship_slots のロードをここで行い、開始直後の装備数記録をスキップする.
+		$newship_slots = load_storage('newship_slots');	// この環境で保存した新規艦の初期装備数をロードする.
+		for (var i in $init_newship_slots) {			// 既知艦の初期装備個数を上書きする.
+			var n = $init_newship_slots[i];
+			if (n != null)
+				$newship_slots[i] = n;
+		}
+	}
 	save_storage('ship_list', $ship_list);
+	save_storage('newship_slots', $newship_slots);
 }
 
 function delta_update_ship_list(list) {
@@ -633,6 +661,21 @@ function debug_print_mst() {
 	chrome.extension.sendRequest(req);
 }
 
+function debug_print_newship_slots() {
+	var msg = ['YPS_newship_slots', '\t==id:\t==slots\t==name'];
+	var newship_slots = $newship_slots ? $newship_slots : load_storage('newship_slots');
+	for (var id in $mst_ship) {
+		var mst = $mst_ship[id];
+		if (mst.yps_begin_shipid) continue; // 改造型を除外する.
+		if (!mst.api_afterlv) continue; // 改造不能型（季節艦、深海棲艦）を除外する.
+		msg.push('\t' + id + ':\t' + newship_slots[id] + ',\t// ' + ship_name(id) + '.');
+	}
+	var req = [];
+	req.push('## DEBUG newship_slots');
+	req.push(msg);
+	chrome.extension.sendRequest(req);
+}
+
 //------------------------------------------------------------------------
 // イベントハンドラ.
 //
@@ -1093,14 +1136,14 @@ function on_battle_result(json) {
 	}
 	if (g) {
 		var drop_ship = {
-			api_id: -$battle_count - 1000, // 通常の背番号(1以上)と衝突しないように負の仮番号を作る. 母港に戻れば保有艦一覧が全体更新されるので、正しい背番号になる.
+			api_id: $tmp_ship_id--, // 通常の背番号(1以上)と衝突しないように負の仮番号を作る. 母港に戻れば保有艦一覧が全体更新されるので、正しい背番号になる.
 			api_ship_id: g.api_ship_id,
 			api_cond: 49,
 			api_lv: 1,
 			api_maxhp: 1,
 			api_nowhp: 1,
 			api_locked: 0,
-			api_slot: [-1,-1,-1,-1,-1],	// デフォルト装備が取れないので空にしておく. ドロップ艦は装備を持っている筈なので、母港に戻るまで装備一覧は正しくないことになる.
+			api_slot: [],	// デフォルト装備が取れないので空にしておく.
 			api_onslot: [0,0,0,0,0],
 			api_kyouka: [0,0,0,0,0]
 		};
@@ -1433,6 +1476,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			chrome.extension.sendRequest("## ロード完了");
 			// debug_print_mst();
+			debug_print_newship_slots();
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
