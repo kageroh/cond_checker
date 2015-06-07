@@ -1476,7 +1476,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			chrome.extension.sendRequest("## ロード完了");
 			// debug_print_mst();
-			debug_print_newship_slots();
+			// debug_print_newship_slots();
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
