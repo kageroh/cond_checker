@@ -140,6 +140,7 @@ function update_ship_list(list, is_delta) {
 			// ドロップ時に装備数分のダミー装備IDを用意する. 初入手艦など未記録の艦は装備数0となるので、装備数が少なく表示される場合がある.
 			if (ship.id < 0) {	// on_battle_result で仮登録するドロップ艦の場合.
 				for (var slots = $newship_slots[ship.ship_id]; slots; --slots) { // 装備数未登録なら何もしない(装備数合計が少なく表示される)
+					$slotitem_list[$tmp_slot_id] = null; // 個数を合せるためnullのダミーエントリを追加する. 母港旗艦(slot_itemパケット)でリストが全更新される.
 					ship.slot.push($tmp_slot_id--); // 初期装備数分のダミー装備IDを載せる. 母港帰還(portパケット)により正しい値に上書きされる.
 				}
 			}
