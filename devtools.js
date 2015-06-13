@@ -747,6 +747,10 @@ function on_port(json) {
 	var lockeditem_count = 0;
 	var $unlock_slotitem = 0;
 	var $leveling_slotitem = 0;
+	var drumcan_cond85 = [];
+	var drumcan_cond53 = [];
+	var drumcan_cond50 = [];
+	var drumcan_condxx = [];
 	//
 	// ロック装備を種類毎に集計する.
 	for (var id in $slotitem_list) {
@@ -797,6 +801,12 @@ function on_port(json) {
 				else if (r <= 0.75) damage_L++; // 小破.
 				else                damage_N++; // 軽微.
 				lock_repairlist.push(ship);
+			}
+			if (!$ndock_list[id] && !$ship_fdeck[id] && slotitem_count(ship.slot, 75) > 0) { // ドラム缶装備の待機艦を選別する.
+				if     (cond >= 85) drumcan_cond85.push(ship);
+				else if (cond >= 53) drumcan_cond53.push(ship);
+				else if (cond > 49) drumcan_cond50.push(ship);
+				else               drumcan_condxx.push(ship);
 			}
 			var b = ship.begin_shipid();
 			if (!lock_beginlist[b]) lock_beginlist[b] = [];
@@ -880,6 +890,12 @@ function on_port(json) {
 	// ロック艦キラ付一覧を表示する.
 	var msg = ['YPS_kira_list'];
 	req.push('キラ付艦数:***' + cond85 + ' **' + cond53 + ' *' + cond50);
+	msg.push('## ドラム缶装備の待機艦(遠征交代要員)');
+	msg.push('\t==cond\t==艦名'); // 表ヘッダ
+	if (drumcan_cond85.length > 0) msg.push('\t*** 85以上\t|' + shiplist_names(drumcan_cond85));
+	if (drumcan_cond53.length > 0) msg.push('\t** 53以上\t|' + shiplist_names(drumcan_cond53));
+	if (drumcan_cond50.length > 0) msg.push('\t* 50以上\t|' + shiplist_names(drumcan_cond50));
+	if (drumcan_condxx.length > 0) msg.push('\t. 49以下\t|' + shiplist_names(drumcan_condxx));
 	if (Object.keys(lock_condlist).length > 0) {
 		msg.push('## ロック艦cond降順');
 		msg.push('\t==cond\t==艦名'); // 表ヘッダ
