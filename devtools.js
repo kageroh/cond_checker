@@ -846,7 +846,7 @@ function on_port(json) {
 	}
 	req.push('資材増減数:' + msg.join(', '));
 	//
-	// 艦娘保有数、未ロック艦一覧、改造可能艦一覧、ロック艦キラ付一覧を表示する.
+	// 艦娘保有数、未ロック艦一覧、未保有艦一覧、ダブリ艦一覧を表示する.
 	var ships = Object.keys($ship_list).length;
 	var space = $max_ship - ships;
 	if (space <= 0)      req.push('### @!!艦娘保有数が満杯です!!@'); // 警告表示.
@@ -857,8 +857,7 @@ function on_port(json) {
 		+ ($unlock_slotitem ? '*' : '')
 		+ ', ロック:' + (ships - unlock_names.length)
 		+ ', ダブリ:' + double_count
-		+ ', 未保有:' + unowned_names.length
-		+ ', キラ付:***' + cond85 + ' **' + cond53 + ' *' + cond50 + ')');
+		+ ', 未保有:' + unowned_names.length);
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧(装備数*' + $unlock_slotitem + ')');
@@ -875,6 +874,12 @@ function on_port(json) {
 			if (a.length > 1) msg.push('\t|' + shiplist_names(a));
 		}
 	}
+	msg.push('---');
+	if (msg.length > 2) req.push(msg);
+	//
+	// ロック艦キラ付一覧を表示する.
+	var msg = ['YPS_kira_list'];
+	req.push('キラ付艦数:***' + cond85 + ' **' + cond53 + ' *' + cond50);
 	if (Object.keys(lock_condlist).length > 0) {
 		msg.push('## ロック艦cond降順');
 		msg.push('\t==cond\t==艦名'); // 表ヘッダ
