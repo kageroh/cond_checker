@@ -867,7 +867,8 @@ function on_port(json) {
 		+ ($unlock_slotitem ? '*' : '')
 		+ ', ロック:' + (ships - unlock_names.length)
 		+ ', ダブリ:' + double_count
-		+ ', 未保有:' + unowned_names.length);
+		+ ', 未保有:' + unowned_names.length
+		+ ')');
 	var msg = ['YPS_ship_list'];
 	if (unlock_names.length > 0) {
 		msg.push('## 未ロック艦一覧(装備数*' + $unlock_slotitem + ')');
