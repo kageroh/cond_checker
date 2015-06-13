@@ -1382,9 +1382,9 @@ function on_battle(json) {
 	var fmt = null;
 	if (d.api_formation) {
 		$enemy_formation_id = d.api_formation[1];
-		fmt = formation_name(d.api_formation[0]) + '/'
-			+ match_name(d.api_formation[2]) + '/'
-			+ formation_name(d.api_formation[1]);
+		fmt = formation_name(d.api_formation[0])
+			+ '/' + match_name(d.api_formation[2])
+			+ '/敵' + formation_name(d.api_formation[1]);
 		if (d.api_support_flag) fmt += '+' + support_name(d.api_support_flag);
 		$battle_info = fmt;
 	}
