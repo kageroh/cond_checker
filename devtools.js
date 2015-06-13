@@ -66,12 +66,21 @@ Ship.prototype.kira_cond_diff_name = function() {
 	return kira_name(this.c_cond) + this.c_cond + diff_name(this.c_cond, this.p_cond);
 };
 
+Ship.prototype.fuel_max = function() {
+	var max = $mst_ship[this.ship_id].api_fuel_max;
+	return max == null ? 0 : max; // if null or undefined then 0
+};
+
+Ship.prototype.bull_max = function() {
+	var max = $mst_ship[this.ship_id].api_bull_max;
+	return max == null ? 0 : max; // if null or undefined then 0
+};
+
 Ship.prototype.fuel_name = function() {
 	var max = $mst_ship[this.ship_id].api_fuel_max;
 	if (max && this.fuel < max) return percent_name(this.fuel, max);
 	return ''; // 100% or unknown
 };
-
 Ship.prototype.bull_name = function() {
 	var max = $mst_ship[this.ship_id].api_bull_max;
 	if (max && this.bull < max) return percent_name(this.bull, max);
@@ -606,6 +615,42 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 	return (nowhp < 0 ? 0 : nowhp) + '/' + maxhp + diff_name(nowhp, beginhp) + ':' + damage_name(nowhp, maxhp);
 }
 
+function fleet_brief_status(deck, deck2) {
+	var kira = 0, n = 0;
+	var esc = 0, sunk = 0;
+	var damage_H = 0;
+	var damage_M = 0;
+	var damage_L = 0;
+	var fuel = 0, fuel_max = 0;
+	var bull = 0, bull_max = 0;
+	var list = deck.api_ship;
+	if (deck2) list = list.concat(deck2.api_ship);
+	for (var i in list) {
+		var ship = $ship_list[list[i]];
+		if (ship) {
+			++n;
+			fuel += ship.fuel; fuel_max += ship.fuel_max();
+			bull += ship.bull; bull_max += ship.bull_max();
+			if (ship.c_cond > 49) ++kira;
+			var r = ship.nowhp / ship.maxhp;
+			if ($ship_escape[ship.id]) esc++; // 退避.
+			else if (r <= 0) sunk++; // 撃沈.
+			else if (r <= 0.25) damage_H++; // 大破.
+			else if (r <= 0.50) damage_M++; // 中破.
+			else if (r <= 0.75) damage_L++; // 小破.
+		}
+	}
+	return '*' + kira + '/' + n
+		+ (fuel < fuel_max ? ' 燃料' + percent_name(fuel, fuel_max) : '')
+		+ (bull < bull_max ? ' 弾薬' + percent_name(bull, bull_max) : '')
+		+ (esc  ? ' 退避' + esc : '')
+		+ (sunk ? ' 撃沈' + sunk : '')
+		+ (damage_H ? ' 大破!!!' + damage_H : '')
+		+ (damage_M ? ' 中破' + damage_M : '')
+		+ (damage_L ? ' 小破' + damage_L : '')
+		;
+}
+
 function push_fleet_status(msg, deck) {
 	var lv_sum = 0;
 	var fleet_ships = 0;
@@ -991,18 +1036,21 @@ function on_port(json) {
 		var msg = ['YPS_fdeck_list' + f_id];
 		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
 		var deck = $fdeck_list[f_id];
+		var brief;
 		if ($combined_flag && f_id == 1) {
 			var deck2 = $fdeck_list[2];	// 連合第二艦隊は2固定.
 			push_fleet_status(msg, deck);
 			push_fleet_status(msg, deck2);
-			req.push('## 連合艦隊1+2: ' + deck.api_name + ' + ' + deck2.api_name);
+			brief = fleet_brief_status(deck, deck2);
+			req.push('## 連合艦隊1+2: ' + deck.api_name + ' + ' + deck2.api_name + ' (' + brief + ')');
 		}
 		else if ($combined_flag && f_id == 2) {
 			continue;	// f_id == 1 にてまとめて表示済み.
 		}
 		else {
 			push_fleet_status(msg, deck);
-			req.push('## 艦隊' + f_id + ': ' + deck.api_name);
+			brief = fleet_brief_status(deck);
+			req.push('## 艦隊' + f_id + ': ' + deck.api_name + ' (' + brief + ')');
 		}
 		req.push(msg);
 		var mission_end = deck.api_mission[2];
