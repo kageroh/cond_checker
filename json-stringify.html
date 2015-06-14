@@ -20,8 +20,10 @@ function parse_input() {
 	var input = document.fm.input.value;
 	input = input.replace(/^svdata=/,"")
 	input = JSON.parse(input);
-	var result = document.getElementById('result');
-	result.textContent = JSON.stringify(input, repXX, 2);
+	var s = JSON.stringify(input, repXX, 2);
+	s = s.replace(/\n\s*(-?\d+),/g, '$1, ');		// 数値の配列要素は改行を省く.
+	s = s.replace(/\n\s*(-?\d+)\n\s+]/g, '$1]');	// 数値の配列要素は改行を省く.
+	document.getElementById('result').textContent = s;
 }
 </script>
 </head>
