@@ -20,7 +20,14 @@ var $ship_escape = {};	// 護衛退避したshipidのマップ.
 var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
-var $material = {};
+var $material = {
+	// [燃料,弾薬,鋼材,ボーキ, バーナー,バケツ,歯車,螺子]
+	mission: [0,0,0,0, 0,0,0,0],	///< 遠征累計.
+	quest  : [0,0,0,0, 0,0,0,0],	///< 任務累計.
+	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
+	now : [0,0,0,0, 0,0,0,0],	///< 現在資源.
+	pre : [0,0,0,0, 0,0,0,0]	///< 前回資源.
+};
 var $quest_count = -1;
 var $quest_exec_count = 0;
 var $quest_list = {};
@@ -85,6 +92,16 @@ Ship.prototype.bull_name = function() {
 	var max = $mst_ship[this.ship_id].api_bull_max;
 	if (max && this.bull < max) return percent_name(this.bull, max);
 	return ''; // 100% or unknown
+};
+
+Ship.prototype.charge = function(data) { ///< 補給.
+	var p_fuel = this.fuel;
+	var p_bull = this.bull;
+	this.fuel   = data.api_fuel;
+	this.bull   = data.api_bull;
+	this.onslot = data.api_onslot;
+	$material.charge[0] += this.fuel - p_fuel;
+	$material.charge[1] += this.bull - p_bull;
 };
 
 Ship.prototype.can_kaizou = function() {
@@ -351,7 +368,7 @@ function kira_name(cond) {
 };
 
 function material_name(id) {
-	switch (id) {
+	switch (parseInt(id, 10)) {
 		case 1: return '燃料';
 		case 2: return '弾薬';
 		case 3: return '鋼材';
@@ -522,6 +539,10 @@ function request_date_time() {
 		s += ', server:' + d.toLocaleString();
 	}
 	return s;
+}
+
+function array_copy(dst, src) {
+	for (var i = 0; i < src.length; ++i) dst[i] = src[i];
 }
 
 function count_if(a, value) {
@@ -847,14 +868,24 @@ function on_port(json) {
 	var msg = [];
 	if (material) {
 		material.forEach(function(data) {
-			var id = data.api_id;
+			var i = data.api_id - 1;
 			var value = data.api_value;
-			var diff  = diff_name(value, $material[id]);
-			$material[id] = value;
-			if (diff.length) msg.push(material_name(id) + diff);
+			var diff  = diff_name(value, $material.now[i]);
+			$material.pre[i] = $material.now[i] = value;
+			if (diff.length) msg.push(material_name(i + 1) + diff);
 		});
 	}
 	req.push('資材増減数:' + msg.join(', '));
+	var msg = ['YPS_material', '\t', '\t==現在値', '\t==遠征累計', '\t==任務累計', '\t==補給累計'];
+	for (var i = 0; i < 8; ++i) {
+		msg[1] += '\t==' + material_name(i + 1);
+		msg[2] += '\t' + $material.now[i];
+		msg[3] += '\t' + $material.mission[i];
+		msg[4] += '\t' + $material.quest[i];
+		msg[5] += '\t' + -$material.charge[i];
+	}
+	msg.push('---');
+	req.push(msg);
 	//
 	// 艦娘保有数、未ロック艦一覧、未保有艦一覧、ダブリ艦一覧を表示する.
 	var ships = Object.keys($ship_list).length;
@@ -1682,6 +1713,45 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			on_port(json);
 		};
 	}
+	else if (api_name == '/api_req_hokyu/charge') {
+		// 補給.
+		func = function(json) { // 補給による資材消費を記録する.
+			var d = json.api_data;
+			for (var i = 0; i < d.api_ship.length; ++i) {
+				var data = d.api_ship[i];
+				var ship = $ship_list[data.api_id];
+				if (ship) ship.charge(data);
+			}
+			var now_baux = d.api_material[3];
+			if (d.api_use_bou) $material.charge[3] += $material.pre[3] - now_baux;
+			array_copy($material.pre, d.api_material);
+		};
+	}
+	else if (api_name == '/api_req_quest/clearitemget') {
+		// 任務クリア.
+		func = function(json) { // 任務報酬を記録する.
+			var d = json.api_data;
+			for (var i = 0; i < d.api_material.length; ++i) {
+				$material.quest[i] += d.api_material[i];
+			}
+			for (var i = 0; i < d.api_bounus.length; ++i) {
+				var n  = d.api_bounus[i].api_count;
+				var id = d.api_bounus[i].api_item.api_id;
+				if (id >= 1 && id <= 8) $material.quest[id - 1] += n;
+			}
+		};
+	}
+	else if (api_name == '/api_get_member/material') {
+		// 建造後、任務クリア後など.
+		func = function(json) { // 資材変化を記録する.
+			var d = json.api_data;
+			for (var i = 0; i < d.length; ++i) {
+				var id = d[i].api_id;
+				var value = d[i].api_value;
+				if (id >= 1 && id <= 8) $material.pre[id - 1] = $material.now[id - 1] = value;
+			}
+		};
+	}
 	else if (api_name == '/api_get_member/ndock') {
 		// 入渠.
 		func = function(json) { // 入渠状況を更新する.
@@ -1741,6 +1811,20 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var d = json.api_data;
 			var id = decode_postdata_params(request.request.postData.params).api_deck_id;
 			$last_mission[id] = '前回遠征: ' + d.api_quest_name + ' ' + mission_clear_name(d.api_clear_result);
+			for (var i = 0; i < d.api_get_material.length; ++i) // i=0..3 燃料からボーキーまで.
+				$material.mission[i] += d.api_get_material[i];
+			var add_mission_item = function(flag, get_item) {
+				var id = 0;
+				switch (flag) {
+				case 1: id = 6; break; // バケツ.
+				case 2: id = 5; break; // バーナー.
+				case 3: id = 7; break; // 歯車.
+				case 4: id = get_item.api_useitem_id; break; // その他のアイテム.
+				}
+				if (id >= 1 && id <= 8 && get_item) $material.mission[id - 1] += get_item.api_useitem_count;
+			};
+			add_mission_item(d.api_useitem_flag[0], d.api_get_item1);
+			add_mission_item(d.api_useitem_flag[1], d.api_get_item2);
 		};
 	}
 	else if (api_name == '/api_get_member/practice') {
