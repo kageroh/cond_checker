@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <script type="text/javascript" language="javascript">
 function repXX(key, value) {
-	switch (key) {
+	switch (key) { // 個人ID値を抹消する.
 	case "api_nickname":
 	case "api_nickname_id":
 	case "api_comment":
 	case "api_comment_id":
+	case "api_member_id":
+	case "api_member_lv":
+	case "api_member_exp":
 		return "xxxx";
 	}
 	return value;
