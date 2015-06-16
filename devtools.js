@@ -25,6 +25,11 @@ var $material = {
 	mission: [0,0,0,0, 0,0,0,0],	///< 遠征累計.
 	quest  : [0,0,0,0, 0,0,0,0],	///< 任務累計.
 	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
+	ndock  : [0,0,0,0, 0,0,0,0],	///< 入渠累計.
+	createitem : [0,0,0,0, 0,0,0,0],	///< 装備開発累計.
+	createship : [0,0,0,0, 0,0,0,0],	///< 艦娘建造累計.
+	remodelslot : [0,0,0,0, 0,0,0,0],	///< 装備改修累計.
+	destroyship : [0,0,0,0, 0,0,0,0],	///< 艦娘解体累計.
 	now : [0,0,0,0, 0,0,0,0],	///< 現在資源.
 	pre : [0,0,0,0, 0,0,0,0],	///< 前回資源.
 	diff: ""	///< 変化量メッセージ.
@@ -62,6 +67,7 @@ function Ship(data, ship) {
 	this.lv		= data.api_lv;
 	this.locked	= data.api_locked;
 	this.ndock_time	= data.api_ndock_time;
+	this.ndock_item	= data.api_ndock_item; // 入渠消費量[燃料,鋼材].
 	this.ship_id	= data.api_ship_id;
 	this.kyouka	= data.api_kyouka;	// 近代化改修による強化値[火力,雷装,対空,装甲,運].
 }
@@ -101,8 +107,8 @@ Ship.prototype.charge = function(data) { ///< 補給.
 	this.fuel   = data.api_fuel;
 	this.bull   = data.api_bull;
 	this.onslot = data.api_onslot;
-	$material.charge[0] += this.fuel - p_fuel;
-	$material.charge[1] += this.bull - p_bull;
+	$material.charge[0] -= this.fuel - p_fuel;
+	$material.charge[1] -= this.bull - p_bull;
 };
 
 Ship.prototype.can_kaizou = function() {
@@ -714,7 +720,7 @@ function push_fleet_status(msg, deck) {
 	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
 }
 
-function update_material(material) {
+function update_material(material, sum) {
 	// material: [燃料,弾薬,鋼材,ボーキ, バーナー,バケツ,歯車,螺子] or [{api_id: ID, api_value: 値}, ...]
 	// ID: 1:燃料, 2:弾薬, 3:鋼材, 4:ボーキ, 5:バーナー, 6:バケツ, 7:歯車, 8:螺子.
 	var msg = [];
@@ -725,9 +731,11 @@ function update_material(material) {
 			id = value.api_id;
 			value = value.api_value;
 		}
-		var diff = diff_name(value, $material.now[id-1]);
+		var now = $material.now[id-1];
+		var diff = value - now;
+		if (diff) msg.push(material_name(id) + diff_name(value, now));
+		if (sum) sum[id-1] += diff;
 		$material.pre[id-1] = $material.now[id-1] = value;
-		if (diff.length) msg.push(material_name(id) + diff);
 	}
 	$material.diff = msg.join(', ');
 }
@@ -876,13 +884,28 @@ function print_port() {
 	//
 	// 資材変化を表示する.
 	req.push('資材増減数:' + $material.diff);
-	var msg = ['YPS_material', '\t', '\t==現在値', '\t==遠征累計', '\t==任務累計', '\t==補給累計'];
+	var msg = ['YPS_material', '\t'
+		, '\t==現在値'
+		, '\t==遠征累計'
+		, '\t==任務累計'
+		, '\t==補給累計'
+		, '\t==入居累計'
+		, '\t==建造累計'
+		, '\t==解体累計'
+		, '\t==開発累計'
+		, '\t==改修累計'
+	];
 	for (var i = 0; i < 8; ++i) {
 		msg[1] += '\t==' + material_name(i + 1);
 		msg[2] += '\t' + $material.now[i];
 		msg[3] += '\t' + $material.mission[i];
 		msg[4] += '\t' + $material.quest[i];
-		msg[5] += '\t' + -$material.charge[i];
+		msg[5] += '\t' + $material.charge[i];
+		msg[6] += '\t' + $material.ndock[i];
+		msg[7] += '\t' + $material.createship[i];
+		msg[8] += '\t' + $material.destroyship[i];
+		msg[9] += '\t' + $material.createitem[i];
+		msg[10] += '\t' + $material.remodelslot[i];
 	}
 	msg.push('---');
 	req.push(msg);
@@ -1598,13 +1621,32 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_kdock_list(json.api_data);
 		};
 	}
+	else if (api_name == '/api_req_kousyou/createship') {
+		// 艦娘建造.
+		var params = decode_postdata_params(request.request.postData.params); // 送信した消費資材値を抜き出す.
+		$material.createship[0] -= params.api_item1;
+		$material.createship[1] -= params.api_item2;
+		$material.createship[2] -= params.api_item3;
+		$material.createship[3] -= params.api_item4;
+		$material.createship[6] -= params.api_item5;		// 開発資材(歯車).
+		$material.createship[4] -= params.api_highspeed;	// 高速建造材(バーナー).
+		// 直後に /api_get_member/kdock と /api_get_member/material パケットが来るので print_port() は不要.
+	}
 	else if (api_name == '/api_req_kousyou/createitem') {
 		// 装備開発.
-		func = function(json) { // 開発した装備を、リストに加える.
-			if (json.api_data.api_create_flag) {
-				add_slotitem_list(json.api_data.api_slot_item);
-				print_port();
+		var params = decode_postdata_params(request.request.postData.params); // 送信した消費資材値を抜き出す.
+		$material.createitem[0] -= params.api_item1;
+		$material.createitem[1] -= params.api_item2;
+		$material.createitem[2] -= params.api_item3;
+		$material.createitem[3] -= params.api_item4;
+		func = function(json) { // 開発成功した装備をリストに加える.
+			var d = json.api_data;
+			if (d.api_create_flag) {
+				$material.createitem[6]--;	// 開発資材(歯車).
+				add_slotitem_list(d.api_slot_item);
 			}
+			update_material(d.api_material);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kousyou/getship') {
@@ -1629,6 +1671,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 解体した艦娘が持つ装備を、リストから抜く.
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
 			if (id) ship_delete([id]);
+			var d = json.api_data;
+			update_material(d.api_material, $material.destroyship); // 解体による資材増加を記録する.
 			print_port();
 		};
 	}
@@ -1643,8 +1687,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
 		// 装備改修.
 		func = function(json) {	// 明石の改修工廠で改修した装備をリストに反映する.
-			add_slotitem_list(json.api_data.api_after_slot);	// 装備リストを更新する.
-			slotitem_delete(json.api_data.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
+			var d = json.api_data;
+			add_slotitem_list(d.api_after_slot);	// 装備リストを更新する.
+			slotitem_delete(d.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
+			update_material(d.api_after_material, $material.remodelslot);	// 改修による資材消費を記録する.
 			print_port();
 		};
 	}
@@ -1716,7 +1762,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		};
 	}
 	else if (api_name == '/api_req_hokyu/charge') {
-		// 補給.
+		// 補給実施.
 		func = function(json) { // 補給による資材消費を記録する.
 			var d = json.api_data;
 			for (var i = 0; i < d.api_ship.length; ++i) {
@@ -1725,7 +1771,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				if (ship) ship.charge(data);
 			}
 			var now_baux = d.api_material[3];
-			if (d.api_use_bou) $material.charge[3] += $material.pre[3] - now_baux;
+			if (d.api_use_bou) $material.charge[3] -= $material.pre[3] - now_baux;
 			update_material(d.api_material);
 			print_port();
 		};
@@ -1742,6 +1788,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				var id = d.api_bounus[i].api_item.api_id;
 				if (id >= 1 && id <= 8) $material.quest[id-1] += n;
 			}
+			// 直後に /api_get_member/material パケットが来るので print_port() は不要.
 		};
 	}
 	else if (api_name == '/api_get_member/material') {
@@ -1757,6 +1804,23 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_ndock_list(json.api_data);
 			on_mission_check(5);
 		};
+	}
+	else if (api_name == '/api_req_nyukyo/start') {
+		// 入渠実施.
+		var params = decode_postdata_params(request.request.postData.params);
+		var ship = $ship_list[params.api_ship_id];
+		var fuel  = ship.ndock_item[0];
+		var steel = ship.ndock_item[1];
+		$material.ndock[0] -= fuel;
+		$material.ndock[2] -= steel;
+		$material.ndock[4] -= params.api_highspeed;
+		// 直後に /api_get_member/ndock パケットが来るが母港画面表示は行わない. よって自前で資材変化を算出して表示する.
+		var now = $material.now.concat();
+		now[0] -= fuel;
+		now[2] -= steel;
+		now[4] -= params.api_highspeed;
+		update_material(now);
+		print_port();
 	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
@@ -1829,6 +1893,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			};
 			add_mission_item(d.api_useitem_flag[0], d.api_get_item1);
 			add_mission_item(d.api_useitem_flag[1], d.api_get_item2);
+			// 直後に /api_port/port パケットが来るので print_port() は不要.
 		};
 	}
 	else if (api_name == '/api_get_member/practice') {
