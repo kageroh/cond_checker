@@ -26,7 +26,8 @@ var $material = {
 	quest  : [0,0,0,0, 0,0,0,0],	///< 任務累計.
 	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
 	now : [0,0,0,0, 0,0,0,0],	///< 現在資源.
-	pre : [0,0,0,0, 0,0,0,0]	///< 前回資源.
+	pre : [0,0,0,0, 0,0,0,0],	///< 前回資源.
+	diff: ""	///< 変化量メッセージ.
 };
 var $quest_count = -1;
 var $quest_exec_count = 0;
@@ -713,6 +714,24 @@ function push_fleet_status(msg, deck) {
 	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
 }
 
+function update_material(material) {
+	// material: [燃料,弾薬,鋼材,ボーキ, バーナー,バケツ,歯車,螺子] or [{api_id: ID, api_value: 値}, ...]
+	// ID: 1:燃料, 2:弾薬, 3:鋼材, 4:ボーキ, 5:バーナー, 6:バケツ, 7:歯車, 8:螺子.
+	var msg = [];
+	for (var i = 0; i < material.length; ++i) {
+		var id = i + 1;
+		var value = material[i];	// number or Object
+		if (value.api_id) {
+			id = value.api_id;
+			value = value.api_value;
+		}
+		var diff = diff_name(value, $material.now[id-1]);
+		$material.pre[id-1] = $material.now[id-1] = value;
+		if (diff.length) msg.push(material_name(id) + diff);
+	}
+	$material.diff = msg.join(', ');
+}
+
 //------------------------------------------------------------------------
 // デバッグダンプ.
 //
@@ -744,9 +763,9 @@ function debug_print_newship_slots() {
 }
 
 //------------------------------------------------------------------------
-// イベントハンドラ.
+// 母港画面表示.
 //
-function on_port(json) {
+function print_port() {
 	var req = [request_date_time()];
 	var unlock_names = [];
 	var lock_condlist = {};
@@ -855,27 +874,8 @@ function on_port(json) {
 		if (!owned_ship_idset[id]) unowned_names.push(ship_name(id)); // 未所有艦名をリストに加える.
 	}
 	//
-	// 艦娘と装備数を検出する.
-	var basic = json.api_data.api_basic;
-	if (basic) {
-		$max_ship     = basic.api_max_chara;
-		$max_slotitem = basic.api_max_slotitem + 3;
-		$combined_flag = json.api_data.api_combined_flag;
-	}
-	//
 	// 資材変化を表示する.
-	var material = json.api_data.api_material;
-	var msg = [];
-	if (material) {
-		material.forEach(function(data) {
-			var i = data.api_id - 1;
-			var value = data.api_value;
-			var diff  = diff_name(value, $material.now[i]);
-			$material.pre[i] = $material.now[i] = value;
-			if (diff.length) msg.push(material_name(i + 1) + diff);
-		});
-	}
-	req.push('資材増減数:' + msg.join(', '));
+	req.push('資材増減数:' + $material.diff);
 	var msg = ['YPS_material', '\t', '\t==現在値', '\t==遠征累計', '\t==任務累計', '\t==補給累計'];
 	for (var i = 0; i < 8; ++i) {
 		msg[1] += '\t==' + material_name(i + 1);
@@ -1125,6 +1125,9 @@ function on_port(json) {
 	chrome.extension.sendRequest(req);
 }
 
+//------------------------------------------------------------------------
+// イベントハンドラ.
+//
 function on_mission_check(category) {
 	var req = ['## 任務'];
 	for (var id in $quest_list) {
@@ -1600,7 +1603,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 開発した装備を、リストに加える.
 			if (json.api_data.api_create_flag) {
 				add_slotitem_list(json.api_data.api_slot_item);
-				on_port(json);
+				print_port();
 			}
 		};
 	}
@@ -1610,7 +1613,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_kdock_list(json.api_data.api_kdock);
 			delta_update_ship_list([json.api_data.api_ship]);
 			add_slotitem_list(json.api_data.api_slotitem);
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kousyou/destroyitem2') {
@@ -1618,7 +1621,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 破棄した装備を、リストから抜く.
 			var ids = decode_postdata_params(request.request.postData.params).api_slotitem_ids;
 			if (ids) slotitem_delete(ids.split('%2C'));
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kousyou/destroyship') {
@@ -1626,7 +1629,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 解体した艦娘が持つ装備を、リストから抜く.
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
 			if (id) ship_delete([id]);
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kaisou/powerup') {
@@ -1634,7 +1637,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 素材として使った艦娘が持つ装備を、リストから抜く.
 			var ids = decode_postdata_params(request.request.postData.params).api_id_items;
 			if (ids) ship_delete(ids.split('%2C'));
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
@@ -1642,7 +1645,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) {	// 明石の改修工廠で改修した装備をリストに反映する.
 			add_slotitem_list(json.api_data.api_after_slot);	// 装備リストを更新する.
 			slotitem_delete(json.api_data.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kaisou/lock') {
@@ -1650,7 +1653,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) {
 			var id = decode_postdata_params(request.request.postData.params).api_slotitem_id;	// ロック変更した装備ID.
 			$slotitem_list[id].locked = json.api_data.api_locked;
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_hensei/change') {
@@ -1691,8 +1694,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				list[idx] = id;
 			}
 		}
-		var dummy_json = { api_data: {} }; // 艦隊編成パケットは api_data を持たないので、母港表示にダミーパケットを渡す.
-		on_port(dummy_json);
+		print_port();
 	}
 	else if (api_name == '/api_get_member/questlist') {
 		// 任務一覧.
@@ -1710,7 +1712,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 					get_weekly().quest_state = data.api_state; // あ号任務ならば、遂行状態を記録する(1:未遂行, 2:遂行中, 3:達成)
 				}
 			});
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_hokyu/charge') {
@@ -1724,7 +1726,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			}
 			var now_baux = d.api_material[3];
 			if (d.api_use_bou) $material.charge[3] += $material.pre[3] - now_baux;
-			array_copy($material.pre, d.api_material);
+			update_material(d.api_material);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_quest/clearitemget') {
@@ -1737,19 +1740,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			for (var i = 0; i < d.api_bounus.length; ++i) {
 				var n  = d.api_bounus[i].api_count;
 				var id = d.api_bounus[i].api_item.api_id;
-				if (id >= 1 && id <= 8) $material.quest[id - 1] += n;
+				if (id >= 1 && id <= 8) $material.quest[id-1] += n;
 			}
 		};
 	}
 	else if (api_name == '/api_get_member/material') {
 		// 建造後、任務クリア後など.
 		func = function(json) { // 資材変化を記録する.
-			var d = json.api_data;
-			for (var i = 0; i < d.length; ++i) {
-				var id = d[i].api_id;
-				var value = d[i].api_value;
-				if (id >= 1 && id <= 8) $material.pre[id - 1] = $material.now[id - 1] = value;
-			}
+			update_material(json.api_data);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_get_member/ndock') {
@@ -1768,7 +1767,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_ndock_list(json.api_data.api_ndock);
 			$battle_deck_id = -1;
 			$ship_escape = {};
-			on_port(json);
+			$combined_flag = json.api_data.api_combined_flag;	// 連合艦隊編成有無.
+			update_material(json.api_data.api_material);		// 資材を更新する.
+			var basic = json.api_data.api_basic;
+			$max_ship     = basic.api_max_chara;
+			$max_slotitem = basic.api_max_slotitem + 3;
+			print_port();
 		};
 	}
 	else if (api_name == '/api_get_member/ship_deck') {
@@ -1777,7 +1781,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			delta_update_ship_list(json.api_data.api_ship_data);
 			delta_update_fdeck_list(json.api_data.api_deck_data);
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_get_member/ship3') {
@@ -1789,7 +1793,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			else
 				update_ship_list(json.api_data.api_ship_data);
 			update_fdeck_list(json.api_data.api_deck_data);
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_get_member/mission') {
@@ -1802,7 +1806,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 遠征出発.
 		func = function(json) { // 艦隊一覧を更新してcond表示する.
 			update_fdeck_list(json.api_data);
-			on_port(json);
+			print_port();
 		};
 	}
 	else if (api_name == '/api_req_mission/result') {
@@ -1821,7 +1825,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				case 3: id = 7; break; // 歯車.
 				case 4: id = get_item.api_useitem_id; break; // その他のアイテム.
 				}
-				if (id >= 1 && id <= 8 && get_item) $material.mission[id - 1] += get_item.api_useitem_count;
+				if (id >= 1 && id <= 8 && get_item) $material.mission[id-1] += get_item.api_useitem_count;
 			};
 			add_mission_item(d.api_useitem_flag[0], d.api_get_item1);
 			add_mission_item(d.api_useitem_flag[1], d.api_get_item2);
