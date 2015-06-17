@@ -1683,30 +1683,27 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_kousyou/destroyitem2') {
 		// 装備破棄.
-		func = function(json) { // 破棄した装備を、リストから抜く.
+		func = function(json) {
 			var ids = decode_postdata_params(request.request.postData.params).api_slotitem_ids;
-			if (ids) slotitem_delete(ids.split('%2C'));
-			diff_update_material(json.api_data.api_get_material, $material.destroyitem);
+			if (ids) slotitem_delete(ids.split('%2C'));		// 破棄した装備を、リストから抜く.
+			diff_update_material(json.api_data.api_get_material, $material.destroyitem);	// 装備破棄による資材増加を記録する.
 			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kousyou/destroyship') {
 		// 艦娘解体.
-		func = function(json) { // 解体した艦娘が持つ装備を、リストから抜く.
+		func = function(json) {
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
-			if (id) ship_delete([id]);
-			var d = json.api_data;
-			update_material(d.api_material, $material.destroyship); /// 解体による資材増加を記録する. @bug 資材自然増加分が含まれてしまう.
+			if (id) ship_delete([id]);		// 解体した艦娘が持つ装備を、リストから抜く.
+			update_material(json.api_data.api_material, $material.destroyship); /// 解体による資材増加を記録する. @bug 資材自然増加分が含まれてしまう.
 			print_port();
 		};
 	}
 	else if (api_name == '/api_req_kaisou/powerup') {
 		// 近代化改修.
-		func = function(json) { // 素材として使った艦娘が持つ装備を、リストから抜く.
-			var ids = decode_postdata_params(request.request.postData.params).api_id_items;
-			if (ids) ship_delete(ids.split('%2C'));
-			print_port();
-		};
+		var ids = decode_postdata_params(request.request.postData.params).api_id_items;
+		if (ids) ship_delete(ids.split('%2C'));		// 素材として使った艦娘が持つ装備を、リストから抜く.
+		print_port();
 	}
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
 		// 装備改修.
