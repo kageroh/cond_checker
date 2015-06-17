@@ -1834,12 +1834,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var steel = ship.ndock_item[1];
 		$material.ndock[0] -= fuel;
 		$material.ndock[2] -= steel;
-		$material.ndock[4] -= params.api_highspeed;
+		$material.ndock[5] -= params.api_highspeed; // 高速修復材(バケツ).
 		// 直後に /api_get_member/ndock パケットが来るが母港画面表示は行わない. よって自前で資材変化を算出して表示する.
 		var now = $material.now.concat();
 		now[0] -= fuel;
 		now[2] -= steel;
-		now[4] -= params.api_highspeed;
+		now[5] -= params.api_highspeed; // 高速修復材(バケツ).
 		update_material(now);
 		print_port();
 	}
