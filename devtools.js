@@ -1830,17 +1830,19 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 入渠実施.
 		var params = decode_postdata_params(request.request.postData.params);
 		var ship = $ship_list[params.api_ship_id];
-		var fuel  = ship.ndock_item[0];
-		var steel = ship.ndock_item[1];
-		$material.ndock[0] -= fuel;
-		$material.ndock[2] -= steel;
-		$material.ndock[5] -= params.api_highspeed; // 高速修復材(バケツ).
-		// 直後に /api_get_member/ndock パケットが来るが母港画面表示は行わない. よって自前で資材変化を算出して表示する.
 		var now = $material.now.concat();
-		now[0] -= fuel;
-		now[2] -= steel;
-		now[5] -= params.api_highspeed; // 高速修復材(バケツ).
-		update_material(now);
+		now[0] -= ship.ndock_item[0];	// 燃料.
+		now[2] -= ship.ndock_item[1];	// 鋼材.
+		now[5] -= params.api_highspeed;	// 高速修復材(バケツ). "0" or "1".
+		update_material(now, $material.ndock);
+		print_port();
+	}
+	else if (api_name == '/api_req_nyukyo/speedchange') {
+		// 入渠中の高速修復実施.
+		// var ndock_id = decode_postdata_params(request.request.postData.params).api_ndock_id;
+		var now = $material.now.concat();
+		--now[5];	// 高速修復材(バケツ).
+		update_material(now, $material.ndock);
 		print_port();
 	}
 	else if (api_name == '/api_port/port') {
