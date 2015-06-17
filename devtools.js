@@ -26,12 +26,15 @@ var $material = {
 	quest  : [0,0,0,0, 0,0,0,0],	///< 任務累計.
 	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
 	ndock  : [0,0,0,0, 0,0,0,0],	///< 入渠累計.
-	createitem : [0,0,0,0, 0,0,0,0],	///< 装備開発累計.
-	createship : [0,0,0,0, 0,0,0,0],	///< 艦娘建造累計.
+	dropitem    : [0,0,0,0, 0,0,0,0],	///< 道中資源累計.
+	createship  : [0,0,0,0, 0,0,0,0],	///< 艦娘建造累計.
+	createitem  : [0,0,0,0, 0,0,0,0],	///< 装備開発累計.
 	remodelslot : [0,0,0,0, 0,0,0,0],	///< 装備改修累計.
 	destroyship : [0,0,0,0, 0,0,0,0],	///< 艦娘解体累計.
-	now : [0,0,0,0, 0,0,0,0],	///< 現在資源.
-	pre : [0,0,0,0, 0,0,0,0],	///< 前回資源.
+	destroyitem : [0,0,0,0, 0,0,0,0],	///< 装備破棄累計.
+	now : [],	///< 現在資材. 初回は全項目undefinedとする.
+	pre : [],	///< 前回資材. 初回は全項目undefinedとする.
+	beg : null,	///< 初期資材. 初回更新時にnowのコピーを保持する.
 	diff: ""	///< 変化量メッセージ.
 };
 var $quest_count = -1;
@@ -343,8 +346,8 @@ function weekly_name() {
 }
 
 function diff_name(now, prev) {		// now:1, prev:2 -> "(-1)"
-	var diff = now - prev;
-	if (!prev) return '';
+	var diff = now - prev;	// 演算項目のどちらかがundefinedなら減算結果はNaNとなる. 項目がnullならば0として減算する.
+	if (prev == null) return '';	// nullかundefinedなら増減なしと見做して空文字列を返す.
 	else if (diff > 0) return '(+' + diff + ')'; // with plus sign
 	else if (diff < 0) return '(' + diff +')';   // with minus sign
 	else /* diff == 0 */ return '';
@@ -731,13 +734,23 @@ function update_material(material, sum) {
 			id = value.api_id;
 			value = value.api_value;
 		}
-		var now = $material.now[id-1];
-		var diff = value - now;
-		if (diff) msg.push(material_name(id) + diff_name(value, now));
-		if (sum) sum[id-1] += diff;
+		var now = $material.now[id-1];	// 初回はundefined.
+		var diff = diff_name(value, now);
+		if (diff.length) {
+			msg.push(material_name(id) + diff);
+			if (sum) sum[id-1] += value - now;
+		}
 		$material.pre[id-1] = $material.now[id-1] = value;
 	}
 	$material.diff = msg.join(', ');
+	if ($material.beg == null) $material.beg = $material.now.concat(); // 初回更新時にnowのコピーを保持する.
+}
+
+function diff_update_material(diff_material, sum) {
+	// diff_material: [燃料増分,弾薬増分,鋼材増分,ボーキ増分].
+	var m = diff_material.concat(); // 複製を作る.
+	for (var i = 0; i < m.length; ++i) { m[i] += $material.now[i]; } // 増分値を絶対値に変換する.
+	update_material(m, sum);
 }
 
 //------------------------------------------------------------------------
@@ -884,28 +897,35 @@ function print_port() {
 	//
 	// 資材変化を表示する.
 	req.push('資材増減数:' + $material.diff);
-	var msg = ['YPS_material', '\t'
-		, '\t==現在値'
-		, '\t==遠征累計'
-		, '\t==任務累計'
-		, '\t==補給累計'
-		, '\t==入居累計'
-		, '\t==建造累計'
-		, '\t==解体累計'
-		, '\t==開発累計'
-		, '\t==改修累計'
+	var msg = ['YPS_material'
+		, '\t'
+		, '\t現在値'
+		, '\t収支累計'
+		, '\t==任務'
+		, '\t==遠征'
+		, '\t==道中'
+		, '\t==補給'
+		, '\t==入渠'
+		, '\t==建造'
+		, '\t==解体'
+		, '\t==開発'
+		, '\t==改修'
+		, '\t==破棄'
 	];
 	for (var i = 0; i < 8; ++i) {
 		msg[1] += '\t==' + material_name(i + 1);
 		msg[2] += '\t' + $material.now[i];
-		msg[3] += '\t' + $material.mission[i];
+		msg[3] += '\t' + ($material.now[i] - $material.beg[i]);
 		msg[4] += '\t' + $material.quest[i];
-		msg[5] += '\t' + $material.charge[i];
-		msg[6] += '\t' + $material.ndock[i];
-		msg[7] += '\t' + $material.createship[i];
-		msg[8] += '\t' + $material.destroyship[i];
-		msg[9] += '\t' + $material.createitem[i];
-		msg[10] += '\t' + $material.remodelslot[i];
+		msg[5] += '\t' + $material.mission[i];
+		msg[6] += '\t' + $material.dropitem[i];
+		msg[7] += '\t' + $material.charge[i];
+		msg[8] += '\t' + $material.ndock[i];
+		msg[9] += '\t' + $material.createship[i];
+		msg[10] += '\t' + $material.destroyship[i];
+		msg[11] += '\t' + $material.createitem[i];
+		msg[12] += '\t' + $material.remodelslot[i];
+		msg[13] += '\t' + $material.destroyitem[i];
 	}
 	msg.push('---');
 	req.push(msg);
@@ -1192,6 +1212,7 @@ function on_next_cell(json) {
 		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
 	}
 	if (g) {
+		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
 		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
 		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
 	}
@@ -1629,7 +1650,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		$material.createship[2] -= params.api_item3;
 		$material.createship[3] -= params.api_item4;
 		$material.createship[6] -= params.api_item5;		// 開発資材(歯車).
-		$material.createship[4] -= params.api_highspeed;	// 高速建造材(バーナー).
+		if (params.api_highspeed != 0) {
+			$material.createship[4] -= (params.api_large_flag != 0 ? 10 : 1);	// 高速建造材(バーナー).
+		}
 		// 直後に /api_get_member/kdock と /api_get_member/material パケットが来るので print_port() は不要.
 	}
 	else if (api_name == '/api_req_kousyou/createitem') {
@@ -1663,6 +1686,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 破棄した装備を、リストから抜く.
 			var ids = decode_postdata_params(request.request.postData.params).api_slotitem_ids;
 			if (ids) slotitem_delete(ids.split('%2C'));
+			diff_update_material(json.api_data.api_get_material, $material.destroyitem);
 			print_port();
 		};
 	}
@@ -1672,7 +1696,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
 			if (id) ship_delete([id]);
 			var d = json.api_data;
-			update_material(d.api_material, $material.destroyship); // 解体による資材増加を記録する.
+			update_material(d.api_material, $material.destroyship); /// 解体による資材増加を記録する. @bug 資材自然増加分が含まれてしまう.
 			print_port();
 		};
 	}
@@ -1690,7 +1714,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var d = json.api_data;
 			add_slotitem_list(d.api_after_slot);	// 装備リストを更新する.
 			slotitem_delete(d.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
-			update_material(d.api_after_material, $material.remodelslot);	// 改修による資材消費を記録する.
+			update_material(d.api_after_material, $material.remodelslot);	/// 改修による資材消費を記録する. @bug 資材自然増加分が含まれてしまう.
 			print_port();
 		};
 	}
