@@ -1823,7 +1823,13 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 入渠.
 		func = function(json) { // 入渠状況を更新する.
 			update_ndock_list(json.api_data);
-			on_mission_check(5);
+			if ($do_print_port_on_ndock) {
+				$do_print_port_on_ndock = false;
+				print_port();
+			}
+			else {
+				on_mission_check(5);
+			}
 		};
 	}
 	else if (api_name == '/api_req_nyukyo/start') {
@@ -1835,7 +1841,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		now[2] -= ship.ndock_item[1];	// 鋼材.
 		now[5] -= params.api_highspeed;	// 高速修復材(バケツ). "0" or "1".
 		update_material(now, $material.ndock);
-		print_port();
+		$do_print_port_on_ndock = true; // 直後に来る /api_get_member/ndock パケットで print_port() を行う.
 	}
 	else if (api_name == '/api_req_nyukyo/speedchange') {
 		// 入渠中の高速修復実施.
