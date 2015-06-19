@@ -1843,7 +1843,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		now[2] -= ship.ndock_item[1];	// 鋼材.
 		now[5] -= params.api_highspeed;	// 高速修復材(バケツ). "0" or "1".
 		update_material(now, $material.ndock);
-		$do_print_port_on_ndock = true; // 直後に来る /api_get_member/ndock パケットで print_port() を行う.
+		if (params.api_highspeed != 0) {
+			print_port();	// 高速修復を使った場合は /api_get_member/ndock パケットが来ないので、ここで print_port() を行う.
+		}
+		else {
+			$do_print_port_on_ndock = true; // 直後に来る /api_get_member/ndock パケットで print_port() を行う.
+		}
 	}
 	else if (api_name == '/api_req_nyukyo/speedchange') {
 		// 入渠中の高速修復実施.
