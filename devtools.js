@@ -213,13 +213,14 @@ function update_fdeck_list(list, is_delta) {
 		$fdeck_list = {};
 		$ship_fdeck = {};
 	}
-	list.forEach(function(deck) {
+	for (var idx in list) {	// list が Array でも Object($fdeck_list自身) でも扱えるようにする.
+		var deck = list[idx];
 		$fdeck_list[deck.api_id] = deck;
 		for (var i in deck.api_ship) {
 			var ship_id = deck.api_ship[i];
 			if (ship_id != -1) $ship_fdeck[ship_id] = deck.api_id;
 		}
-	});
+	}
 }
 
 function delta_update_fdeck_list(list) {
@@ -1761,6 +1762,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				list[idx] = id;
 			}
 		}
+		update_fdeck_list($fdeck_list); // 編成結果を $ship_fdeck に反映する.
 		print_port();
 	}
 	else if (api_name == '/api_get_member/questlist') {
