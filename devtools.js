@@ -536,7 +536,7 @@ function decode_postdata_params(params) {
 	params.forEach(function(data) {
 		var name  = decodeURI(data.name);
 		var value = decodeURI(data.value);
-		if (name && value) r[name] = value;
+		if (name && value) r[name] = (value == "" || isNaN(value)) ? value : value * 1;  // 数値文字列ならばNumberに変換して格納する. さもなくばstringのまま格納する.
 	});
 	return r;
 }
@@ -1728,8 +1728,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 艦隊編成.
 		var params = decode_postdata_params(request.request.postData.params);
 		var list = $fdeck_list[params.api_id].api_ship;	// 変更艦隊リスト.
-		var id  = parseInt(params.api_ship_id, 10);		// -2:一括解除, -1:解除, 他:艦娘ID.
-		var idx = parseInt(params.api_ship_idx, 10);	// -1:一括解除, 0..N:変更位置.
+		var id  = params.api_ship_id;		// -2:一括解除, -1:解除, 他:艦娘ID.
+		var idx = params.api_ship_idx;		// -1:一括解除, 0..N:変更位置.
 		if (id == -2) {
 			// 旗艦以外の艦を外す(-1を設定する).
 			for (var i = 1; i < list.length; ++i) list[i] = -1;
