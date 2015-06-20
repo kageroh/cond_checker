@@ -42,6 +42,7 @@ var $quest_exec_count = 0;
 var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
+var $do_print_port_on_ndock = false;
 var $kdock_list = {};
 var $enemy_id = null;
 var $enemy_formation_id = 0;
