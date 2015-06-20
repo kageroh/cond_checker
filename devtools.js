@@ -114,6 +114,12 @@ Ship.prototype.charge = function(data) { ///< 補給.
 	$material.charge[1] -= this.bull - p_bull;
 };
 
+Ship.prototype.highspeed_repair = function() { ///< 高速修復.
+	this.nowhp = this.maxhp;
+	this.ndock_time = 0;
+	delete $ndock_list[this.id];
+};
+
 Ship.prototype.can_kaizou = function() {
 	var afterlv = $mst_ship[this.ship_id].api_afterlv;
 	return afterlv && afterlv <= this.lv;
@@ -1844,6 +1850,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		now[5] -= params.api_highspeed;	// 高速修復材(バケツ). "0" or "1".
 		update_material(now, $material.ndock);
 		if (params.api_highspeed != 0) {
+			ship.highspeed_repair();	// 母港パケットで一斉更新されるまで対象艦の修復完了が反映されないので、自前で反映する.
 			print_port();	// 高速修復を使った場合は /api_get_member/ndock パケットが来ないので、ここで print_port() を行う.
 		}
 		else {
@@ -1852,7 +1859,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_nyukyo/speedchange') {
 		// 入渠中の高速修復実施.
-		// var ndock_id = decode_postdata_params(request.request.postData.params).api_ndock_id;
+		var params = decode_postdata_params(request.request.postData.params);
+		for (var ship_id in $ndock_list) {
+			if ($ndock_list[ship_id].api_id == params.api_ndock_id) {
+				$ship_list[ship_id].highspeed_repair(); break;	// 母港パケットで一斉更新されるまで対象艦の修復完了が反映されないので、自前で反映する.
+			}
+		}
 		var now = $material.now.concat();
 		--now[5];	// 高速修復材(バケツ).
 		update_material(now, $material.ndock);
