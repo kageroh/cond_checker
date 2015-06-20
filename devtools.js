@@ -1858,6 +1858,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		update_material(now, $material.ndock);
 		print_port();
 	}
+	else if (api_name == '/api_req_kousyou/createship_speedchange') {
+		// 建造中の高速建造実施.
+		var params = decode_postdata_params(request.request.postData.params);
+		var k = $kdock_list[params.api_kdock_id];
+		if (k) k.api_state = 3; // 完成に変更する.
+		var now = $material.now.concat();
+		--now[4];	// 高速建造材(バーナー).
+		update_material(now, $material.createship);
+		print_port();
+	}
 	else if (api_name == '/api_port/port') {
 		// 母港帰還.
 		$request = request;
