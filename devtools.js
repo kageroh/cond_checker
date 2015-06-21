@@ -1693,7 +1693,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 装備破棄.
 		func = function(json) {
 			var ids = decode_postdata_params(request.request.postData.params).api_slotitem_ids;
-			if (ids) slotitem_delete(ids.split('%2C'));		// 破棄した装備を、リストから抜く.
+			if (ids) slotitem_delete(/%2C/.test(ids) ? ids.split('%2C') : [ids]);		// 破棄した装備を、リストから抜く.
 			diff_update_material(json.api_data.api_get_material, $material.destroyitem);	// 装備破棄による資材増加を記録する.
 			print_port();
 		};
@@ -1710,7 +1710,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_req_kaisou/powerup') {
 		// 近代化改修.
 		var ids = decode_postdata_params(request.request.postData.params).api_id_items;
-		if (ids) ship_delete(ids.split('%2C'));		// 素材として使った艦娘が持つ装備を、リストから抜く.
+		if (ids) ship_delete(/%2C/.test(ids) ? ids.split('%2C') : [ids]);		// 素材として使った艦娘が持つ装備を、リストから抜く.
 		print_port();
 	}
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
