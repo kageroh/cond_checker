@@ -921,19 +921,19 @@ function print_port() {
 		, '\t==破棄'
 	];
 	for (var i = 0; i < 8; ++i) {
-		msg[1] += '\t==' + material_name(i + 1);
-		msg[2] += '\t' + $material.now[i];
-		msg[3] += '\t' + ($material.now[i] - $material.beg[i]);
-		msg[4] += '\t' + $material.quest[i];
-		msg[5] += '\t' + $material.mission[i];
-		msg[6] += '\t' + $material.dropitem[i];
-		msg[7] += '\t' + $material.charge[i];
-		msg[8] += '\t' + $material.ndock[i];
-		msg[9] += '\t' + $material.createship[i];
-		msg[10] += '\t' + $material.destroyship[i];
-		msg[11] += '\t' + $material.createitem[i];
-		msg[12] += '\t' + $material.remodelslot[i];
-		msg[13] += '\t' + $material.destroyitem[i];
+		msg[1]  += '\t==' + material_name(i + 1);
+		msg[2]  += '\t  ' + $material.now[i];
+		msg[3]  += '\t  ' + ($material.now[i] - $material.beg[i]);
+		msg[4]  += '\t  ' + $material.quest[i];
+		msg[5]  += '\t  ' + $material.mission[i];
+		msg[6]  += '\t  ' + $material.dropitem[i];
+		msg[7]  += '\t  ' + $material.charge[i];
+		msg[8]  += '\t  ' + $material.ndock[i];
+		msg[9]  += '\t  ' + $material.createship[i];
+		msg[10] += '\t  ' + $material.destroyship[i];
+		msg[11] += '\t  ' + $material.createitem[i];
+		msg[12] += '\t  ' + $material.remodelslot[i];
+		msg[13] += '\t  ' + $material.destroyitem[i];
 	}
 	msg.push('---');
 	req.push(msg);
@@ -1055,10 +1055,10 @@ function print_port() {
 				var ship = $ship_list[id];
 				var c_date = new Date(d.api_complete_time);
 				msg.push('\t' + ship.name_lv() 
-					+ '\t' + d.api_item1
-					+ '\t' + d.api_item2
-					+ '\t' + d.api_item3
-					+ '\t' + d.api_item4
+					+ '\t  ' + d.api_item1
+					+ '\t  ' + d.api_item2
+					+ '\t  ' + d.api_item3
+					+ '\t  ' + d.api_item4
 					+ '\t' + c_date.toLocaleString()
 					);
 			}
@@ -1091,11 +1091,11 @@ function print_port() {
 			var complete = (k.api_state == 3 || c_date.getTime() < Date.now());	// api_state 3:完成, 2:建造中, 1:???, 0:空き, -1:未開放. ※ 1以下は$kdock_listに載せない.
 			msg.push('\t' + (complete ? '完成!!' : '建造中')
 				+ '\t' + ship_name(k.api_created_ship_id)
-				+ '\t' + k.api_item1
-				+ '\t' + k.api_item2
-				+ '\t' + k.api_item3
-				+ '\t' + k.api_item4
-				+ '\t' + k.api_item5
+				+ '\t  ' + k.api_item1
+				+ '\t  ' + k.api_item2
+				+ '\t  ' + k.api_item3
+				+ '\t  ' + k.api_item4
+				+ '\t  ' + k.api_item5
 				+ '\t' + (complete ? '' : c_date.toLocaleString())
 				);
 		}

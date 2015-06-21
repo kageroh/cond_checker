@@ -108,6 +108,7 @@ function parse_markdown(a) {
 		else if (/^\* /.test(s))	{ t = s.replace(/^. (.+)/, "<li>$1</li>"); li_count++; }
 		else if (/^\t/.test(s))		{ t = "<tr>" + s.replace(/\t/g, "<td>") + "</tr>"; tr_count++;
 									  t = t.replace(/<td>\|/g, '<td style="white-space:normal;">'); // "\t|" は折り返し有のセルに入れる.
+									  t = t.replace(/<td>  /g, '<td style="text-align:right;">'); // "\t  " は右寄せする.
 									  t = t.replace(/<td>==/g, '<th>'); // "\t==" はヘッダセル.
 									}
 		// リストを<ul>で括る.
