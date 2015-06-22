@@ -106,13 +106,17 @@ Ship.prototype.bull_name = function() {
 };
 
 Ship.prototype.charge = function(data) { ///< 補給.
-	var p_fuel = this.fuel;
-	var p_bull = this.bull;
+	var d_fuel  = data.api_fuel - this.fuel;
+	var d_bull  = data.api_bull - this.bull;
+	if (this.lv > 99) {	// ケッコンカッコカリ艦は消費量15%軽減.
+		d_fuel = Math.floor(d_fuel * 0.85);
+		d_bull = Math.floor(d_bull * 0.85);
+	}
 	this.fuel   = data.api_fuel;
 	this.bull   = data.api_bull;
 	this.onslot = data.api_onslot;
-	$material.charge[0] -= this.fuel - p_fuel;
-	$material.charge[1] -= this.bull - p_bull;
+	$material.charge[0] -= d_fuel;
+	$material.charge[1] -= d_bull;
 };
 
 Ship.prototype.highspeed_repair = function() { ///< 高速修復.
