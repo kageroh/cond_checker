@@ -1,3 +1,6 @@
+//------------------------------------------------------------------------
+// DOM生成.
+//
 var div = document.createElement('div');
 div.style.whiteSpace = 'pre-wrap';
 div.style.position = 'absolute';
@@ -23,14 +26,21 @@ style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭�
 	+ "h5.markdown { margin:0px 1em;}"
 	;
 
-document.getElementById('w').style.textAlign = 'left';
-document.getElementById('w').style.width = '820px';
-document.getElementById('area-game').style.textAlign = 'left';
-document.getElementById('game_frame').width = '820px';
 document.getElementsByTagName('head')[0].appendChild(style);
 document.body.appendChild(navi);
 document.body.appendChild(div);
 
+//------------------------------------------------------------------------
+// ゲーム画面の配置調整.
+//
+document.getElementById('w').style.textAlign = 'left';
+document.getElementById('w').style.width = '820px';
+document.getElementById('area-game').style.textAlign = 'left';
+document.getElementById('game_frame').width = '820px';
+
+//------------------------------------------------------------------------
+// DOM制御.
+//
 var $style_display = {};
 var $onclick_func = {};
 
@@ -56,17 +66,6 @@ function style_display(id) {
 
 	return $style_display[id]; // 最後に記録されたdisplay値を返す.
 }
-
-chrome.runtime.onMessage.addListener(function (req) {
-	if (req instanceof Array) {
-		update_style_display(); // ページ変更前に、全idのdisplay値記録を更新する.
-		div.innerHTML = parse_markdown(req);
-		navi.innerHTML = all_close_button();
-		update_onclick();
-	} else {
-		div.innerHTML += parse_markdown(req.toString().split('\n'));
-	}
-});
 
 function insert_string(str, index, add) {
 	return str.substring(0, index) + add + str.substring(index);
@@ -113,6 +112,9 @@ function toggle_div(id) {
 		;
 }
 
+//------------------------------------------------------------------------
+// markdown -> html 変換.
+//
 function parse_markdown(a) {
 	var html = "";
 	var li_count = 0;
@@ -169,3 +171,17 @@ function parse_markdown(a) {
 	if (tr_count > 0) { html += "</table>"; } 
 	return html;
 }
+
+//------------------------------------------------------------------------
+// 表示内容受信.
+//
+chrome.runtime.onMessage.addListener(function (req) {
+	if (req instanceof Array) {
+		update_style_display(); // ページ変更前に、全idのdisplay値記録を更新する.
+		div.innerHTML = parse_markdown(req);
+		navi.innerHTML = all_close_button();
+		update_onclick();
+	} else {
+		div.innerHTML += parse_markdown(req.toString().split('\n'));
+	}
+});
