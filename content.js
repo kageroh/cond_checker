@@ -26,6 +26,20 @@ document.getElementsByTagName('head')[0].appendChild(style);
 document.body.appendChild(div);
 
 var $style_display = {};
+var $onclick_func = {};
+
+function update_style_display() {
+	for (var id in $style_display) {
+		style_display(id);
+	}
+}
+
+function update_onclick() {
+	for (var id in $onclick_func) {
+		var e = document.getElementById(id);
+		if (e) e.onclick = $onclick_func[id];
+	}
+}
 
 function style_display(id) {
 	var e = document.getElementById(id);
@@ -39,8 +53,9 @@ function style_display(id) {
 
 chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
-		for (var id in $style_display) { style_display(id); } // ページ変更前に、全idのdisplay値記録を更新する.
+		update_style_display(); // ページ変更前に、全idのdisplay値記録を更新する.
 		div.innerHTML = parse_markdown(req);
+		update_onclick();
 	} else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
 	}
@@ -51,23 +66,28 @@ function insert_string(str, index, add) {
 }
 
 function toggle_button(id) {
-	var d_show = (style_display(id) == 'block') ? 'none': 'inline';
-	var d_hide = (style_display(id) == 'block') ? 'inline': 'none';
-	var s = '  <input id="<ID>_show" style="display:<DISP_SHOW>; font-size:70%; padding:0px;" type="button" value="＋" onclick="document.getElementById(\'<ID>\').style.display = \'block\';'
-			+ 'document.getElementById(\'<ID>_show\').style.display = \'none\';'
-			+ 'document.getElementById(\'<ID>_hide\').style.display = \'inline\';">'
-			+ '<input id="<ID>_hide" style="display:<DISP_HIDE>; font-size:70%; padding:0px;" type="button" value="－" onclick="document.getElementById(\'<ID>\').style.display = \'none\';'
-			+ 'document.getElementById(\'<ID>_show\').style.display = \'inline\';'
-			+ 'document.getElementById(\'<ID>_hide\').style.display = \'none\';">'
-	s = s.replace(/<DISP_SHOW>/g, d_show);
-	s = s.replace(/<DISP_HIDE>/g, d_hide);
-	return s.replace(/<ID>/g, id);
+	$onclick_func[id + "_btn"] = function() {
+		var e = document.getElementById(id);
+		if (!e) return;
+		if (e.style.display == 'block') {
+			e.style.display = 'none';
+			this.value = '＋';
+		}
+		else {
+			e.style.display = 'block';
+			this.value = '－';
+		}
+	};
+	return '  <input id="<ID>_btn" style="font-size:70%; padding:0px;" type="button" value="<VALUE>">'
+		.replace(/<ID>/g, id)
+		.replace(/<VALUE>/g, style_display(id) == 'block' ? '－': '＋')
+		;
 }
 function toggle_div(id) {
-	var d = (style_display(id) == 'block') ? 'block': 'none';
-	var s = '<div id="<ID>" style="display:<DISP_SHOW>;">';
-	s = s.replace(/<DISP_SHOW>/g, d);
-	return s.replace(/<ID>/g, id);
+	return '<div id="<ID>" style="display:<DISPLAY>;">'
+		.replace(/<ID>/g, id)
+		.replace(/<DISPLAY>/g, style_display(id) == 'block' ? 'block': 'none')
+		;
 }
 
 function parse_markdown(a) {
@@ -126,4 +146,3 @@ function parse_markdown(a) {
 	if (tr_count > 0) { html += "</table>"; } 
 	return html;
 }
-
