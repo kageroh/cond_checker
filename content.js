@@ -8,6 +8,11 @@ div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>"
 	+ "ゲームスタート後に「ロード完了」が表示されない場合は[デベロッパー ツール]を起動し、画面をリロードしてゲームスタートからやり直してください\n"
 	+ "※ デベロッパーツールは、Opt+Cmd+I(Mac), Ctrl+Shift+I, F12 キーで起動できます\n";
 
+var navi = document.createElement('div');
+navi.style.position = 'absolute';
+navi.style.top = '50px'; // NaviBar 39px + margin 20px - 9px
+navi.style.left = div.style.left;
+
 var style = document.createElement('style');
 style.textContent = "ul.markdown {list-style:disc inside;}" // 箇条書き頭文字円盤.
 	+ "table.markdown {border-collapse:collapse; border:0px; white-space:nowrap;}" // テーブル枠線なし. 行折り返しなし.
@@ -23,6 +28,7 @@ document.getElementById('w').style.width = '820px';
 document.getElementById('area-game').style.textAlign = 'left';
 document.getElementById('game_frame').width = '820px';
 document.getElementsByTagName('head')[0].appendChild(style);
+document.body.appendChild(navi);
 document.body.appendChild(div);
 
 var $style_display = {};
@@ -55,6 +61,7 @@ chrome.runtime.onMessage.addListener(function (req) {
 	if (req instanceof Array) {
 		update_style_display(); // ページ変更前に、全idのdisplay値記録を更新する.
 		div.innerHTML = parse_markdown(req);
+		navi.innerHTML = all_close_button();
 		update_onclick();
 	} else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
@@ -63,6 +70,22 @@ chrome.runtime.onMessage.addListener(function (req) {
 
 function insert_string(str, index, add) {
 	return str.substring(0, index) + add + str.substring(index);
+}
+
+function all_close_button() {
+	$onclick_func["YPS_allclose"] = function() {
+		var ids = Object.keys($style_display);
+		for (var i = 0; i < ids.length; ++i) {
+			var e = document.getElementById(ids[i]);
+			if (e && e.style.display == 'block') {
+				e.style.display = 'none';
+				var btn = document.getElementById(ids[i] + '_btn');
+				if (btn) btn.value = '＋';
+			}
+		}
+	};
+	return '<input id="YPS_allclose" type="button" value="全閉">'
+		;
 }
 
 function toggle_button(id) {
