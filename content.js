@@ -37,6 +37,7 @@ document.getElementById('w').style.textAlign = 'left';
 document.getElementById('w').style.width = '820px';
 document.getElementById('area-game').style.textAlign = 'left';
 document.getElementById('game_frame').width = '820px';
+document.getElementById('ntg-recommend').style.display = 'none';
 
 //------------------------------------------------------------------------
 // DOM制御.
