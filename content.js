@@ -11,6 +11,15 @@ div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>"
 	+ "ゲームスタート後に「ロード完了」が表示されない場合は[デベロッパー ツール]を起動し、画面をリロードしてゲームスタートからやり直してください\n"
 	+ "※ デベロッパーツールは、Opt+Cmd+I(Mac), Ctrl+Shift+I, F12 キーで起動できます\n";
 
+var hst = document.createElement('div');
+hst.style.whiteSpace = div.style.whiteSpace;
+hst.style.position = div.style.position;
+hst.style.top = div.style.top;
+hst.style.left = div.style.left;
+hst.style.background = 'silver';
+hst.YPS_HTMLarray = [];	// html履歴配列.
+hst.YPS_HTMLcursor = 0;	// 履歴表示位置.
+
 var navi = document.createElement('div');
 navi.style.position = 'absolute';
 navi.style.top = '50px'; // NaviBar 39px + margin 20px - 9px
@@ -42,30 +51,28 @@ document.getElementById('ntg-recommend').style.display = 'none';
 //------------------------------------------------------------------------
 // DOM制御.
 //
-var $style_display = {};
-var $onclick_func = {};
+var $target_display = {};	// DOM.Id をキーとした、表示/非表示のbool
+var $button_onclick = {};	// DOM.Id をキーとした、onclick-function
 
-function update_style_display() {
-	for (var id in $style_display) {
-		style_display(id);
+function set_toggle(id, btn, target, display) {
+	if (display) {
+		$target_display[id] = true; target.style.display = 'block'; btn.value = '－';
+	}
+	else {
+		$target_display[id] = false; target.style.display = 'none'; btn.value = '＋';
 	}
 }
 
-function update_onclick() {
-	for (var id in $onclick_func) {
+function update_button_target() {
+	for (var btn_id in $button_onclick) {
+		var b = document.getElementById(btn_id);
+		if (b) b.onclick = $button_onclick[btn_id];
+	}
+	for (var id in $target_display) {
 		var e = document.getElementById(id);
-		if (e) e.onclick = $onclick_func[id];
+		var b = document.getElementById(id + '_btn');
+		if (e && b) set_toggle(id, b, e, $target_display[id]);
 	}
-}
-
-function style_display(id) {
-	var e = document.getElementById(id);
-	if (e && e.style.display)
-		$style_display[id] = e.style.display; // ページ内にidがあればそのdisplay値を記録する.
-	else if (!$style_display[id])
-		$style_display[id] = 'none'; // display値の記録がなければ初期値 none を記録する.
-
-	return $style_display[id]; // 最後に記録されたdisplay値を返す.
 }
 
 function insert_string(str, index, add) {
@@ -73,44 +80,29 @@ function insert_string(str, index, add) {
 }
 
 function all_close_button() {
-	$onclick_func["YPS_allclose"] = function() {
-		var ids = Object.keys($style_display);
-		for (var i = 0; i < ids.length; ++i) {
-			var e = document.getElementById(ids[i]);
-			if (e && e.style.display == 'block') {
-				e.style.display = 'none';
-				var btn = document.getElementById(ids[i] + '_btn');
-				if (btn) btn.value = '＋';
-			}
+	$button_onclick["YPS_allclose"] = function() {
+		for (var id in $target_display) {
+			var e = document.getElementById(id);
+			var b = document.getElementById(id + '_btn');
+			if (e && b) set_toggle(id, b, e, false);
 		}
 	};
-	return '<input id="YPS_allclose" type="button" value="全閉">'
-		;
+	return '<input id="YPS_allclose" type="button" value="全閉">';
 }
 
 function toggle_button(id) {
-	$onclick_func[id + "_btn"] = function() {
-		var e = document.getElementById(id);
-		if (!e) return;
-		if (e.style.display == 'block') {
-			e.style.display = 'none';
-			this.value = '＋';
-		}
-		else {
-			e.style.display = 'block';
-			this.value = '－';
-		}
+	$button_onclick[id + "_btn"] = function() {
+		var e = document.getElementById(id); // target
+		var b = this; // button
+		if (e) set_toggle(id, b, e, !$target_display[id]); // DOM.idの表示/非表示を反転する.
 	};
-	return '  <input id="<ID>_btn" style="font-size:70%; padding:0px;" type="button" value="<VALUE>">'
-		.replace(/<ID>/g, id)
-		.replace(/<VALUE>/g, style_display(id) == 'block' ? '－': '＋')
-		;
+	return '  <input id="<ID>_btn" style="font-size:70%; padding:0px;" type="button" value="＋"/>'
+		.replace(/<ID>/g, id);
 }
+
 function toggle_div(id) {
-	return '<div id="<ID>" style="display:<DISPLAY>;">'
-		.replace(/<ID>/g, id)
-		.replace(/<DISPLAY>/g, style_display(id) == 'block' ? 'block': 'none')
-		;
+	return '<div id="<ID>" style="display:none;">'
+		.replace(/<ID>/g, id);
 }
 
 //------------------------------------------------------------------------
@@ -174,15 +166,74 @@ function parse_markdown(a) {
 }
 
 //------------------------------------------------------------------------
+// 履歴保存.
+//
+function push_history(html) {
+	var ha = hst.YPS_HTMLarray;
+	if (/^\s*<h/.test(html)) return;		// 先頭行がhタグで始まる任務確認表示は保存対象外とする.
+	if (ha[ha.length-1] == html) return;	// 前回保存と等しいならば保存しない.
+	if (ha.push(html) > 50) {
+		ha.shift(); // 50を超えたら古いものから削除する.
+	}
+}
+
+function update_histinfo() {
+	var e = document.getElementById('YPS_histinfo');
+	if (!e) return;
+	var len = hst.YPS_HTMLarray.length;	// 履歴総数.
+	var pos = hst.YPS_HTMLcursor + 1;	// 履歴表示位置.
+	if (div.parentNode)
+		e.textContent = 'x' + len;			// 通常表示中は "x履歴総数" を表示する.
+	else
+		e.textContent = pos + '/' + len;	// 履歴表示中は "履歴表示位置/履歴総数" を表示する.
+}
+
+function history_buttons() {
+	$button_onclick["YPS_rev"] = function() {
+		var ha = hst.YPS_HTMLarray;
+		var i  = hst.YPS_HTMLcursor;
+		if (ha.length < 1) return;	// 履歴無しなら何もしない.
+		if (div.parentNode) {
+			document.body.replaceChild(hst, div); // 履歴表示開始.
+			i = ha.length;
+		}
+		if (--i < 0) i = 0;
+		hst.innerHTML = ha[hst.YPS_HTMLcursor = i];
+		update_button_target();
+		update_histinfo();
+	};
+	$button_onclick["YPS_fwd"] = function() {
+		var ha = hst.YPS_HTMLarray;
+		var i  = hst.YPS_HTMLcursor;
+		if (div.parentNode) return; // 履歴表示中以外は何もしない.
+		if (++i >= ha.length) {
+			document.body.replaceChild(div, hst); // 履歴表示を中断する.
+		}
+		else {
+			hst.innerHTML = ha[hst.YPS_HTMLcursor = i];
+		}
+		update_button_target();
+		update_histinfo();
+	};
+	return ' <input id="YPS_rev" type="button" value="←"/>'
+		+ ' <input id="YPS_fwd" type="button" value="→"/>'
+		+ ' 履歴<span id="YPS_histinfo"></span>'
+		;
+}
+
+//------------------------------------------------------------------------
 // 表示内容受信.
 //
 chrome.runtime.onMessage.addListener(function (req) {
+	if (!div.parentNode) document.body.replaceChild(div, hst); // 履歴表示を中断する.
 	if (req instanceof Array) {
-		update_style_display(); // ページ変更前に、全idのdisplay値記録を更新する.
 		div.innerHTML = parse_markdown(req);
-		navi.innerHTML = all_close_button();
-		update_onclick();
-	} else {
+		navi.innerHTML = all_close_button() + history_buttons();
+	}
+	else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
 	}
+	push_history(div.innerHTML);	// 履歴に追加する.
+	update_button_target();			// 更新したHTMLに対して、ターゲット表示/非表示を反映する.
+	update_histinfo();				// 履歴個数表示を更新する.
 });
