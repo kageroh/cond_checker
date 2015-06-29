@@ -1895,7 +1895,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		var k = $kdock_list[params.api_kdock_id];
 		if (k) k.api_state = 3; // 完成に変更する.
 		var now = $material.now.concat();
-		--now[4];	// 高速建造材(バーナー).
+		now[4] -= (k.api_item1 >= 1500 ? 10 : 1);	// 高速建造材(バーナー).
 		update_material(now, $material.createship);
 		print_port();
 	}
