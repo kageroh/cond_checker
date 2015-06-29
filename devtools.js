@@ -27,7 +27,7 @@ var $material = {
 	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
 	ndock  : [0,0,0,0, 0,0,0,0],	///< 入渠累計.
 	dropitem    : [0,0,0,0, 0,0,0,0],	///< 道中資源累計.
-	createship  : [0,0,0,0, 0,0,0,0],	///< 艦娘建造累計.
+	createship  : [0,0,0,0, 0,0,0,0],	///< 艦娘建造/改造累計.
 	createitem  : [0,0,0,0, 0,0,0,0],	///< 装備開発累計.
 	remodelslot : [0,0,0,0, 0,0,0,0],	///< 装備改修累計.
 	destroyship : [0,0,0,0, 0,0,0,0],	///< 艦娘解体累計.
@@ -918,7 +918,7 @@ function print_port() {
 		, '\t==道中'
 		, '\t==補給'
 		, '\t==入渠'
-		, '\t==建造'
+		, '\t==建造/改造'
 		, '\t==解体'
 		, '\t==開発'
 		, '\t==改修'
@@ -1672,6 +1672,15 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		}
 		// 直後に /api_get_member/kdock と /api_get_member/material パケットが来るので print_port() は不要.
 	}
+	else if (api_name == '/api_req_kaisou/remodeling') {
+		// 艦娘改造.
+		var params = decode_postdata_params(request.request.postData.params);
+		var ship = $ship_list[params.api_id];
+		var mst = $mst_ship[ship.ship_id];
+		$material.createship[1] -= mst.api_afterbull;	// 消費弾薬.
+		$material.createship[2] -= mst.api_afterfuel;	// 消費鋼材. afterfuelという名前だが、消費するのは鋼材である.
+		// 直後に /api_get_member/ship3, /api_get_member/slot_item, /api_get_member/material パケットが来るので print_port() は不要.
+	}
 	else if (api_name == '/api_req_kousyou/createitem') {
 		// 装備開発.
 		var params = decode_postdata_params(request.request.postData.params); // 送信した消費資材値を抜き出す.
@@ -1917,7 +1926,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		};
 	}
 	else if (api_name == '/api_get_member/ship3') {
-		// 装備換装.
+		// 装備換装、艦娘改造.
 		$request = request;
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			if (decode_postdata_params(request.request.postData.params).api_shipid)
