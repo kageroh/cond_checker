@@ -1471,13 +1471,9 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 				+ ', e_damage:' + fraction_percent_name(e_damage_total, e_hp_total) + (e_leader_lost ? '[x' : '[') + e_lost_count + '/' + e_count + ']'
 				+ (isChase ? ', chase_rate:' : ', rate:') + Math.round(rate * 10000) / 10000
 				;
-	$guess_debug_log = (rate >= 2.49 && rate <= 2.51) // B/C判定閾値検証.
-				|| (rate >= 0.8864 && rate <= 0.9038) // C/D判定閾値検証.
-				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
-				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
-				;
+	$guess_debug_log = false;
 	if (e_count == e_lost_count && f_lost_count == 0) {
-		return (f_damage_total == 0) ? '完S' : 'S';
+		return (f_damage_total == 0) ? '完S' : 'S';	// 1%未満の微ダメージでも、"完S"にはならない.
 	}
 	if (e_lost_count >= (e_count == 6 ? 4 : e_count/2) && f_lost_count == 0) {
 		return 'A';
@@ -1485,9 +1481,17 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if (e_leader_lost && f_lost_count < e_lost_count) {
 		return 'B';
 	}
+	$guess_debug_log = (rate >= 2.49 && rate <= 2.51) // B/C判定閾値検証.
+				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
+				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
+				;
 	if (rate > 2.5) { // ほぼ確定. rate == 2.5 でC判定を確認済み.
 		return 'B';
 	}
+	$guess_debug_log = (rate >= 0.8864 && rate <= 0.9038) // C/D判定閾値検証.
+				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
+				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
+				;
 	if (rate > 0.9) { // 要検証!!! r == 0.9038 でC判定を確認. rate == 0.8864 でD判定を確認済み. 0.8864～0.9038 の区間に閾値がある.
 		return 'C';
 	}
