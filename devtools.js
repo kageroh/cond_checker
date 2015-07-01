@@ -1729,7 +1729,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		// 近代化改修.
 		var ids = decode_postdata_params(request.request.postData.params).api_id_items;
 		if (ids) ship_delete(/%2C/.test(ids) ? ids.split('%2C') : [ids]);		// 素材として使った艦娘が持つ装備を、リストから抜く.
-		print_port();
+		func = function(json) {
+			var d = json.api_data;
+			if (d.api_ship) delta_update_ship_list([d.api_ship]);
+			if (d.api_deck) update_fdeck_list(d.api_deck);
+			print_port();
+		}
 	}
 	else if (api_name == '/api_req_kousyou/remodel_slot') {
 		// 装備改修.
