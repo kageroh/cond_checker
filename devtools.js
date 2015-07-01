@@ -33,7 +33,6 @@ var $material = {
 	destroyship : [0,0,0,0, 0,0,0,0],	///< 艦娘解体累計.
 	destroyitem : [0,0,0,0, 0,0,0,0],	///< 装備破棄累計.
 	now : [],	///< 現在資材. 初回は全項目undefinedとする.
-	pre : [],	///< 前回資材. 初回は全項目undefinedとする.
 	beg : null,	///< 初期資材. 初回更新時にnowのコピーを保持する.
 	diff: ""	///< 変化量メッセージ.
 };
@@ -752,7 +751,7 @@ function update_material(material, sum) {
 			msg.push(material_name(id) + diff);
 			if (sum) sum[id-1] += value - now;
 		}
-		$material.pre[id-1] = $material.now[id-1] = value;
+		$material.now[id-1] = value;
 	}
 	if (msg.length) $material.diff = msg.join(', ');
 	if ($material.beg == null) $material.beg = $material.now.concat(); // 初回更新時にnowのコピーを保持する.
@@ -1824,7 +1823,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				if (ship) ship.charge(data);
 			}
 			var now_baux = d.api_material[3];
-			if (d.api_use_bou) $material.charge[3] -= $material.pre[3] - now_baux;
+			if (d.api_use_bou) $material.charge[3] -= $material.now[3] - now_baux;
 			update_material(d.api_material);
 			print_port();
 		};
