@@ -917,7 +917,7 @@ function print_port() {
 		, '\t==道中'
 		, '\t==補給'
 		, '\t==入渠'
-		, '\t==建造/改造'
+		, '\t==建造+改造'
 		, '\t==解体'
 		, '\t==開発'
 		, '\t==改修'
@@ -968,26 +968,6 @@ function print_port() {
 		for (var id in lock_beginlist) {
 			var a = lock_beginlist[id];
 			if (a.length > 1) msg.push('\t|' + shiplist_names(a));
-		}
-	}
-	msg.push('---');
-	if (msg.length > 2) req.push(msg);
-	//
-	// ロック艦キラ付一覧を表示する.
-	var msg = ['YPS_kira_list'];
-	req.push('キラ付艦数:***' + cond85 + ' **' + cond53 + ' *' + cond50);
-	msg.push('## ドラム缶装備の待機艦(遠征交代要員)');
-	msg.push('\t==cond\t==艦名'); // 表ヘッダ
-	if (drumcan_cond85.length > 0) msg.push('\t*** 85以上\t|' + shiplist_names(drumcan_cond85));
-	if (drumcan_cond53.length > 0) msg.push('\t** 53以上\t|' + shiplist_names(drumcan_cond53));
-	if (drumcan_cond50.length > 0) msg.push('\t* 50以上\t|' + shiplist_names(drumcan_cond50));
-	if (drumcan_condxx.length > 0) msg.push('\t. 49以下\t|' + shiplist_names(drumcan_condxx));
-	if (Object.keys(lock_condlist).length > 0) {
-		msg.push('## ロック艦cond降順');
-		msg.push('\t==cond\t==艦名'); // 表ヘッダ
-		for (var cond = 100; cond >= 0; --cond) {
-			var a = lock_condlist[cond];
-			if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + shiplist_names(a));
 		}
 	}
 	msg.push('---');
@@ -1044,6 +1024,26 @@ function print_port() {
 	var a = lock_kyoukalist[4]; if (a.length > 0) msg.push('### 運',   '\t|' + shiplist_names(a));
 	msg.push('---');
 	if (msg.length > 3) req.push(msg);
+	//
+	// ロック艦キラ付一覧を表示する.
+	var msg = ['YPS_kira_list'];
+	req.push('キラ付艦数:***' + cond85 + ' **' + cond53 + ' *' + cond50);
+	msg.push('## ドラム缶装備の待機艦(遠征交代要員)');
+	msg.push('\t==cond\t==艦名'); // 表ヘッダ
+	if (drumcan_cond85.length > 0) msg.push('\t*** 85以上\t|' + shiplist_names(drumcan_cond85));
+	if (drumcan_cond53.length > 0) msg.push('\t** 53以上\t|' + shiplist_names(drumcan_cond53));
+	if (drumcan_cond50.length > 0) msg.push('\t* 50以上\t|' + shiplist_names(drumcan_cond50));
+	if (drumcan_condxx.length > 0) msg.push('\t. 49以下\t|' + shiplist_names(drumcan_condxx));
+	if (Object.keys(lock_condlist).length > 0) {
+		msg.push('## ロック艦cond降順');
+		msg.push('\t==cond\t==艦名'); // 表ヘッダ
+		for (var cond = 100; cond >= 0; --cond) {
+			var a = lock_condlist[cond];
+			if (a) msg.push('\t' + kira_name(cond) + cond + '\t|' + shiplist_names(a));
+		}
+	}
+	msg.push('---');
+	if (msg.length > 2) req.push(msg);
 	//
 	// 入渠(修理)一覧表示する.
 	var ndocks = Object.keys($ndock_list).length;
