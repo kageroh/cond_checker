@@ -754,7 +754,7 @@ function update_material(material, sum) {
 		}
 		$material.pre[id-1] = $material.now[id-1] = value;
 	}
-	$material.diff = msg.join(', ');
+	if (msg.length) $material.diff = msg.join(', ');
 	if ($material.beg == null) $material.beg = $material.now.concat(); // 初回更新時にnowのコピーを保持する.
 }
 
