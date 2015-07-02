@@ -73,6 +73,7 @@ function Ship(data, ship) {
 	this.ndock_item	= data.api_ndock_item; // 入渠消費量[燃料,鋼材].
 	this.ship_id	= data.api_ship_id;
 	this.kyouka	= data.api_kyouka;	// 近代化改修による強化値[火力,雷装,対空,装甲,運].
+	this.nextlv	= data.api_exp[1];
 }
 
 Ship.prototype.name_lv = function() {
@@ -158,6 +159,10 @@ Ship.prototype.slot_names = function() {
 	}
 	return a.join(', ');
 }
+
+Ship.prototype.next_level = function () {
+	return 'あと ' + this.nextlv;
+};
 
 //------------------------------------------------------------------------
 // データ保存と更新.
@@ -721,6 +726,7 @@ function push_fleet_status(msg, deck) {
 			+ '\t' + ship.fuel_name()
 			+ '\t' + ship.bull_name()
 			+ '\t' + ship.slot_names()
+			+ '\t' + ship.next_level()
 			);
 		var d = slotitem_count(ship.slot, 75);	// ドラム缶.
 		if (d) {
@@ -1141,7 +1147,7 @@ function print_port() {
 	// 各艦隊の情報を一覧表示する.
 	for (var f_id in $fdeck_list) {
 		var msg = ['YPS_fdeck_list' + f_id];
-		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備'); // 表ヘッダ. 慣れれば不用な気がする.
+		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備\t==次のLvまで'); // 表ヘッダ. 慣れれば不用な気がする.
 		var deck = $fdeck_list[f_id];
 		var brief;
 		if ($combined_flag && f_id == 1) {
