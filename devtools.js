@@ -73,8 +73,7 @@ function Ship(data, ship) {
 	this.ndock_item	= data.api_ndock_item; // 入渠消費量[燃料,鋼材].
 	this.ship_id	= data.api_ship_id;
 	this.kyouka	= data.api_kyouka;	// 近代化改修による強化値[火力,雷装,対空,装甲,運].
-	this.nowexp	= (ship) ? ship.nowexp : 0; // 経験値情報の引き継ぎ.
-	this.nextexp = (ship) ? ship.nextexp : 100; // 経験値情報がない艦は便宜上lv1とみなす.
+	this.nextlv	= data.api_exp[1];
 }
 
 Ship.prototype.name_lv = function() {
@@ -161,24 +160,8 @@ Ship.prototype.slot_names = function() {
 	return a.join(', ');
 }
 
-Ship.prototype.update_exp = function (nowexp, getexp, nextexp) {
-	this.nowexp = nowexp + getexp;
-	this.nextexp = nextexp;
-};
-
-Ship.prototype.update_level = function (getexp, exptuple) {
-	var nowexp = exptuple[0];
-	var nextexp = exptuple[0];// Lv99 or Lv150
-	if (exptuple.length == 2) {
-		nextexp = exptuple[1];
-	} else if (exptuple.length == 3) {
-		nextexp = exptuple[2];//LV up 時
-	}
-	this.update_exp(nowexp, getexp, nextexp);
-};
-
 Ship.prototype.next_level = function () {
-	return 'あと ' + (this.nextexp - this.nowexp);
+	return 'あと ' + this.nextlv;
 };
 
 //------------------------------------------------------------------------
@@ -787,21 +770,6 @@ function diff_update_material(diff_material, sum) {
 	update_material(m, sum);
 }
 
-function update_ship_exp(ship_id, data) {
-	var exp = data.api_get_ship_exp[0] == -1 ?
-		data.api_get_ship_exp.slice(1) : // 戦闘結果
-		data.api_get_ship_exp; // 遠征結果
-	var lvup_tuple = data.api_get_exp_lvup;
-	for (var i = 0; i < 6; ++i) {
-		var id = ship_id[i];
-		if (id == -1) {
-			continue;
-		}
-		var ship = $ship_list[id];
-		ship.update_level(exp[i], lvup_tuple[i]);
-	}
-}
-
 //------------------------------------------------------------------------
 // デバッグダンプ.
 //
@@ -1373,12 +1341,6 @@ function on_battle_result(json) {
 	}
 	if (drop_item_name) {
 		msg += '\n## drop item\n' + drop_item_name;
-	}
-	if (d.api_get_ship_exp) {
-		update_ship_exp($fdeck_list[$battle_deck_id].api_ship, d);
-	}
-	if (d.api_get_ship_exp_combined) {
-		update_ship_exp($fdeck_list[2].api_ship, d);
 	}
 	chrome.extension.sendRequest('## battle result\n' + msg);
 }
@@ -2018,7 +1980,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			};
 			add_mission_item(d.api_useitem_flag[0], d.api_get_item1);
 			add_mission_item(d.api_useitem_flag[1], d.api_get_item2);
-			update_ship_exp(d.api_ship_id.slice(1), d);
 			// 直後に /api_port/port パケットが来るので print_port() は不要.
 		};
 	}
