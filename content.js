@@ -5,7 +5,7 @@ var div = document.createElement('div');
 div.style.whiteSpace = 'pre-wrap';
 div.style.position = 'absolute';
 div.style.top = '75px'; // NaviBar 39px + margin 20px + spacer 16px
-div.style.left = '822px';
+div.style.left = '850px';
 div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>"
 	+ "<h3>ロード中...</h3>"
 	+ "ゲームスタート後に「ロード完了」が表示されない場合は[デベロッパー ツール]を起動し、画面をリロードしてゲームスタートからやり直してください\n"
@@ -46,7 +46,7 @@ document.getElementById('w').style.textAlign = 'left';
 document.getElementById('w').style.width = '820px';
 document.getElementById('area-game').style.textAlign = 'left';
 document.getElementById('game_frame').width = '820px';
-document.getElementById('ntg-recommend').style.display = 'none';
+//document.getElementById('ntg-recommend').style.display = 'none';
 
 //------------------------------------------------------------------------
 // DOM制御.
