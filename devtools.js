@@ -1312,7 +1312,8 @@ function on_battle_result(json) {
 			api_locked: 0,
 			api_slot: [],	// デフォルト装備が取れないので空にしておく.
 			api_onslot: [0,0,0,0,0],
-			api_kyouka: [0,0,0,0,0]
+			api_kyouka: [0,0,0,0,0],
+			api_exp: [0,100,0]
 		};
 		delta_update_ship_list([drop_ship]);
 	}
