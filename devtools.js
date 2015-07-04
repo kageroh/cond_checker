@@ -388,9 +388,11 @@ function fraction_percent_name(now, max) {	// now:1, max:2 -> "1/2(50%)"
 function kira_name(cond) {
 	return (cond >= 85) ? '*** ' : // 三重キラ.
 		   (cond >= 53) ? '** ' : // 回避向上キラ.
-		   (cond >  49) ? '* ' : // キラ.
-		   (cond == 49) ? '. ' : // normal
-		 /* cond < 49 */  '> '; // recovering
+		   (cond >= 50) ? '* ' : // キラ.
+		   (cond == 49) ? '. ' : // 通常.
+		   (cond >= 30) ? '> ' : // 疲労.
+		   (cond >= 20) ? '>> ' : // オレンジ疲労.
+		 /* cond 0..19 */ '>>> '; // 赤疲労.
 };
 
 function material_name(id) {
