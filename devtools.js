@@ -1837,6 +1837,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_quest/clearitemget') {
 		// 任務クリア.
+		var params = decode_postdata_params(request.request.postData.params);
+		delete $quest_list[params.api_quest_id]; // 任務リストから外す.
+		$quest_exec_count--;
+		$quest_count--;
 		func = function(json) { // 任務報酬を記録する.
 			var d = json.api_data;
 			for (var i = 0; i < d.api_material.length; ++i) {
