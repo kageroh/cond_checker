@@ -395,6 +395,27 @@ function kira_name(cond) {
 		 /* cond 0..19 */ '>>> '; // 赤疲労.
 };
 
+function kira_names(list) {
+	var count = {};	// kira_name をキーとするカウンター.
+	list.forEach(function(cond) {
+		var name = kira_name(cond).trim();
+		if (count[name] == null)
+			count[name] = 1;
+		else
+			count[name]++;
+	});
+	var msg = [];
+	var n;
+	if (n = count['***']) msg.push('***' + n);
+	if (n = count['**'])  msg.push('**' + n);
+	if (n = count['*'])   msg.push('*' + n);
+//	if (n = count['.'])   msg.push('通常' + n); --- 通常は表示しない.
+	if (n = count['>'])   msg.push('疲労' + n);
+	if (n = count['>>'])  msg.push('橙疲労' + n);
+	if (n = count['>>>']) msg.push('赤疲労' + n);
+	return msg.join(' ');
+}
+
 function material_name(id) {
 	switch (parseInt(id, 10)) {
 		case 1: return '燃料';
@@ -665,7 +686,7 @@ function hp_status_on_battle(nowhp, maxhp, beginhp) {
 }
 
 function fleet_brief_status(deck, deck2) {
-	var kira = 0, n = 0;
+	var cond_list = [];
 	var esc = 0, sunk = 0;
 	var damage_H = 0;
 	var damage_M = 0;
@@ -677,10 +698,9 @@ function fleet_brief_status(deck, deck2) {
 	for (var i in list) {
 		var ship = $ship_list[list[i]];
 		if (ship) {
-			++n;
 			fuel += ship.fuel; fuel_max += ship.fuel_max();
 			bull += ship.bull; bull_max += ship.bull_max();
-			if (ship.c_cond > 49) ++kira;
+			cond_list.push(ship.c_cond);
 			var r = ship.nowhp / ship.maxhp;
 			if ($ship_escape[ship.id]) esc++; // 退避.
 			else if (r <= 0) sunk++; // 撃沈.
@@ -689,7 +709,7 @@ function fleet_brief_status(deck, deck2) {
 			else if (r <= 0.75) damage_L++; // 小破.
 		}
 	}
-	return '*' + kira + '/' + n
+	return kira_names(cond_list)
 		+ (fuel < fuel_max ? ' 燃料' + percent_name(fuel, fuel_max) : '')
 		+ (bull < bull_max ? ' 弾薬' + percent_name(bull, bull_max) : '')
 		+ (esc  ? ' 退避' + esc : '')
