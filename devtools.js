@@ -158,7 +158,7 @@ Ship.prototype.slot_names = function() {
 		}
 	}
 	return a.join(', ');
-}
+};
 
 Ship.prototype.next_level = function () {
 	return 'あと ' + this.nextlv;
@@ -342,6 +342,9 @@ function push_to_logbook(log) {
 	save_storage('logbook', $logbook);
 }
 
+//------------------------------------------------------------------------
+// 表示文字列化.
+//
 function fraction_name(num, denom) {
 	if (num >= denom)
 		return '達成';
@@ -349,9 +352,6 @@ function fraction_name(num, denom) {
 		return num + '/' + denom;
 }
 
-//------------------------------------------------------------------------
-// 表示文字列化.
-//
 function weekly_name() {
 	var w = get_weekly();
 	return '(出撃数:'  + fraction_name(w.sortie, 36)
@@ -393,7 +393,7 @@ function kira_name(cond) {
 		   (cond >= 30) ? '> ' : // 疲労.
 		   (cond >= 20) ? '>> ' : // オレンジ疲労.
 		 /* cond 0..19 */ '>>> '; // 赤疲労.
-};
+}
 
 function kira_names(list) {
 	var count = {};	// kira_name をキーとするカウンター.
