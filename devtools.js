@@ -1081,7 +1081,13 @@ function print_port() {
 		if (ndocks > 0) {
 			msg.push('## 修理中');
 			msg.push('\t==艦名Lv\t==燃料\t==弾薬\t==鋼材\t==ボーキ\t==完了時刻'); // 表ヘッダ.
+			var ndoklst = {};
 			for (var id in $ndock_list) {
+				var d = $ndock_list[id];
+				ndoklst[d.api_id] = id;
+			}
+			for (var i in ndoklst){
+				var id = ndoklst[i];
 				var d = $ndock_list[id];
 				var ship = $ship_list[id];
 				var c_date = new Date(d.api_complete_time);
