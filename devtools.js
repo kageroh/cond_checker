@@ -242,6 +242,26 @@ function delta_update_fdeck_list(list) {
 	update_fdeck_list(list, true);
 }
 
+function response_header_date(request){
+	var h = request.response.headers;
+	if(h && h[0].name == 'Date'){
+		return h[0].value;
+	}
+}
+
+function update_ndock_complete(req) {
+	// $ndock_list のクリア前に現在のリストで入渠完了した艦がないかチェックする
+	for(var id in $ndock_list){
+		var d = $ndock_list[id];
+		var ship = $ship_list[id];
+		if(d.api_complete_time < new Date(response_header_date(req)).getTime() + 60000){
+			//alert(d.api_complete_time_str);
+			ship.highspeed_repair();
+			$do_print_port_on_ndock = true;
+		}
+	}
+}
+
 function update_ndock_list(list) {
 	if (!list) return;
 	$ndock_list = {};
@@ -1891,7 +1911,9 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_get_member/ndock') {
 		// 入渠.
+		$request = request;
 		func = function(json) { // 入渠状況を更新する.
+			update_ndock_complete($request);
 			update_ndock_list(json.api_data);
 			if ($do_print_port_on_ndock) {
 				$do_print_port_on_ndock = false;
