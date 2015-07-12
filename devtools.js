@@ -583,11 +583,12 @@ function damage_name(nowhp, maxhp) {
 //
 function decode_postdata_params(params) {
 	var r = {};
-	if (!params) return;
-	params.forEach(function(data) {
-		var name  = decodeURI(data.name);
-		var value = decodeURI(data.value);
-		if (name && value) r[name] = (value == "" || isNaN(value)) ? value : value * 1;  // 数値文字列ならばNumberに変換して格納する. さもなくばstringのまま格納する.
+	if (params instanceof Array) params.forEach(function(data) {
+		if (data.name && data.value) {
+			var name  = decodeURI(data.name);
+			var value = decodeURI(data.value);
+			r[name] = (value == "" || isNaN(value)) ? value : +value;  // 数値文字列ならばNumberに変換して格納する. さもなくばstringのまま格納する.
+		}
 	});
 	return r;
 }
