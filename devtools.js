@@ -394,6 +394,7 @@ function percent_name_unless100(now, max, decimal_digits) {	// now:1, max:2 -> "
 }
 
 function fraction_percent_name(now, max) {	// now:1, max:2 -> "1/2(50%)"
+	if (!max) return '';	// 0除算回避.
 	var d = (100 * now / max < 1) ? 1 : 0; // 1%未満なら小数部2桁目を切り捨て、1%以上なら小数部切り捨て.
 	return now + '/' + max + '(' + percent_name(now, max, d) + ')';
 }
@@ -1467,41 +1468,47 @@ function calc_damage(result, hp, battle, hc) {
 		}
 	}
 	if (battle.api_deck_id && battle.api_damage) { // battle: api_support_hourai
-		// 支援艦隊攻撃:敵ダメージ集計.
+		// 支援艦隊砲雷撃:敵ダメージ集計.
 		for (var i = 1; i <= 6; ++i) {
 			hp[i+6] -= Math.floor(battle.api_damage[i]);
 		}
+		// 支援艦隊砲雷撃:戦闘詳報収集.
+		for (var i = 1; i <= 6; ++i) {
+			result.detail.push({ty:"支援砲雷撃", target: i + 6, cl: battle_cl_name(battle.api_cl_list[i]), damage: battle.api_damage[i]});
+		}
 	}
-	if (battle.api_frai && battle.api_erai) {
-		// 味方雷撃詳細収集.
+	if (battle.api_frai) {
+		// 味方雷撃:戦闘詳報収集.
 		for (var i = 1; i <= 6; ++i) {
 			var target = battle.api_frai[i];
 			var damage = battle.api_fydam[i];
-			if (target != 0) result.detail.push({ty:"雷撃戦", at: (hc ? i + 20 : i), target: target + 6, si:[], cl: battle_cl_name(battle.api_fcl[i]), damage: damage});
+			if (target != 0) result.detail.push({ty:"雷撃戦", at: (hc ? i + 20 : i), target: target + 6, cl: battle_cl_name(battle.api_fcl[i]), damage: damage});
 		}
-		// 敵雷撃詳細収集.
+	}
+	if (battle.api_erai) {
+		// 敵雷撃:戦闘詳報収集.
 		for (var i = 1; i <= 6; ++i) {
 			var target = battle.api_erai[i];
 			var damage = battle.api_eydam[i];
-			if (target != 0) result.detail.push({ty:"雷撃戦", at: i + 6, target: (hc ? target + 20 : target), si:[], cl: battle_cl_name(battle.api_ecl[i]), damage: damage});
+			if (target != 0) result.detail.push({ty:"雷撃戦", at: i + 6, target: (hc ? target + 20 : target), cl: battle_cl_name(battle.api_ecl[i]), damage: damage});
 		}
 	}
 	if (battle.api_frai_flag && battle.api_fbak_flag) {
-		// 開幕航空戦:味方被害詳細収集.
+		// 開幕航空戦:味方被害詳報収集.
 		for (var i = 1; i <= 6; ++i) {
 			var target = hc ? i + 20 : i;
 			var damage = battle.api_fdam[i];
 			if (battle.api_frai_flag[i] || battle.api_fbak_flag[i])
-				result.detail.push({ty:"航空戦", target: target, si:[], cl: battle_cl_name(damage ? battle.api_fcl_flag[i]+1 : 0), damage: damage});
+				result.detail.push({ty:"航空戦", target: target, cl: battle_cl_name(damage ? battle.api_fcl_flag[i]+1 : 0), damage: damage});
 		}
 	}
 	if (battle.api_erai_flag && battle.api_ebak_flag) {
-		// 開幕航空戦:敵被害詳細収集.
+		// 開幕航空戦/航空支援:敵被害詳報収集.
 		for (var i = 1; i <= 6; ++i) {
 			var target = i + 6;
 			var damage = battle.api_edam[i];
 			if (battle.api_erai_flag[i] || battle.api_ebak_flag[i])
-				result.detail.push({ty:"航空戦", target: target, si:[], cl: battle_cl_name(damage ? battle.api_ecl_flag[i]+1 : 0), damage: damage});
+				result.detail.push({ty: (battle.api_fdam ? "航空戦" : "航空支援"), target: target, cl: battle_cl_name(damage ? battle.api_ecl_flag[i]+1 : 0), damage: damage});
 		}
 	}
 }
@@ -1513,6 +1520,15 @@ function calc_kouku_damage(result, hp, kouku, hc) {
 		result.seiku = st.api_disp_seiku;
 		result.touch = st.api_touch_plane;
 		result.f_air_lostcount += st.api_f_lostcount;
+		result.detail.push({
+			ty: '制空戦:' + seiku_name(st.api_disp_seiku),
+			cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+			damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
+		});
+		if (st.api_touch_plane) {
+			var t0 = st.api_touch_plane[0]; if (t0 != -1) result.detail.push({ty:'触接',  si:[t0], cl:'', damage:''});
+			var t1 = st.api_touch_plane[1]; if (t1 != -1) result.detail.push({ty:'被触接', si:[t1], cl:'', damage:''});
+		}
 	}
 	if (kouku.api_stage2) {	// 防空戦.
 		var st = kouku.api_stage2;
@@ -1523,8 +1539,15 @@ function calc_kouku_damage(result, hp, kouku, hc) {
 				ty: '対空カットイン(' + st.api_air_fire.api_kind + ')',
 				at: idx,
 				si: st.api_air_fire.api_use_items,
-				cl: '撃墜率',
-				damage: fraction_percent_name(st.api_e_lostcount, st.api_e_count)
+				cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+				damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
+			});
+		}
+		else {
+			result.detail.push({
+				ty: '防空戦',
+				cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+				damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
 			});
 		}
 	}
@@ -1657,6 +1680,9 @@ function on_battle(json) {
 	};
 	calc_kouku_damage(result, nowhps, d.api_kouku, nowhps_c); // 航空戦.
 	calc_kouku_damage(result, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
+	if (d.api_support_flag == 1) calc_damage(result, nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
+	if (d.api_support_flag == 2) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
+	if (d.api_support_flag == 3) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
 	calc_damage(result, nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(result, nowhps, d.api_hougeki, nowhps_c);	// midnight
 	switch ($combined_flag) {
@@ -1677,9 +1703,6 @@ function on_battle(json) {
 		break;
 	}
 	calc_damage(result, nowhps, d.api_raigeki, nowhps_c);
-	if (d.api_support_flag == 1) calc_damage(result, nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
-	if (d.api_support_flag == 2) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
-	if (d.api_support_flag == 3) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
 	var fdeck = $fdeck_list[$battle_deck_id = d.api_deck_id];
 	var fmt = null;
@@ -1742,7 +1765,7 @@ function on_battle(json) {
 			return '';
 	}
 	if (result.detail.length) {
-		var msg = ['YPS_battle_detail', '\t==種別\t==攻撃艦\t==防御艦\t==使用装備\t==戦果\t==ダメージ'];
+		var msg = ['YPS_battle_detail', '\t==種別\t==攻撃艦\t==防御艦\t==使用装備\t==敵撃墜/戦果\t==被撃墜/ダメージ'];
 		for (var i = 0; i < result.detail.length; ++i) {
 			var dt = result.detail[i];
 			msg.push('\t' + dt.ty + '\t' + ship_name_lv(dt.at) + '\t' + ship_name_lv(dt.target) + '\t' + slotitem_names(dt.si) + '\t' + dt.cl + '\t' + dt.damage);
