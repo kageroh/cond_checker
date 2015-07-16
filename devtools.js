@@ -1691,10 +1691,13 @@ function on_battle(json) {
 	}
 	calc_kouku_damage(result, nowhps, d.api_kouku, nowhps_c); // 航空戦.
 	calc_kouku_damage(result, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
-	var ds = d.api_support_info; if (ds && ds.api_support_airatack) ds.api_support_airattack = ds.api_support_airatack; // 綴り訂正.
-	if (d.api_support_flag == 1) calc_damage(result, nowhps, d.api_support_info.api_support_airattack.api_stage3); // 1:航空支援.
-	if (d.api_support_flag == 2) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 2:支援射撃
-	if (d.api_support_flag == 3) calc_damage(result, nowhps, d.api_support_info.api_support_hourai); // 3:支援長距離雷撃.
+	var ds = d.api_support_info;
+	if (ds) {
+		if (ds.api_support_airatack) ds.api_support_airattack = ds.api_support_airatack; // 綴り訂正.
+		if (d.api_support_flag == 1) calc_damage(result, nowhps, ds.api_support_airattack.api_stage3); // 1:航空支援.
+		if (d.api_support_flag == 2) calc_damage(result, nowhps, ds.api_support_hourai); // 2:支援射撃
+		if (d.api_support_flag == 3) calc_damage(result, nowhps, ds.api_support_hourai); // 3:支援長距離雷撃.
+	}
 	calc_damage(result, nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(result, nowhps, d.api_hougeki, nowhps_c);	// midnight
 	switch ($combined_flag) {
