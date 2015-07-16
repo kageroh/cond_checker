@@ -1520,15 +1520,15 @@ function calc_kouku_damage(result, hp, kouku, hc) {
 		result.seiku = st.api_disp_seiku;
 		result.touch = st.api_touch_plane;
 		result.f_air_lostcount += st.api_f_lostcount;
-		result.detail.push({
-			ty: '制空戦:' + seiku_name(st.api_disp_seiku),
-			cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
-			damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
-		});
 		if (st.api_touch_plane) {
-			var t0 = st.api_touch_plane[0]; if (t0 != -1) result.detail.push({ty:'触接',  si:[t0], cl:'', damage:''});
-			var t1 = st.api_touch_plane[1]; if (t1 != -1) result.detail.push({ty:'被触接', si:[t1], cl:'', damage:''});
+			var t0 = st.api_touch_plane[0]; if (t0 != -1) result.detail.push({ty:'触接',  si:[t0]});
+			var t1 = st.api_touch_plane[1]; if (t1 != -1) result.detail.push({ty:'被触接', si:[t1]});
 		}
+		result.detail.push({
+			ty: seiku_name(st.api_disp_seiku),
+			ek: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+			fk: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
+		});
 	}
 	if (kouku.api_stage2) {	// 防空戦.
 		var st = kouku.api_stage2;
@@ -1539,15 +1539,15 @@ function calc_kouku_damage(result, hp, kouku, hc) {
 				ty: '対空カットイン(' + st.api_air_fire.api_kind + ')',
 				at: idx,
 				si: st.api_air_fire.api_use_items,
-				cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
-				damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
+				ek: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+				fk: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
 			});
 		}
 		else {
 			result.detail.push({
 				ty: '防空戦',
-				cl: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
-				damage: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
+				ek: fraction_percent_name(st.api_e_lostcount, st.api_e_count),
+				fk: fraction_percent_name(st.api_f_lostcount, st.api_f_count)
 			});
 		}
 	}
@@ -1766,10 +1766,16 @@ function on_battle(json) {
 			return '';
 	}
 	if (result.detail.length) {
-		var msg = ['YPS_battle_detail', '\t==種別\t==攻撃艦\t==防御艦\t==使用装備\t==敵撃墜/戦果\t==被撃墜/ダメージ'];
+		var msg = ['YPS_battle_detail', '\t==種別\t==攻撃艦\t==防御艦\t==敵撃墜/戦果\t==被撃墜/ダメージ\t==使用装備'];
 		for (var i = 0; i < result.detail.length; ++i) {
 			var dt = result.detail[i];
-			msg.push('\t' + dt.ty + '\t' + ship_name_lv(dt.at) + '\t' + ship_name_lv(dt.target) + '\t' + slotitem_names(dt.si) + '\t' + dt.cl + '\t' + dt.damage);
+			msg.push('\t' + dt.ty
+				+ '\t' + ship_name_lv(dt.at)
+				+ '\t' + ship_name_lv(dt.target)
+				+ '\t' + (dt.cl || dt.ek || "")	// 命中判定 または 敵撃墜率.
+				+ '\t' + (dt.damage || dt.fk || "")	// ダメージ または 被撃墜率.
+				+ '\t' + slotitem_names(dt.si)
+			);
 		}
 		req.push('戦闘詳報');
 		req.push(msg);
