@@ -1674,10 +1674,21 @@ function on_battle(json) {
 	var beginhps_c = nowhps_c ? nowhps_c.concat() : [];
 	var result = {
 		seiku : null, 				// 制空権.
-		touch : d.api_touch_plane,	// 触接. 夜戦はd.にある、昼戦はd.api_kouku.state1.にある.
+		touch : null,				// 触接.
 		f_air_lostcount : 0,		// 非撃墜数.
 		detail : []					// 戦闘詳報.
 	};
+	if (d.api_touch_plane) {
+		// 触接(夜戦).
+		result.touch = d.api_touch_plane;
+		var t0 = d.api_touch_plane[0]; if (t0 != -1) result.detail.push({ty:'触接(夜戦)',  si:[t0]});
+		var t1 = d.api_touch_plane[1]; if (t1 != -1) result.detail.push({ty:'被触接(夜戦)', si:[t1]});
+	}
+	if (d.api_flare_pos) {
+		// 照明弾発射(夜戦).
+		var t0 = d.api_flare_pos[0]; if (t0 != -1) result.detail.push({ty:'照明弾(夜戦)', at:t0});
+		var t1 = d.api_flare_pos[1]; if (t1 != -1) result.detail.push({ty:'敵照明弾(夜戦)', at:t1+6});
+	}
 	calc_kouku_damage(result, nowhps, d.api_kouku, nowhps_c); // 航空戦.
 	calc_kouku_damage(result, nowhps, d.api_kouku2, nowhps_c); // 航空戦第二波.
 	var ds = d.api_support_info; if (ds && ds.api_support_airatack) ds.api_support_airattack = ds.api_support_airatack; // 綴り訂正.
