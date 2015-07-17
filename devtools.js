@@ -1291,6 +1291,7 @@ function on_next_cell(json) {
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
 	if (e) {
+		// 2015-7-17メンテにて敵編成(d.api_enemy)が取れなくなったので、このifブロックは処理されない.
 		$enemy_id = e.api_enemy_id;
 		var msg = $enemy_id.toString(10);
 		var fleet = $enemy_list[$enemy_id];
@@ -1303,6 +1304,16 @@ function on_next_cell(json) {
 			msg += '\n\t' + fleet.join('\t');
 			if(/潜水.級/.test(msg)) msg += '\n### 潜水艦注意!!';
 		}
+		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
+	}
+	else {
+		// 2015-7-17メンテにて敵編成が取れなくなったので暫定的にダミー値で埋めておく. @todo 潜水艦有無は知りたい.
+		if (d.api_event_id == 5) {
+			area += '(boss)';
+			$is_boss = true;
+		}
+		$enemy_id = 0;
+		$next_enemy = area + ':?';
 		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
 	}
 	if (g) {
