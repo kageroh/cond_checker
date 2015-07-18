@@ -1294,7 +1294,7 @@ function on_next_cell(json) {
 		chrome.extension.sendRequest('## next item\n' + msg);
 	}
 	else if (h) {	// 渦潮マス.
-		var msg = area + ':' + material_name(h.api_mst_id) + 'x' + h.api_count;
+		var msg = area + ':' + material_name(h.api_mst_id) + 'x' + -h.api_count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
 		$battle_log.push(msg);
 		chrome.extension.sendRequest('## next loss\n' + msg);
