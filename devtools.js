@@ -1,6 +1,7 @@
 // -*- coding: utf-8 -*-
 var $ship_list		= load_storage('ship_list');
 //var $enemy_list	= load_storage('enemy_list');
+var $enemy_log		= load_storage('enemy_log');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
@@ -53,6 +54,8 @@ var $guess_info_str = '';
 var $pcDateTime = null;
 var $svDateTime = null;
 var $newship_slots = null;
+var $enemy_ship_names = [];
+
 //-------------------------------------------------------------------------
 // Ship クラス.
 function Ship(data, ship) {
@@ -1301,7 +1304,8 @@ function on_next_cell(json) {
 	}
 	else {	// 戦闘マス.
 		$next_enemy = area;
-		chrome.extension.sendRequest('## next enemy\n' + area);
+		var elog = $enemy_log[$next_enemy] || [area]; // 戦闘記録が無ければ海域名を表示する.
+		chrome.extension.sendRequest('## next enemy\n' + elog.join('\n'));
 	}
 }
 
@@ -1350,7 +1354,7 @@ function on_battle_result(json) {
 		else if (/[DE]/.test(rank) || $guess_debug_log) {
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
 		}
-		var log = $next_enemy + '(' + e.api_deck_name + '):' + $battle_info + ':' + rank;
+		var log = $next_enemy + '(' + e.api_deck_name + ':' + $enemy_ship_names.join() + '):' + $battle_info + ':' + rank;
 		if (drop_ship_name) {
 			log += '+' + g.api_ship_name; // drop_ship_name; 艦種を付けると冗長すぎるので艦名のみとする.
 		}
@@ -1359,6 +1363,12 @@ function on_battle_result(json) {
 		}
 		$battle_log.push(log);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
+		if (!/^演習/.test($next_enemy)) {
+			var elog = $enemy_log[$next_enemy] || [];
+			if (elog.push('\t' + $svDateTime.toLocaleString() + '\t' + log) > 5) elog.shift(); // 直近の戦闘ログを5個記録する.
+			$enemy_log[$next_enemy] = elog;
+			save_storage('enemy_log', $enemy_log);
+		}
 	}
 	if (g) {
 		var drop_ship = {
@@ -1785,10 +1795,12 @@ function on_battle(json) {
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c, beginhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
+	$enemy_ship_names = [];
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
+		$enemy_ship_names.push(name);
 		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], beginhps[i+6]));
 	}
 	chrome.extension.sendRequest(req);
