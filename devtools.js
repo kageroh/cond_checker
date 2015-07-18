@@ -1313,8 +1313,8 @@ function on_next_cell(json) {
 			$is_boss = true;
 		}
 		$enemy_id = 0;
-		$next_enemy = area + ':?';
-		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
+		$next_enemy = area + ':';
+		chrome.extension.sendRequest('## next enemy\n' + area);
 	}
 	if (g) {
 		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
