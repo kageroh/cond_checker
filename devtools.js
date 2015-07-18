@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
 var $ship_list		= load_storage('ship_list');
-var $enemy_list		= load_storage('enemy_list');
+//var $enemy_list	= load_storage('enemy_list');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
@@ -43,8 +43,6 @@ var $battle_count = 0;
 var $ndock_list = {};
 var $do_print_port_on_ndock = false;
 var $kdock_list = {};
-var $enemy_id = null;
-var $enemy_formation_id = 0;
 var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
@@ -216,10 +214,6 @@ function update_ship_list(list, is_delta) {
 
 function delta_update_ship_list(list) {
 	update_ship_list(list, true);
-}
-
-function update_enemy_list() {
-	save_storage('enemy_list', $enemy_list);
 }
 
 function update_fdeck_list(list, is_delta) {
@@ -1284,47 +1278,28 @@ function on_mission_check(category) {
 
 function on_next_cell(json) {
 	var d = json.api_data;
-	var e = json.api_data.api_enemy;
 	var g = json.api_data.api_itemget;
 	if (!g) g = json.api_data.api_itemget_eo_comment; // EO 1-6 海域ゴールの取得資源.
 	var h = json.api_data.api_happening;
 	var area = d.api_maparea_id + '-' + d.api_mapinfo_no + '-' + d.api_no;
 	$next_mapinfo = $mst_mapinfo[d.api_maparea_id * 10 + d.api_mapinfo_no];
-	if (e) {
-		// 2015-7-17メンテにて敵編成(d.api_enemy)が取れなくなったので、このifブロックは処理されない.
-		$enemy_id = e.api_enemy_id;
-		var msg = $enemy_id.toString(10);
-		var fleet = $enemy_list[$enemy_id];
-		if (d.api_event_id == 5) {
-			area += '(boss)';
-			$is_boss = true;
-		}
-		$next_enemy = area + ':' + $enemy_id;
-		if (fleet) {
-			msg += '\n\t' + fleet.join('\t');
-			if(/潜水.級/.test(msg)) msg += '\n### 潜水艦注意!!';
-		}
-		chrome.extension.sendRequest('## next enemy\n' + area + ':' + msg);
-	}
-	else {
-		// 2015-7-17メンテにて敵編成が取れなくなったので暫定的にダミー値で埋めておく. @todo 潜水艦有無は知りたい.
-		if (d.api_event_id == 5) {
-			area += '(boss)';
-			$is_boss = true;
-		}
-		$enemy_id = 0;
-		$next_enemy = area + ':';
-		chrome.extension.sendRequest('## next enemy\n' + area);
+	if (d.api_event_id == 5) {
+		area += '(boss)';
+		$is_boss = true;
 	}
 	if (g) {
 		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
 		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
 		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
 	}
-	if (h) {
+	else if (h) {
 		var msg = material_name(h.api_mst_id) + 'x' + h.api_count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
 		chrome.extension.sendRequest('## next loss\n' + area + ':' + msg);
+	}
+	else {
+		$next_enemy = area;
+		chrome.extension.sendRequest('## next enemy\n' + area);
 	}
 }
 
@@ -1372,11 +1347,6 @@ function on_battle_result(json) {
 		}
 		else if (/[DE]/.test(rank) || $guess_debug_log) {
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
-		}
-		var fleet = $enemy_list[$enemy_id];
-		if (fleet) {
-			fleet[0] = e.api_deck_name + '(' + formation_name($enemy_formation_id) + '):';
-			update_enemy_list();
 		}
 		var log = $next_enemy + '(' + e.api_deck_name + '):' + $battle_info + ':' + rank;
 		if (drop_ship_name) {
@@ -1733,7 +1703,6 @@ function on_battle(json) {
 	var fdeck = $fdeck_list[$battle_deck_id = d.api_deck_id];
 	var fmt = null;
 	if (d.api_formation) {
-		$enemy_formation_id = d.api_formation[1];
 		fmt = formation_name(d.api_formation[0])
 			+ '/' + match_name(d.api_formation[2])
 			+ '/敵' + formation_name(d.api_formation[1]);
@@ -1814,17 +1783,11 @@ function on_battle(json) {
 		push_fdeck_status(req, $fdeck_list[2], maxhps_c, nowhps_c, beginhps_c); // 連合第二艦隊は二番固定です.
 	}
 	req.push('## enemy damage');
-	var enemy_fleet = [$enemy_list[$enemy_id] ? $enemy_list[$enemy_id][0] : '???'];
 	for (var i = 1; i <= 6; ++i) {
 		var ke = d.api_ship_ke[i];
 		if (ke == -1) continue;
 		var name = ship_name(ke) + 'Lv' + d.api_ship_lv[i];
 		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], beginhps[i+6]));
-		enemy_fleet.push(name);
-	}
-	if ($enemy_id) { // 演習は$enemy_idが空
-		$enemy_list[$enemy_id] = enemy_fleet;
-		update_enemy_list();
 	}
 	chrome.extension.sendRequest(req);
 }
@@ -2202,7 +2165,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 演習相手の提督名を記憶する.
 			$next_enemy = "演習相手:" + json.api_data.api_nickname;
 			$next_mapinfo = { api_name : "演習" };
-			$enemy_id = null;
 		};
 	}
 	else if (api_name == '/api_req_map/start') {
