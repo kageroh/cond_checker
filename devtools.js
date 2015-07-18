@@ -1287,17 +1287,19 @@ function on_next_cell(json) {
 		area += '(boss)';
 		$is_boss = true;
 	}
-	if (g) {
+	if (g) {	// 資源マス.
 		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
-		var msg = material_name(g.api_id) + 'x' + g.api_getcount;
-		chrome.extension.sendRequest('## next item\n' + area + ':' + msg);
+		var msg = area + ':' + material_name(g.api_id) + 'x' + g.api_getcount;
+		$battle_log.push(msg);
+		chrome.extension.sendRequest('## next item\n' + msg);
 	}
-	else if (h) {
-		var msg = material_name(h.api_mst_id) + 'x' + h.api_count;
+	else if (h) {	// 渦潮マス.
+		var msg = area + ':' + material_name(h.api_mst_id) + 'x' + h.api_count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
-		chrome.extension.sendRequest('## next loss\n' + area + ':' + msg);
+		$battle_log.push(msg);
+		chrome.extension.sendRequest('## next loss\n' + msg);
 	}
-	else {
+	else {	// 戦闘マス.
 		$next_enemy = area;
 		chrome.extension.sendRequest('## next enemy\n' + area);
 	}
