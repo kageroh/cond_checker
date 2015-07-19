@@ -44,6 +44,7 @@ var $battle_count = 0;
 var $ndock_list = {};
 var $do_print_port_on_ndock = false;
 var $kdock_list = {};
+var $battle_deck_id = -1;
 var $battle_log = [];
 var $last_mission = {};
 var $beginhps = null;
@@ -1303,6 +1304,17 @@ function on_next_cell(json) {
 		$battle_log.push(msg);
 		chrome.extension.sendRequest('## next loss\n' + msg);
 	}
+	else if (d.api_event_id == 6) {	// 非戦闘マス.
+		var msg = area;
+		switch (d.api_event_kind) {
+		case 0: msg += ':気のせいだった'; break;
+		case 1: msg += ':敵影を見ず'; break;
+		case 2: msg += ':能動分岐'; break;
+		default: msg += ':??'; break;
+		}
+		$battle_log.push(msg);
+		chrome.extension.sendRequest('## next skip\n' + msg);
+	}
 	else {	// 戦闘マス.
 		$next_enemy = area;
 		var msg = area;
@@ -1370,7 +1382,6 @@ function on_battle_result(json) {
 			log += '+' + drop_item_name;
 		}
 		$battle_log.push(log);
-		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
 		if (!/^演習/.test($next_enemy)) {
 			// 敵艦隊構成と司令部Lvを記録する.
 			var elog = $enemy_log[$next_enemy] || [];
@@ -2121,6 +2132,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_ship_list(json.api_data.api_ship);
 			update_fdeck_list(json.api_data.api_deck_port);
 			update_ndock_list(json.api_data.api_ndock);
+			if ($battle_deck_id > 0) $last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
 			$battle_deck_id = -1;
 			$ship_escape = {};
 			$combined_flag = json.api_data.api_combined_flag;	// 連合艦隊編成有無.
