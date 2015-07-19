@@ -54,6 +54,7 @@ var $guess_info_str = '';
 var $pcDateTime = null;
 var $svDateTime = null;
 var $newship_slots = null;
+var $enemy_formation = '';
 var $enemy_ship_names = [];
 
 //-------------------------------------------------------------------------
@@ -1306,7 +1307,12 @@ function on_next_cell(json) {
 		$next_enemy = area;
 		var msg = area;
 		var elog = $enemy_log[$next_enemy];
-		if (elog) msg += ':前回戦闘記録\n' + elog.join('\n');
+		if (elog) {
+			msg += ':敵遭遇記録\n';
+			elog.forEach(function(data) {
+				if (data.name != null) msg += data.name + ', 司令部Lv' + data.lv + '\n';
+			});
+		}
 		chrome.extension.sendRequest('## next enemy\n' + msg);
 	}
 }
@@ -1356,7 +1362,7 @@ function on_battle_result(json) {
 		else if (/[DE]/.test(rank) || $guess_debug_log) {
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
 		}
-		var log = $next_enemy + '(' + e.api_deck_name + ':' + $enemy_ship_names.join() + '):' + $battle_info + ':' + rank;
+		var log = $next_enemy + '(' + e.api_deck_name + '):' + $battle_info + ':' + rank;
 		if (drop_ship_name) {
 			log += '+' + g.api_ship_name; // drop_ship_name; 艦種を付けると冗長すぎるので艦名のみとする.
 		}
@@ -1366,8 +1372,17 @@ function on_battle_result(json) {
 		$battle_log.push(log);
 		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
 		if (!/^演習/.test($next_enemy)) {
+			// 敵艦隊構成と司令部Lvを記録する.
 			var elog = $enemy_log[$next_enemy] || [];
-			if (elog.push('\t' + $svDateTime.toLocaleString() + '\t' + log) > 5) elog.shift(); // 直近の戦闘ログを5個記録する.
+			var efleet = {
+				name: e.api_deck_name + '(' + $enemy_formation + '):' + $enemy_ship_names.join(), // 艦隊名(陣形):艦名,...
+				lv: d.api_member_lv		// 司令部Lv.
+			};
+			for (var i = 0; i < elog.length; ++i) {
+				if (elog[i].name == null) { elog = []; break; } // 期待した構造で無い場合はリセットする.
+				if (elog[i].name == efleet.name) elog.splice(i--, 1); // 古いデータを削除する.
+			}
+			elog.push(efleet);
 			$enemy_log[$next_enemy] = elog;
 			save_storage('enemy_log', $enemy_log);
 		}
@@ -1722,6 +1737,7 @@ function on_battle(json) {
 			+ '/敵' + formation_name(d.api_formation[1]);
 		if (d.api_support_flag) fmt += '+' + support_name(d.api_support_flag);
 		$battle_info = fmt;
+		$enemy_formation = formation_name(d.api_formation[1]);
 	}
 	if (!fdeck) return; // for debug.
 	var req = [request_date_time()];
