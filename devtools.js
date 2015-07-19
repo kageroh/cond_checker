@@ -1246,7 +1246,7 @@ function print_port() {
 			req.push('遠征' + id + ' ' + $mst_mission[id].api_name + ': ' + d.toLocaleString());
 		}
 		else if (deck.api_id == $battle_deck_id) {
-			req.push('出撃中: ' + $battle_log.join(' →') + ' →');
+			req.push('出撃中: ' + $battle_log.join('\n→'));
 		}
 		else {
 			if ($last_mission[f_id])
@@ -1304,8 +1304,10 @@ function on_next_cell(json) {
 	}
 	else {	// 戦闘マス.
 		$next_enemy = area;
-		var elog = $enemy_log[$next_enemy] || [area]; // 戦闘記録が無ければ海域名を表示する.
-		chrome.extension.sendRequest('## next enemy\n' + elog.join('\n'));
+		var msg = area;
+		var elog = $enemy_log[$next_enemy];
+		if (elog) msg += ':前回戦闘記録\n' + elog.join('\n');
+		chrome.extension.sendRequest('## next enemy\n' + msg);
 	}
 }
 
@@ -1362,7 +1364,7 @@ function on_battle_result(json) {
 			log += '+' + drop_item_name;
 		}
 		$battle_log.push(log);
-		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join(' →');
+		$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
 		if (!/^演習/.test($next_enemy)) {
 			var elog = $enemy_log[$next_enemy] || [];
 			if (elog.push('\t' + $svDateTime.toLocaleString() + '\t' + log) > 5) elog.shift(); // 直近の戦闘ログを5個記録する.
