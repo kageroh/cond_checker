@@ -1325,6 +1325,7 @@ function on_next_cell(json) {
 				if (data.name != null) msg += data.name + ', 司令部Lv' + data.lv + '\n';
 			});
 		}
+		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
 		chrome.extension.sendRequest('## next enemy\n' + msg);
 	}
 }

@@ -136,7 +136,7 @@ function parse_markdown(a) {
 		s = s.replace(/大破!!!/g, '<span style="color:red">$&</span>');
 		s = s.replace(/MISS!!/g, '<span style="color:red">$&</span>'); // 判定ミスを着色する.
 		s = s.replace(/\(0\.\d+\%\)/g, '<span style="color:red">$&</span>'); // 微小ダメージを着色する.
-		s = s.replace(/@!!(.+)!!@/g, '<span style="color:red">$1</span>');
+		s = s.replace(/@!!([^!]+)!!@/g, '<span style="color:red">$1</span>');
 		// markdown書式を変換する.
 		if      (/^--+/.test(s))	t = "<hr>";
 		else if (/^#### /.test(s))	t = s.replace(/^#+ (.+)/, '<h5 class="markdown">$1</h5>');
