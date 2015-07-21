@@ -18,6 +18,7 @@ var $combined_flag = 0;
 var $fdeck_list = {};
 var $ship_fdeck = {};
 var $ship_escape = {};	// 護衛退避したshipidのマップ.
+var $mapinfo_rank = {};	// 海域難易度 0:なし, 1:丙, 2:乙, 3:甲.
 var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
@@ -1320,9 +1321,9 @@ function on_next_cell(json) {
 		var msg = area;
 		var elog = $enemy_log[$next_enemy];
 		if (elog) {
-			msg += ':敵遭遇記録\n';
+			msg += ':敵遭遇記録(過去100回)\n\t==回数\t==艦隊名(陣形):編成\t==司令部Lv\n';
 			elog.forEach(function(data) {
-				if (data.name != null) msg += data.name + ', 司令部Lv' + data.lv + '\n';
+				if (data.n > 0) msg += '\t  ' + data.n + '\t|' + data.name + '\t' + data.lv + '\n';
 			});
 		}
 		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
@@ -1388,13 +1389,38 @@ function on_battle_result(json) {
 			var elog = $enemy_log[$next_enemy] || [];
 			var efleet = {
 				name: e.api_deck_name + '(' + $enemy_formation + '):' + $enemy_ship_names.join(), // 艦隊名(陣形):艦名,...
+				n: 1,					// 回数.
 				lv: d.api_member_lv		// 司令部Lv.
 			};
-			for (var i = 0; i < elog.length; ++i) {
-				if (elog[i].name == null) { elog = []; break; } // 期待した構造で無い場合はリセットする.
-				if (elog[i].name == efleet.name) elog.splice(i--, 1); // 古いデータを削除する.
+			if ($next_mapinfo) {
+				switch ($mapinfo_rank[$next_mapinfo.api_id]) {
+				case 1: efleet.lv += '(丙)'; break;
+				case 2: efleet.lv += '(乙)'; break;
+				case 3: efleet.lv += '(甲)'; break;
+				}
 			}
-			elog.push(efleet);
+			var total_n = 0;
+			for (var i = 0; i < elog.length; ++i) {
+				var ei = elog[i];
+				if (ei.name == null) { elog = []; break; } // 期待した構造と違う場合はリセットする.
+				if (ei.n == null) ei.n = 1; // 安全弁.
+				if (ei.name == efleet.name) {
+					elog.splice(i--, 1);	// 古いデータを削除する.
+					if (ei.n > 0) efleet.n += ei.n;
+				}
+				else if (ei.n > 0) {
+					total_n += ei.n; // 回数を合計する.
+				}
+				else {
+					ei.n = 0; // 安全弁.
+				}
+			}
+			elog.push(efleet); total_n += efleet.n;
+			for (var i = 0; i < elog.length; ++i) {
+				while (elog[i].n > 0 && total_n > 100) { // 回数合計が100以下になるまで古い記録から順に回数を減らす.
+					--elog[i].n; --total_n;
+				}
+			}
 			$enemy_log[$next_enemy] = elog;
 			save_storage('enemy_log', $enemy_log);
 		}
@@ -2210,6 +2236,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 演習相手の提督名を記憶する.
 			$next_enemy = "演習相手:" + json.api_data.api_nickname;
 			$next_mapinfo = { api_name : "演習" };
+		};
+	}
+	else if (api_name == '/api_get_member/mapinfo') {
+		// 海域選択メニュー.
+		func = function(json) { // 海域情報を記録する.
+			$mapinfo_rank = {};
+			json.api_data.forEach(function(data) {
+				if (data.api_eventmap)
+					$mapinfo_rank[data.api_id] = data.api_eventmap.api_selected_rank;
+			});
 		};
 	}
 	else if (api_name == '/api_req_map/start') {
