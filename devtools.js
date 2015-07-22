@@ -1,7 +1,6 @@
 // -*- coding: utf-8 -*-
 var $ship_list		= load_storage('ship_list');
-//var $enemy_list	= load_storage('enemy_list');
-var $enemy_log		= load_storage('enemy_log');
+var $enemy_db		= load_storage('enemy_db');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
@@ -1317,13 +1316,14 @@ function on_next_cell(json) {
 		chrome.extension.sendRequest('## next skip\n' + msg);
 	}
 	else {	// 戦闘マス.
-		$next_enemy = area;
 		var msg = area;
-		var elog = $enemy_log[$next_enemy];
-		if (elog) {
-			msg += ':敵遭遇記録(過去100回)\n\t==回数\t==艦隊名(陣形):編成\t==司令部Lv\n';
-			elog.forEach(function(data) {
-				if (data.n > 0) msg += '\t  ' + data.n + '\t|' + data.name + '\t' + data.lv + '\n';
+		var db = $enemy_db[$next_enemy = area];
+		if (db) {
+			msg += ':敵遭遇記録(過去' + db.fifo.length + '回)\n\t==回数\t==艦隊名(陣形):編成\t==司令部Lv\n';
+			var list = db.data.concat();
+			list.sort(function(a, b) { return b.n - a.n; }); // 回数降順に並べ替える.
+			list.forEach(function(a) {
+				if (a.n > 0) msg += '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
 			});
 		}
 		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
@@ -1386,9 +1386,9 @@ function on_battle_result(json) {
 		$battle_log.push(log);
 		if (!/^演習/.test($next_enemy)) {
 			// 敵艦隊構成と司令部Lvを記録する.
-			var elog = $enemy_log[$next_enemy] || [];
+			var db = $enemy_db[$next_enemy] || { fifo:[], data:[] };
 			var efleet = {
-				name: e.api_deck_name + '(' + $enemy_formation + '):' + $enemy_ship_names.join(), // 艦隊名(陣形):艦名,...
+				name: e.api_deck_name + '(' + $enemy_formation + '): ' + $enemy_ship_names.join(', '), // 艦隊名(陣形):艦名,...
 				n: 1,					// 回数.
 				lv: d.api_member_lv		// 司令部Lv.
 			};
@@ -1399,30 +1399,20 @@ function on_battle_result(json) {
 				case 3: efleet.lv += '(甲)'; break;
 				}
 			}
-			var total_n = 0;
-			for (var i = 0; i < elog.length; ++i) {
-				var ei = elog[i];
-				if (ei.name == null) { elog = []; break; } // 期待した構造と違う場合はリセットする.
-				if (ei.n == null) ei.n = 1; // 安全弁.
-				if (ei.name == efleet.name) {
-					elog.splice(i--, 1);	// 古いデータを削除する.
-					if (ei.n > 0) efleet.n += ei.n;
-				}
-				else if (ei.n > 0) {
-					total_n += ei.n; // 回数を合計する.
-				}
-				else {
-					ei.n = 0; // 安全弁.
+			for (var i = 0; i < db.data.length; ++i) {		// db.dataに記録済みならば、その記録を更新する.
+				if (db.data[i].name == efleet.name) {
+					efleet.n += db.data[i].n;
+					db.data[i] = efleet;
+					break;
 				}
 			}
-			elog.push(efleet); total_n += efleet.n;
-			for (var i = 0; i < elog.length; ++i) {
-				while (elog[i].n > 0 && total_n > 100) { // 回数合計が100以下になるまで古い記録から順に回数を減らす.
-					--elog[i].n; --total_n;
-				}
+			if (i == db.data.length) db.data.push(efleet);	// 未記録ならば、db.dataへ新規追加する.
+			db.fifo.push(i);	// 最新記録のインデックスを末尾追加する.
+			while (db.fifo.length > 100) {
+				db.data[db.fifo.shift()].n--;	// 最古記録のインデックスを取り出し、その記録の回数を減らす.
 			}
-			$enemy_log[$next_enemy] = elog;
-			save_storage('enemy_log', $enemy_log);
+			$enemy_db[$next_enemy] = db;
+			save_storage('enemy_db', $enemy_db);
 		}
 	}
 	if (g) {
