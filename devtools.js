@@ -1319,11 +1319,16 @@ function on_next_cell(json) {
 		var msg = area;
 		var db = $enemy_db[$next_enemy = area];
 		if (db) {
-			msg += ':敵遭遇記録(過去' + db.fifo.length + '回)\n\t==回数\t==艦隊名(陣形):編成\t==司令部Lv\n';
+			msg += ':敵遭遇回数記録\n\t==今週\t==通算\t==艦隊名(陣形):編成\t==司令部Lv\n';
+			var week = get_weekly().week;
+			if (db.week != week) {
+				db.week = week;
+				db.data.forEach(function(a) { a.wn = 0; }); // 今週回数をゼロに戻す.
+			}
 			var list = db.data.concat();
-			list.sort(function(a, b) { return b.n - a.n; }); // 回数降順に並べ替える.
+			list.sort(function(a, b) { return b.wn != a.wn ? b.wn - a.wn : b.n - a.n; }); // 回数降順に並べ替える.
 			list.forEach(function(a) {
-				if (a.n > 0) msg += '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
+				msg += '\t  ' + a.wn + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
 			});
 		}
 		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
@@ -1386,10 +1391,11 @@ function on_battle_result(json) {
 		$battle_log.push(log);
 		if (!/^演習/.test($next_enemy)) {
 			// 敵艦隊構成と司令部Lvを記録する.
-			var db = $enemy_db[$next_enemy] || { fifo:[], data:[] };
+			var db = $enemy_db[$next_enemy] || { week:get_weekly().week, data:[] };
 			var efleet = {
 				name: e.api_deck_name + '(' + $enemy_formation + '): ' + $enemy_ship_names.join(', '), // 艦隊名(陣形):艦名,...
-				n: 1,					// 回数.
+				wn: 1,					// 今週回数.
+				n: 1,					// 通算回数.
 				lv: d.api_member_lv		// 司令部Lv.
 			};
 			if ($next_mapinfo) {
@@ -1402,15 +1408,12 @@ function on_battle_result(json) {
 			for (var i = 0; i < db.data.length; ++i) {		// db.dataに記録済みならば、その記録を更新する.
 				if (db.data[i].name == efleet.name) {
 					efleet.n += db.data[i].n;
+					efleet.wn += db.data[i].wn;
 					db.data[i] = efleet;
 					break;
 				}
 			}
 			if (i == db.data.length) db.data.push(efleet);	// 未記録ならば、db.dataへ新規追加する.
-			db.fifo.push(i);	// 最新記録のインデックスを末尾追加する.
-			while (db.fifo.length > 100) {
-				db.data[db.fifo.shift()].n--;	// 最古記録のインデックスを取り出し、その記録の回数を減らす.
-			}
 			$enemy_db[$next_enemy] = db;
 			save_storage('enemy_db', $enemy_db);
 		}
