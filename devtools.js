@@ -1364,6 +1364,13 @@ function on_battle_result(json) {
 	var drop_item_name = h ? $mst_useitem[h.api_useitem_id].api_name : null;
 	$escape_info = d.api_escape;	// on_goback_port()で使用する.
 	if (e) {
+		if ($next_mapinfo) {
+			switch ($mapinfo_rank[$next_mapinfo.api_id]) {	// 難度選択海域ならば、艦隊名に難度表記を付加する.
+			case 1: e.api_deck_name += '@丙'; break;
+			case 2: e.api_deck_name += '@乙'; break;
+			case 3: e.api_deck_name += '@甲'; break;
+			}
+		}
 		var rank = d.api_win_rank;
 		msg += e.api_deck_name;
 		if (d.api_ship_id) {
@@ -1398,13 +1405,6 @@ function on_battle_result(json) {
 				n: 1,					// 通算回数.
 				lv: d.api_member_lv		// 司令部Lv.
 			};
-			if ($next_mapinfo) {
-				switch ($mapinfo_rank[$next_mapinfo.api_id]) {
-				case 1: efleet.lv += '(丙)'; break;
-				case 2: efleet.lv += '(乙)'; break;
-				case 3: efleet.lv += '(甲)'; break;
-				}
-			}
 			for (var i = 0; i < db.data.length; ++i) {		// db.dataに記録済みならば、その記録を更新する.
 				if (db.data[i].name == efleet.name) {
 					efleet.n += db.data[i].n;
