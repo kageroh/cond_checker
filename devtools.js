@@ -1320,15 +1320,23 @@ function on_next_cell(json) {
 		var db = $enemy_db[$next_enemy = area];
 		if (db) {
 			msg += ':敵遭遇回数記録\n\t==今週\t==通算\t==艦隊名(陣形):編成\t==司令部Lv\n';
+			if (db.fifo || db.data[0].r == null) { // 旧データならば破棄する.
+				delete db.fifo;
+				db.data = [];
+			}
 			var week = get_weekly().week;
 			if (db.week != week) {
 				db.week = week;
-				db.data.forEach(function(a) { a.wn = 0; }); // 今週回数をゼロに戻す.
+				db.data.forEach(function(a) { a.w = 0; }); // 今週回数をゼロに戻す.
 			}
 			var list = db.data.concat();
-			list.sort(function(a, b) { return b.wn != a.wn ? b.wn - a.wn : b.n - a.n; }); // 回数降順に並べ替える.
+			list.sort(function(a, b) {	// 海域難度、今週、通算降順に並べ替える.
+				if (a.r != b.r) return b.r - a.r;	// 海域難度が異なればその大小を返す.
+				if (b.w != a.w) return b.w - a.w;	// 今週回数が異なればその大小を返す.
+				return b.n - a.n;	// 通算回数の大小を返す.
+			});
 			list.forEach(function(a) {
-				msg += '\t  ' + a.wn + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
+				msg += '\t  ' + a.w + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
 			});
 		}
 		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
@@ -1365,7 +1373,8 @@ function on_battle_result(json) {
 	$escape_info = d.api_escape;	// on_goback_port()で使用する.
 	if (e) {
 		if ($next_mapinfo) {
-			switch ($mapinfo_rank[$next_mapinfo.api_id]) {	// 難度選択海域ならば、艦隊名に難度表記を付加する.
+			var map_rank = $mapinfo_rank[$next_mapinfo.api_id];
+			switch (map_rank) {	// 難度選択海域ならば、艦隊名に難度表記を付加する.
 			case 1: e.api_deck_name += '@丙'; break;
 			case 2: e.api_deck_name += '@乙'; break;
 			case 3: e.api_deck_name += '@甲'; break;
@@ -1401,14 +1410,15 @@ function on_battle_result(json) {
 			var db = $enemy_db[$next_enemy] || { week:get_weekly().week, data:[] };
 			var efleet = {
 				name: e.api_deck_name + '(' + $enemy_formation + '): ' + $enemy_ship_names.join(', '), // 艦隊名(陣形):艦名,...
-				wn: 1,					// 今週回数.
+				w: 1,					// 今週回数.
 				n: 1,					// 通算回数.
+				r: (map_rank || 0),		// 海域難度. 3(甲),2(乙),1(丙),0(通常) undefinedなら0に置き換える.
 				lv: d.api_member_lv		// 司令部Lv.
 			};
 			for (var i = 0; i < db.data.length; ++i) {		// db.dataに記録済みならば、その記録を更新する.
 				if (db.data[i].name == efleet.name) {
 					efleet.n += db.data[i].n;
-					efleet.wn += db.data[i].wn;
+					efleet.w += db.data[i].w;
 					db.data[i] = efleet;
 					break;
 				}
