@@ -1,14 +1,14 @@
 // -*- coding: utf-8 -*-
-var $ship_list		= load_storage('ship_list');
-var $enemy_db		= load_storage('enemy_db');
 var $mst_ship		= load_storage('mst_ship');
 var $mst_slotitem	= load_storage('mst_slotitem');
 var $mst_mission	= load_storage('mst_mission');
 var $mst_useitem	= load_storage('mst_useitem');
 var $mst_mapinfo	= load_storage('mst_mapinfo');
+var $ship_list		= load_storage('ship_list');
+var $slotitem_list	= load_storage('slotitem_list');
+var $enemy_db		= load_storage('enemy_db');
 var $weekly			= load_storage('weekly');
 var $logbook		= load_storage('logbook', []);
-var $slotitem_list	= load_storage('slotitem_list');
 var $tmp_ship_id = -1000;	// ドロップ艦の仮ID.
 var $tmp_slot_id = -1000;	// ドロップ艦装備の仮ID.
 var $max_ship = 0;
@@ -17,7 +17,7 @@ var $combined_flag = 0;
 var $fdeck_list = {};
 var $ship_fdeck = {};
 var $ship_escape = {};	// 護衛退避したshipidのマップ.
-var $mapinfo_rank = {};	// 海域難易度 0:なし, 1:丙, 2:乙, 3:甲.
+var $mapinfo_rank = {};	// 海域難易度 undefined:なし, 1:丙, 2:乙, 3:甲.
 var $next_mapinfo = null;
 var $next_enemy = null;
 var $is_boss = false;
@@ -81,6 +81,13 @@ function Ship(data, ship) {
 
 Ship.prototype.name_lv = function() {
 	return ship_name(this.ship_id) + 'Lv' + this.lv;
+};
+
+Ship.prototype.fleet_name_lv = function() {
+		var name = this.name_lv();
+		var fdeck = $ship_fdeck[this.id];
+		if (fdeck) name = '(艦隊' + fdeck + ')' + name; // 頭に艦隊番号を付ける.
+		return name;
 };
 
 Ship.prototype.kira_cond_diff_name = function() {
@@ -551,9 +558,7 @@ function shiplist_names(list) {	// Shipの配列をlv降順に並べて、","区
 	}
 	for (var i in names) {
 		var e = names[i];
-		var name = e.ship.name_lv();
-		var fdeck = $ship_fdeck[e.ship.id];
-		if (fdeck) name = '(艦隊' + fdeck + ')' + name; // 頭に艦隊番号を付ける.
+		var name = e.ship.fleet_name_lv();	// "(艦隊N)艦名LvN"
 		if (e.count > 1) name += "x" + e.count;	// 同一艦は x N で束ねる.
 		names[i] = name;
 	}
@@ -924,7 +929,7 @@ function print_port() {
 		if (!ship.locked) {
 			var n = count_unless(ship.slot, -1); // スロット装備数.
 			$unlock_slotitem += n;
-			var name = ship.name_lv();
+			var name = ship.fleet_name_lv();
 			if (n > 0) name += "*"; // 装備持ちなら、名前の末尾に"*"を付ける.
 			unlock_names.push(name);
 			if (ship.lv >= 10) unlock_lv10++;
@@ -1138,7 +1143,7 @@ function print_port() {
 				var d = $ndock_list[id];
 				var ship = $ship_list[id];
 				var c_date = new Date(d.api_complete_time);
-				msg.push('\t' + ship.name_lv() 
+				msg.push('\t' + ship.fleet_name_lv()
 					+ '\t  ' + d.api_item1
 					+ '\t  ' + d.api_item2
 					+ '\t  ' + d.api_item3
@@ -1153,7 +1158,7 @@ function print_port() {
 			lock_repairlist.sort(function(a, b) { return b.ndock_time - a.ndock_time; }); // 修理所要時間降順で並べ替える.
 			for (var i in lock_repairlist) {
 				var ship = lock_repairlist[i];
-				msg.push('\t' + ship.name_lv() 
+				msg.push('\t' + ship.fleet_name_lv()
 					+ '\t' + hp_status(ship.nowhp, ship.maxhp)
 					+ '\t' + msec_name(ship.ndock_time)
 					);
@@ -1487,19 +1492,18 @@ function calc_damage(result, hp, battle, hc) {
 	// hc ::= [-1, combined1..6]
 	if (!battle) return;
 	if (battle.api_df_list && battle.api_damage) {
-		// 砲撃戦:敵味方ダメージ集計.
 		var df = battle.api_df_list;
 		for (var i = 1; i < df.length; ++i) {
+			// 砲撃戦:敵味方ダメージ集計.
 			for (var j = 0; j < df[i].length; ++j) {
 				var target = df[i][j];
+				if (target == -1) continue;
 				if (hc && target <= 6)
 					hc[target] -= Math.floor(battle.api_damage[i][j]);
 				else
 					hp[target] -= Math.floor(battle.api_damage[i][j]);
 			}
-		}
-		// 敵味方砲撃詳報収集.
-		for (var i = 1; i < df.length; ++i) {
+			// 砲撃戦:敵味方砲撃詳報収集.
 			var at = battle.api_at_list[i]; if (hc && at <= 6) at += 20; // 攻撃艦No. 連合第二艦隊なら20の下駄履き.
 			var si = battle.api_si_list[i]; // 装備配列.
 			var cl = battle.api_cl_list[i]; // 命中配列.
@@ -1507,7 +1511,9 @@ function calc_damage(result, hp, battle, hc) {
 			if (battle.api_at_type) ty = battle_type_name(battle.api_at_type[i]);	// 昼戦攻撃種別.
 			if (battle.api_sp_list) ty = battle_sp_name(battle.api_sp_list[i]);		// 夜戦攻撃種別.
 			for (var j = 0; j < df[i].length; ++j) {
-				var target = df[i][j]; if (hc && target <= 6) target += 20; // 対象艦No. 連合第二艦隊なら20の下駄履き.
+				var target = df[i][j];
+				if (target == -1) continue;
+				if (hc && target <= 6) target += 20; // 対象艦No. 連合第二艦隊なら20の下駄履き.
 				result.detail.push({ty: ty, at: at, target: target, si: si, cl: battle_cl_name(cl[j]), damage: battle.api_damage[i][j]});
 			}
 		}
@@ -1828,13 +1834,13 @@ function on_battle(json) {
 
 	function ship_name_lv(idx) {
 		if (idx > 20) {
-			idx -= 20; return '(艦隊2)' + $ship_list[$fdeck_list[2].api_ship[idx-1]].name_lv(); // 連合第二艦隊.
+			idx -= 20; return $ship_list[$fdeck_list[2].api_ship[idx-1]].fleet_name_lv(); // 連合第二艦隊.
 		}
 		else if (idx > 6) {
 			idx -= 6; return '(敵' + idx + ')' + ship_name(d.api_ship_ke[idx]) + 'Lv' + d.api_ship_lv[idx]; // 敵艦隊.
 		}
 		else if (idx >= 1) {
-			return '(艦隊' + fdeck.api_id + ')' + $ship_list[fdeck.api_ship[idx-1]].name_lv(); // 味方艦隊.
+			return $ship_list[fdeck.api_ship[idx-1]].fleet_name_lv(); // 味方艦隊.
 		}
 		else // NaN, undefined, null
 			return '';
