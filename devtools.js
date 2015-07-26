@@ -534,7 +534,7 @@ function ship_name(id) {
 	var ship = $mst_ship[id];
 	if (ship) {
 		id = ship.api_name;
-		if (ship.api_sortno == 0 && ship.api_yomi.length > 1) {
+		if (ship.api_sortno == null && ship.api_yomi.length > 1) {
 			id += ship.api_yomi; // 'elite', 'flag ship' ...
 		}
 	}
