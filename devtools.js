@@ -522,7 +522,8 @@ function slotitem_name(id, lv, n, max) {
 	var item = $mst_slotitem[id];
 	if (!item) return id.toString();	// unknown slotitem.
 	var name = item.api_name;
-	if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
+	if (lv >= 10) name += '★max';		// 改修レベルを追加する.
+	else if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
 	if (is_airplane(item) && n) name += 'x' + n + percent_name_unless100(n, max);	// 航空機なら、機数と搭載割合を追加する.
 	return name;
 }
@@ -898,6 +899,7 @@ function print_port() {
 	var lockeditem_list = {};
 	var lockeditem_count = 0;
 	var $unlock_slotitem = 0;
+	var $levelmax_slotitem = 0;
 	var $leveling_slotitem = 0;
 	var drumcan_cond85 = [];
 	var drumcan_cond53 = [];
@@ -918,7 +920,10 @@ function print_port() {
 			lockeditem_count++;
 		}
 		if (value && value.level) {
-			$leveling_slotitem++;
+			if (value.level >= 10)
+				$levelmax_slotitem++;
+			else
+				$leveling_slotitem++;
 		}
 	}
 	//
@@ -1061,7 +1066,8 @@ function print_port() {
 	req.push('装備保有数:' + items + '/' + $max_slotitem
 		+ '(未ロック:' + (items - lockeditem_count)
 		+ ', ロック:' + lockeditem_count
-		+ ', 改修中:' + $leveling_slotitem + ')');
+		+ ', 改修中:' + $leveling_slotitem
+		+ ', 改修max:' + $levelmax_slotitem + ')');
 	var lockeditem_ids = Object.keys(lockeditem_list);
 	if (lockeditem_ids.length > 0) {
 		lockeditem_ids.sort(function(a, b) {	// 種別ID配列を表示順に並べ替える.
