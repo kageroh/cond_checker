@@ -59,7 +59,7 @@ Flash PlayerはChrome内蔵のほうを使用してください
 ![unlock unown double screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-unlock-unown-double.png)
 
 ### 次戦闘マス敵遭遇回数記録サンプル
-![next enemy count screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-next-enemy-cuont.png)
+![next enemy count screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-next-enemy-count.png)
 
 ### 遠征交代要員一覧サンプル
 ![kira standby screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-kira-standby.png)
