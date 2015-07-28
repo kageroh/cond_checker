@@ -1335,9 +1335,18 @@ function on_next_cell(json) {
 				if (b.w != a.w) return b.w - a.w;	// 今週回数が異なればその大小を返す.
 				return b.n - a.n;	// 通算回数の大小を返す.
 			});
+			var sm = 0; // submarine
 			list.forEach(function(a) {
 				msg += '\t  ' + a.w + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
+				if(/潜水.級/.test(a.name)) ++sm;
 			});
+			if(sm > 0){
+				if(sm == list.length){
+					msg += '### 潜水艦注意!!';
+				} else {
+					msg += ('### 潜水艦可能性アリ ' + sm + '/' + list.length);
+				}
+			}
 		}
 		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
 		chrome.extension.sendRequest('## next enemy\n' + msg);
