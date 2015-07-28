@@ -800,7 +800,7 @@ function push_fleet_status(msg, deck) {
 			+ '\t' + rp_str
 			+ '\t' + ship.fuel_name()
 			+ '\t' + ship.bull_name()
-			+ '\t' + ship.slot_names()
+			+ '\t|' + ship.slot_names()
 			+ '\t' + ship.next_level()
 			);
 		var d = slotitem_count(ship.slot, 75);	// ドラム缶.
