@@ -145,7 +145,7 @@ function parse_markdown(a) {
 		else if (/^# /.test(s))		t = s.replace(/^#+ (.+)/, '<h2 class="markdown">$1</h2>');
 		else if (/^\* /.test(s))	{ t = s.replace(/^. (.+)/, "<li>$1</li>"); li_count++; }
 		else if (/^\t/.test(s))		{ t = "<tr>" + s.replace(/\t/g, "<td>") + "</tr>"; tr_count++;
-									  t = t.replace(/<td>\|[^<]+/g, function(match) {	// "\t|" は :,で折り返し有とする.
+									  t = t.replace(/<td>\|[^<]*/g, function(match) {	// "\t|" は :,で折り返し有とする.
 										match = match.replace('<td>|', '<td>');
 										return match.replace(/[,:] /g, '$&<wbr>');
 									  });
