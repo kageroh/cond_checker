@@ -346,6 +346,7 @@ function get_weekly() {
 			boss_cell : 0,
 			win_boss  : 0,
 			win_S     : 0,
+			monday_material : null,
 			week      : wn
 		};
 	}
@@ -836,6 +837,7 @@ function update_material(material, sum) {
 	}
 	if (msg.length) $material.diff = msg.join(', ');
 	if ($material.beg == null) $material.beg = $material.now.concat(); // 初回更新時にnowのコピーを保持する.
+	if ($weekly.monday_material == null) $weekly.monday_material = $material.now.concat(); // 週初めにnowのコピーを保持する.
 }
 
 function diff_update_material(diff_material, sum) {
@@ -996,7 +998,8 @@ function print_port() {
 	var msg = ['YPS_material'
 		, '\t'
 		, '\t現在値'
-		, '\t収支累計'
+		, '\t週間収支'
+		, '\t今回収支'
 		, '\t==任務'
 		, '\t==遠征'
 		, '\t==道中'
@@ -1009,19 +1012,21 @@ function print_port() {
 		, '\t==破棄'
 	];
 	for (var i = 0; i < 8; ++i) {
-		msg[1]  += '\t==' + material_name(i + 1);
-		msg[2]  += '\t  ' + $material.now[i];
-		msg[3]  += '\t  ' + ($material.now[i] - $material.beg[i]);
-		msg[4]  += '\t  ' + $material.quest[i];
-		msg[5]  += '\t  ' + $material.mission[i];
-		msg[6]  += '\t  ' + $material.dropitem[i];
-		msg[7]  += '\t  ' + $material.charge[i];
-		msg[8]  += '\t  ' + $material.ndock[i];
-		msg[9]  += '\t  ' + $material.createship[i];
-		msg[10] += '\t  ' + $material.destroyship[i];
-		msg[11] += '\t  ' + $material.createitem[i];
-		msg[12] += '\t  ' + $material.remodelslot[i];
-		msg[13] += '\t  ' + $material.destroyitem[i];
+		var j = 1;
+		msg[j++] += '\t==' + material_name(i + 1);
+		msg[j++] += '\t  ' + $material.now[i];
+		msg[j++] += '\t  ' + ($material.now[i] - $weekly.monday_material[i]);
+		msg[j++] += '\t  ' + ($material.now[i] - $material.beg[i]);
+		msg[j++] += '\t  ' + $material.quest[i];
+		msg[j++] += '\t  ' + $material.mission[i];
+		msg[j++] += '\t  ' + $material.dropitem[i];
+		msg[j++] += '\t  ' + $material.charge[i];
+		msg[j++] += '\t  ' + $material.ndock[i];
+		msg[j++] += '\t  ' + $material.createship[i];
+		msg[j++] += '\t  ' + $material.destroyship[i];
+		msg[j++] += '\t  ' + $material.createitem[i];
+		msg[j++] += '\t  ' + $material.remodelslot[i];
+		msg[j++] += '\t  ' + $material.destroyitem[i];
 	}
 	msg.push('---');
 	req.push(msg);
