@@ -164,7 +164,7 @@ Ship.prototype.slot_names = function() {
 	for (var i = 0; i < slot.length; ++i) {
 		var value = $slotitem_list[slot[i]];
 		if (value) {
-			a.push(slotitem_name(value.item_id, value.level, onslot[i], maxslot[i]));
+			a.push(slotitem_name(value.item_id, value.level, value.alv, onslot[i], maxslot[i]));
 		}
 	}
 	return a.join(', ');
@@ -519,12 +519,13 @@ function mission_clear_name(cr) {	///@param c	遠征クリア api_clear_result
 	}
 }
 
-function slotitem_name(id, lv, n, max) {
+function slotitem_name(id, lv, alv, n, max) {
 	var item = $mst_slotitem[id];
 	if (!item) return id.toString();	// unknown slotitem.
 	var name = item.api_name;
 	if (lv >= 10) name += '★max';		// 改修レベルを追加する.
 	else if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
+	if (alv >= 1) name += '♥' + alv;	// 熟練度を追加する.
 	if (is_airplane(item) && n) name += 'x' + n + percent_name_unless100(n, max);	// 航空機なら、機数と搭載割合を追加する.
 	return name;
 }
@@ -670,7 +671,7 @@ function add_slotitem_list(data) {
 		});
 	}
 	else if (data.api_slotitem_id) {
-		$slotitem_list[data.api_id] = { item_id: data.api_slotitem_id, locked: data.api_locked, level: data.api_level };
+		$slotitem_list[data.api_id] = { item_id: data.api_slotitem_id, locked: data.api_locked, level: data.api_level, alv: data.api_alv };
 	}
 }
 
@@ -914,6 +915,7 @@ function print_port() {
 		if (value && value.locked) {
 			var i = value.item_id;
 			var lv = value.level;
+			if (value.alv >= 1) lv += value.alv * 16; // levelは1～10なので16の下駄を履く.
 			if (!lockeditem_list[i])
 				lockeditem_list[i] = [];
 			if (!lockeditem_list[i][lv])
@@ -974,8 +976,11 @@ function print_port() {
 		if (ship.slot) {
 			ship.slot.forEach(function(id) {
 				var value = $slotitem_list[id];
-				if (value && value.locked)
-					lockeditem_list[value.item_id][value.level].shiplist.push(ship);
+				if (value && value.locked) {
+					var lv = value.level;
+					if (value.alv >= 1) lv += value.alv * 16; // levelは1～10なので16の下駄を履く.
+					lockeditem_list[value.item_id][lv].shiplist.push(ship);
+				}
 			});
 		}
 		if (ship.can_kaizou()) kaizou_list.push(ship);
@@ -1089,7 +1094,9 @@ function print_port() {
 		lockeditem_ids.forEach(function(id) {
 			for (var lv in lockeditem_list[id]) {
 				var item = lockeditem_list[id][lv];
-				msg.push('\t' + slotitem_name(id, lv) + '\t' + item.shiplist.length + '/' + item.count + '\t|' + shiplist_names(item.shiplist));
+				var level = lv % 16;
+				var alv = (lv - level) / 16;
+				msg.push('\t' + slotitem_name(id, level, alv) + '\t' + item.shiplist.length + '/' + item.count + '\t|' + shiplist_names(item.shiplist));
 			}
 		});
 		msg.push('---');
