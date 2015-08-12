@@ -350,6 +350,9 @@ function get_weekly() {
 			week      : wn
 		};
 	}
+	if ($weekly.monday_material == null) {
+		$weekly.monday_material = $material.now.concat(); save_weekly();
+	}
 	return $weekly;
 }
 
@@ -838,7 +841,7 @@ function update_material(material, sum) {
 	}
 	if (msg.length) $material.diff = msg.join(', ');
 	if ($material.beg == null) $material.beg = $material.now.concat(); // 初回更新時にnowのコピーを保持する.
-	if ($weekly.monday_material == null) $weekly.monday_material = $material.now.concat(); // 週初めにnowのコピーを保持する.
+	get_weekly();	// 週初めにnowのコピーを保持する.
 }
 
 function diff_update_material(diff_material, sum) {
@@ -1016,11 +1019,12 @@ function print_port() {
 		, '\t==改修'
 		, '\t==破棄'
 	];
+	var weekly = get_weekly();
 	for (var i = 0; i < 8; ++i) {
 		var j = 1;
 		msg[j++] += '\t==' + material_name(i + 1);
 		msg[j++] += '\t  ' + $material.now[i];
-		msg[j++] += '\t  ' + ($material.now[i] - $weekly.monday_material[i]);
+		msg[j++] += '\t  ' + ($material.now[i] - weekly.monday_material[i]);
 		msg[j++] += '\t  ' + ($material.now[i] - $material.beg[i]);
 		msg[j++] += '\t  ' + $material.quest[i];
 		msg[j++] += '\t  ' + $material.mission[i];
