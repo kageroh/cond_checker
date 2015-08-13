@@ -2288,6 +2288,11 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			});
 		};
 	}
+	else if (api_name == '/api_req_map/select_eventmap_rank') {
+		// 海域難易度の初回選択／変更.
+		var params = decode_postdata_params(request.request.postData.params);
+		$mapinfo_rank[params.api_maparea_id * 10 + params.api_map_no] = params.api_rank;	// 1:丙, 2:乙, 3:甲.
+	}
 	else if (api_name == '/api_req_map/start') {
 		// 海域初回選択.
 		$battle_count = 0;
