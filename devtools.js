@@ -529,7 +529,7 @@ function slotitem_name(id, lv, alv, n, max) {
 	if (lv >= 10) name += '★max';		// 改修レベルを追加する.
 	else if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
 	if (alv >= 1) name += '♥' + alv;	// 熟練度を追加する.
-	if (is_airplane(item) && n) name += 'x' + n + percent_name_unless100(n, max);	// 航空機なら、機数と搭載割合を追加する.
+	if (is_airplane(item) && n != null) name += (n == 0 && n < max) ? 'x0(@!!全滅!!@)' : 'x' + n + percent_name_unless100(n, max);	// 航空機なら、機数と搭載割合を追加する.
 	return name;
 }
 
