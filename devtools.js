@@ -77,6 +77,9 @@ function Ship(data, ship) {
 	this.ship_id	= data.api_ship_id;
 	this.kyouka	= data.api_kyouka;	// 近代化改修による強化値[火力,雷装,対空,装甲,運].
 	this.nextlv	= data.api_exp[1];
+	if (data.api_slot_ex > 0) {		// api_slot_ex:: 0:増設スロットなし, -1:増設スロット空,　1以上:増設スロット装備ID.
+		this.slot.push(data.api_slot_ex);
+	}
 }
 
 Ship.prototype.name_lv = function() {
