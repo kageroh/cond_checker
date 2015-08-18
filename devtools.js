@@ -180,6 +180,10 @@ Ship.prototype.next_level = function () {
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
+chrome.storage.sync.get({weekly: $weekly}, function(a) {
+	if ($weekly.savetime < a.weekly.savetime) $weekly = a.weekly;
+});
+
 function load_storage(name, def) {
 	if (!def) def = {};
 	var v = localStorage[name];
@@ -360,6 +364,8 @@ function get_weekly() {
 }
 
 function save_weekly() {
+	$weekly.savetime = Date.now();
+	chrome.storage.sync.set({weekly: $weekly});
 	save_storage('weekly', $weekly);
 }
 

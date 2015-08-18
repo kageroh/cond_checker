@@ -3,6 +3,9 @@
 	"name": "KanColle-YPS",
 	"version": "0.0.4",
 	"description": "艦これの余所見プレイを支援する(cond_checker改造版)",
+	"permissions": [
+		"storage"
+	],
 	"background": {
 		"scripts": ["background.js"]
 	},
