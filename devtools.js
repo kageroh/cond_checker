@@ -1625,7 +1625,7 @@ function calc_kouku_damage(result, hp, kouku, hc) {
 		var st = kouku.api_stage2;
 		result.f_air_lostcount += st.api_f_lostcount;
 		if (st.api_air_fire) {
-			var idx = st.api_air_fire.api_idx + 1; if ($combined_flag && idx > 6) idx += 20 - 6;
+			var idx = st.api_air_fire.api_idx + 1; if (hc && idx > 6) idx += 20 - 6;
 			result.detail.push({
 				ty: '対空カットイン(' + st.api_air_fire.api_kind + ')',
 				at: idx,
@@ -1791,14 +1791,16 @@ function on_battle(json) {
 	}
 	calc_damage(result, nowhps, d.api_opening_atack, nowhps_c);	// 開幕雷撃.
 	calc_damage(result, nowhps, d.api_hougeki, nowhps_c);	// midnight
-	switch ($combined_flag) {
+	switch (nowhps_c ? $combined_flag : 0) {
 	default:// 不明.
 	case 0: // 通常艦隊.
 		calc_damage(result, nowhps, d.api_hougeki1);	// 第一艦隊砲撃一巡目.
 		calc_damage(result, nowhps, d.api_hougeki2);	// 第一艦隊砲撃二巡目.
+		calc_damage(result, nowhps, d.api_raigeki);		// 第一艦隊雷撃戦.
 		break;
 	case 1: // 連合艦隊(機動部隊).
 		calc_damage(result, nowhps, d.api_hougeki1, nowhps_c);	// 第二艦隊砲撃.
+		calc_damage(result, nowhps, d.api_raigeki, nowhps_c);	// 第二艦隊雷撃戦.
 		calc_damage(result, nowhps, d.api_hougeki2);	// 第一艦隊砲撃一巡目.
 		calc_damage(result, nowhps, d.api_hougeki3);	// 第一艦隊砲撃二巡目.
 		break;
@@ -1806,9 +1808,9 @@ function on_battle(json) {
 		calc_damage(result, nowhps, d.api_hougeki1);	// 第一艦隊砲撃一巡目.
 		calc_damage(result, nowhps, d.api_hougeki2);	// 第一艦隊砲撃二順目.
 		calc_damage(result, nowhps, d.api_hougeki3, nowhps_c);	// 第二艦隊砲撃.
+		calc_damage(result, nowhps, d.api_raigeki, nowhps_c);	// 第二艦隊雷撃戦.
 		break;
 	}
-	calc_damage(result, nowhps, d.api_raigeki, nowhps_c);
 	if (!d.api_deck_id) d.api_deck_id = d.api_dock_id; // battleのデータは、綴りミスがあるので補正する.
 	var fdeck = $fdeck_list[$battle_deck_id = d.api_deck_id];
 	var fmt = null;
