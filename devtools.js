@@ -1560,12 +1560,11 @@ function calc_damage(result, hp, battle, hc) {
 		}
 	}
 	if (battle.api_deck_id && battle.api_damage) { // battle: api_support_hourai
-		// 支援艦隊砲雷撃:敵ダメージ集計.
 		for (var i = 1; i <= 6; ++i) {
+			if (hp[i+6] < 0) continue;	// 敵艦隊の編成外または撃沈済みなら集計対象外とする.
+			// 支援艦隊砲雷撃:敵ダメージ集計.
 			hp[i+6] -= Math.floor(battle.api_damage[i]);
-		}
-		// 支援艦隊砲雷撃:戦闘詳報収集.
-		for (var i = 1; i <= 6; ++i) {
+			// 支援艦隊砲雷撃:戦闘詳報収集.
 			result.detail.push({ty:"支援砲雷撃", target: i + 6, cl: battle_cl_name(battle.api_cl_list[i]), damage: battle.api_damage[i]});
 		}
 	}
