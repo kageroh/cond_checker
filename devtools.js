@@ -531,7 +531,7 @@ function slotitem_name(id, lv, alv, p_alv, n, max) {
 	var name = item.api_name;
 	if (lv >= 10) name += '★max';		// 改修レベルを追加する.
 	else if (lv >= 1) name += '★+' + lv;	// 改修レベルを追加する.
-	if (alv >= 1) {
+	if (alv >= 1 || alv < p_alv) {
 		if (alv >= 7) name += '♥♥';	// 熟練度最大なら♥２個を追加する.
 		else name += '♥' + alv;		// さもなくば熟練度数値を追加する.
 		var diff = diff_name(alv, p_alv);
