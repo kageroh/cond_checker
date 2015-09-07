@@ -180,9 +180,11 @@ Ship.prototype.next_level = function () {
 //------------------------------------------------------------------------
 // データ保存と更新.
 //
-chrome.storage.sync.get({weekly: $weekly}, function(a) {
-	if ($weekly.savetime < a.weekly.savetime) $weekly = a.weekly;
-});
+function sync_cloud() {
+	chrome.storage.sync.get({weekly: $weekly}, function(a) {
+		if ($weekly.savetime < a.weekly.savetime) $weekly = a.weekly;
+	});
+}
 
 function load_storage(name, def) {
 	if (!def) def = {};
@@ -354,7 +356,8 @@ function get_weekly() {
 			win_boss  : 0,
 			win_S     : 0,
 			monday_material : null,
-			week      : wn
+			week      : wn,
+			savetime : 0
 		};
 	}
 	if ($weekly.monday_material == null) {
@@ -1948,6 +1951,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_useitem(json.api_data.api_mst_useitem);
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
+			sync_cloud();
 			chrome.extension.sendRequest("## ロード完了");
 			// debug_print_mst();
 			// debug_print_newship_slots();
