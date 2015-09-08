@@ -2247,6 +2247,14 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			print_port();
 		};
 	}
+	else if (api_name == '/api_get_member/ship2') {
+		// 間宮、伊良湖使用.
+		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
+			update_ship_list(json.api_data);
+			update_fdeck_list(json.api_data_deck);
+			print_port();
+		};
+	}
 	else if (api_name == '/api_get_member/ship3') {
 		// 装備換装、艦娘改造.
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
