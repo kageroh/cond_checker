@@ -1251,8 +1251,20 @@ function print_port() {
 	var quests = Object.keys($quest_list).length;
 	if (quests > 0) {
 		var msg = ['YPS_quest_list'];
+		var q_count = { daily:0, weekly:0, monthly:0 };
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
+			var q_type = '';
+			switch (quest.api_type) {
+			case 2:	// デイリー.
+			case 4:	// 敵空母3隻.
+			case 5:	// 敵輸送船.
+				q_count.daily++; q_type = '(毎日)'; break;
+			case 3:	// ウィークリー.
+				q_count.weekly++; q_type = '(毎週)'; break;
+			case 6:	// マンスリー.
+				q_count.monthly++; q_type = '(毎月)';  break;
+			}
 			if (quest.api_state > 1) {
 				var progress = (quest.api_state == 3) ? '* 達成!!'
 					: (quest.api_progress_flag == 2) ? '* 遂行80%'
@@ -1260,11 +1272,15 @@ function print_port() {
 					: '* 遂行中';
 				var title = quest.api_title;
 				if (quest.api_no == 214) title += weekly_name();
-				msg.push(progress + ':' + title);
+				msg.push(progress + ':' + q_type + title);
 			}
 		}
 		if (msg.length > 1) {
-			req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count);
+			req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count
+				+ ': 毎日' + q_count.daily
+				+ ', 毎週' + q_count.weekly
+				+ ', 毎月' + q_count.monthly
+				);
 			req.push(msg);
 		}
 	}
