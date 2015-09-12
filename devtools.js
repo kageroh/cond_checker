@@ -210,7 +210,7 @@ function update_ship_list(list, is_delta) {
 			// ドロップ時に装備数分のダミー装備IDを用意する. 初入手艦など未記録の艦は装備数0となるので、装備数が少なく表示される場合がある.
 			if (ship.id < 0) {	// on_battle_result で仮登録するドロップ艦の場合.
 				for (var slots = $newship_slots[ship.ship_id]; slots; --slots) { // 装備数未登録なら何もしない(装備数合計が少なく表示される)
-					$slotitem_list[$tmp_slot_id] = null; // 個数を合せるためnullのダミーエントリを追加する. 母港旗艦(slot_itemパケット)でリストが全更新される.
+					$slotitem_list[$tmp_slot_id] = null; // 個数を合せるためnullのダミーエントリを追加する. 母港帰還時 /api_get_member/slot_item にリストが全更新される.
 					ship.slot.push($tmp_slot_id--); // 初期装備数分のダミー装備IDを載せる. 母港帰還(portパケット)により正しい値に上書きされる.
 				}
 			}
@@ -2347,7 +2347,11 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		$mapinfo_rank[params.api_maparea_id * 10 + params.api_map_no] = params.api_rank;	// 1:丙, 2:乙, 3:甲.
 	}
 	else if (api_name == '/api_req_map/start') {
-		// 海域初回選択.
+		// 海域初戦陣形選択.
+		// 出撃パケットの流れ：
+		//	mapinfo -> mapcell -> start -> 陣形選択 -> battle -> battle_result -> 進撃/撤退/帰還
+		//	[進撃] ship_deck -> next -> 陣形選択 -> battle -> battle_result -> 進撃/撤退/帰還
+		//	[撤退/帰還] port -> slot_item -> unsetslot -> useitem
 		$battle_count = 0;
 		$battle_log = [];
 		var w = get_weekly();
@@ -2356,7 +2360,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = on_next_cell;
 	}
 	else if (api_name == '/api_req_map/next') {
-		// 海域次選択.
+		// 海域次戦陣形選択.
 		func = on_next_cell;
 	}
 	else if (api_name == '/api_req_sortie/battle'
