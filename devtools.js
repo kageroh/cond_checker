@@ -967,8 +967,11 @@ function print_port() {
 			$unlock_slotitem += n;
 			var name = ship.fleet_name_lv();
 			if (n > 0) name += "*"; // 装備持ちなら、名前の末尾に"*"を付ける.
+			if (ship.lv >= 10) { // Lv10以上なら、名前を強調表示し、警告カウントを上げる.
+				unlock_lv10++;
+				name = '@!!' + name + '!!@';
+			}
 			unlock_names.push(name);
-			if (ship.lv >= 10) unlock_lv10++;
 		}
 		else {	// locked
 			var cond = ship.c_cond;
