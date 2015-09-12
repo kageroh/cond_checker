@@ -1266,6 +1266,7 @@ function print_next(title, msg) {
 	req.push('# ' + $next_mapinfo.api_name + ' ' + title);
 	req = req.concat(msg); // msg は string or Array.
 	push_all_fleets(req);
+	if (req.damage_H_alart) { req.splice(1, 0, '# @!!【大破進撃警告】!!@ ダメコン未装備なら、ブラウザを閉じて進撃中止を勧告します.'); } // 大破進撃の警告を2行目に挿入する.
 	chrome.extension.sendRequest(req);
 }
 
@@ -1341,6 +1342,7 @@ function push_all_fleets(req) {
 		}
 		else if (deck.api_id == $battle_deck_id) {
 			req.push('出撃中: ' + $battle_log.join('\n→'));
+			if (/大破!!!/.test(brief)) { req.damage_H_alart = true; } // 大破進撃警告ON.
 		}
 		else {
 			if ($last_mission[f_id])
@@ -2373,6 +2375,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		//	mapinfo -> mapcell -> start -> 陣形選択 -> battle -> battle_result -> 進撃/撤退/帰還
 		//	[進撃] ship_deck -> next -> 陣形選択 -> battle -> battle_result -> 進撃/撤退/帰還
 		//	[撤退/帰還] port -> slot_item -> unsetslot -> useitem
+		var params = decode_postdata_params(request.request.postData.params);
+		$battle_deck_id = params.api_deck_id;
 		$battle_count = 0;
 		$battle_log = [];
 		$is_boss = false;
