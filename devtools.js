@@ -2357,8 +2357,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		//	[撤退/帰還] port -> slot_item -> unsetslot -> useitem
 		$battle_count = 0;
 		$battle_log = [];
-		var w = get_weekly();
-		if (w.quest_state == 2) w.sortie++;
 		$is_boss = false;
 		func = on_next_cell;
 	}
@@ -2414,12 +2412,20 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var r = json.api_data.api_win_rank;
 			var w = get_weekly();
 			if (w.quest_state != 2) return; // 遂行中以外は更新しない.
-			if (r == 'S') w.win_S++;
-			if($is_boss) {
+			if ($battle_count == 1) { // 出撃数.
+				w.sortie++;
+				w.savetime = 0;
+			}
+			if (r == 'S') { // S勝利数.
+				w.win_S++;
+				w.savetime = 0;
+			}
+			if ($is_boss) { // ボス到達数、ボス勝利数.
 				w.boss_cell++;
 				if (r == 'S' || r == 'A' || r == 'B') w.win_boss++;
+				w.savetime = 0;
 			}
-			save_weekly();
+			if (w.savetime == 0) { save_weekly(); } // 更新があれば再保存する.
 		};
 	}
 	else if (api_name == '/api_req_practice/battle_result') {
