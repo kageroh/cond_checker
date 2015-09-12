@@ -1258,6 +1258,18 @@ function print_port() {
 	chrome.extension.sendRequest(req);
 }
 
+//------------------------------------------------------------------------
+// 羅針盤・陣形選択画面表示.
+//
+function print_next(title, msg) {
+	var req = [request_date_time()];
+	req.push('# ' + $next_mapinfo.api_name + ' ' + title);
+	req = req.concat(msg); // msg は string or Array.
+	push_all_fleets(req);
+	chrome.extension.sendRequest(req);
+}
+
+//------------------------------------------------------------------------
 function push_quests(req) {
 	var quests = Object.keys($quest_list).length;
 	if (quests > 0) {
@@ -1375,13 +1387,13 @@ function on_next_cell(json) {
 		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
 		var msg = area + ':' + material_name(g.api_id) + 'x' + g.api_getcount;
 		$battle_log.push(msg);
-		chrome.extension.sendRequest('## next item\n' + msg);
+		print_next('next item', msg);
 	}
 	else if (h) {	// 渦潮マス.
 		var msg = area + ':' + material_name(h.api_mst_id) + 'x' + -h.api_count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
 		$battle_log.push(msg);
-		chrome.extension.sendRequest('## next loss\n' + msg);
+		print_next('next loss', msg);
 	}
 	else if (d.api_event_id == 6) {	// 非戦闘マス.
 		var msg = area;
@@ -1392,13 +1404,14 @@ function on_next_cell(json) {
 		default: msg += ':??'; break;
 		}
 		$battle_log.push(msg);
-		chrome.extension.sendRequest('## next skip\n' + msg);
+		print_next('next skip', msg);
 	}
 	else {	// 戦闘マス.
-		var msg = area;
+		var req = [area];
 		var db = $enemy_db[$next_enemy = area];
 		if (db) {
-			msg += ':敵遭遇回数記録\n\t==今週\t==通算\t==艦隊名(陣形):編成\t==司令部Lv\n';
+			req[0] += ':敵遭遇回数記録';
+			req.push('\t==今週\t==通算\t==艦隊名(陣形):編成\t==司令部Lv');
 			if (db.fifo || db.data[0].r == null) { // 旧データならば破棄する.
 				delete db.fifo;
 				db.data = [];
@@ -1416,19 +1429,16 @@ function on_next_cell(json) {
 			});
 			var sm = 0; // submarine
 			list.forEach(function(a) {
-				msg += '\t  ' + a.w + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv + '\n';
-				if(/潜水.級/.test(a.name)) ++sm;
+				var s = '\t  ' + a.w + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv;
+				var ss = s.replace(/潜水.級/g, '@!!$&!!@');
+				if (s != ss) ++sm;
+				req.push(ss);
 			});
-			if(sm > 0){
-				if(sm == list.length){
-					msg += '### 潜水艦注意!!';
-				} else {
-					msg += ('### 潜水艦可能性アリ ' + sm + '/' + list.length);
-				}
+			if (sm > 0) {
+				req.push('### 潜水艦注意!! ' + fraction_percent_name(sm, list.length));
 			}
 		}
-		msg = msg.replace(/潜水.級/g, '@!!$&!!@');
-		chrome.extension.sendRequest('## next enemy\n' + msg);
+		print_next('next enemy' + ($battle_count + 1), req);
 	}
 }
 
@@ -2271,7 +2281,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
 			delta_update_ship_list(json.api_data.api_ship_data);
 			delta_update_fdeck_list(json.api_data.api_deck_data);
-			print_port();
+			// print_port()　を呼ぶのをやめて、次の　print_next() にて最新の艦隊一覧を表示する.
 		};
 	}
 	else if (api_name == '/api_get_member/ship2') {
