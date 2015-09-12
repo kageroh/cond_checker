@@ -1895,7 +1895,7 @@ function on_battle(json) {
 	req.push('戦闘被害:' + $guess_info_str);
 	req.push('勝敗推定:' + $guess_win_rank);
 
-	function ship_name_lv(idx, nowhp) {
+	function ship_name_lv(idx) {
 		if (idx > 20) {
 			idx -= 20; return $ship_list[$fdeck_list[2].api_ship[idx-1]].fleet_name_lv(); // 連合第二艦隊.
 		}
@@ -1916,7 +1916,7 @@ function on_battle(json) {
 			if (dt.damage && dt.target) dt.damage += ':' + damage_name(dt.hp, (dt.target >= 20 ? maxhps_c[dt.target-20] : maxhps[dt.target]));
 			msg.push('\t' + dt.ty
 				+ '\t' + ship_name_lv(dt.at)
-				+ '\t' + ship_name_lv(dt.target, dt.hp)
+				+ '\t' + ship_name_lv(dt.target)
 				+ '\t' + (dt.cl || dt.ek || "")	// 命中判定 または 敵撃墜率.
 				+ '\t' + (dt.damage || dt.fk || "")	// ダメージ または 被撃墜率.
 				+ '\t' + slotitem_names(dt.si)
