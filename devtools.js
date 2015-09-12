@@ -1251,6 +1251,14 @@ function print_port() {
 	}
 	//
 	// 遂行中任務を一覧表示する.
+	push_quests(req);
+	//
+	// 各艦隊の情報を一覧表示する.
+	push_all_fleets(req);
+	chrome.extension.sendRequest(req);
+}
+
+function push_quests(req) {
 	var quests = Object.keys($quest_list).length;
 	if (quests > 0) {
 		var msg = ['YPS_quest_list'];
@@ -1288,8 +1296,9 @@ function print_port() {
 		}
 	}
 	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
-	//
-	// 各艦隊の情報を一覧表示する.
+}
+
+function push_all_fleets(req) {
 	for (var f_id in $fdeck_list) {
 		var msg = ['YPS_fdeck_list' + f_id];
 		msg.push('\t==cond\t==艦名Lv\t==hp\t==修理\t==燃料\t==弾薬\t==装備\t==次のLvまで'); // 表ヘッダ. 慣れれば不用な気がする.
@@ -1328,7 +1337,6 @@ function print_port() {
 				req.push('母港待機中');
 		}
 	}
-	chrome.extension.sendRequest(req);
 }
 
 //------------------------------------------------------------------------
