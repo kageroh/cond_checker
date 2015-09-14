@@ -1276,6 +1276,7 @@ function push_quests(req) {
 	if (quests > 0) {
 		var msg = ['YPS_quest_list'];
 		var q_count = { daily:0, weekly:0, monthly:0 };
+		var p_count = { daily:0, weekly:0, monthly:0 };
 		for (var id in $quest_list) {
 			var quest = $quest_list[id];
 			var q_type = '';
@@ -1283,10 +1284,13 @@ function push_quests(req) {
 			case 2:	// デイリー.
 			case 4:	// 敵空母3隻.
 			case 5:	// 敵輸送船.
+				if (quest.api_state > 1) p_count.daily++;
 				q_count.daily++; q_type = '(毎日)'; break;
 			case 3:	// ウィークリー.
+				if (quest.api_state > 1) p_count.weekly++;
 				q_count.weekly++; q_type = '(毎週)'; break;
 			case 6:	// マンスリー.
+				if (quest.api_state > 1) p_count.monthly++;
 				q_count.monthly++; q_type = '(毎月)';  break;
 			}
 			if (quest.api_state > 1) {
@@ -1301,9 +1305,10 @@ function push_quests(req) {
 		}
 		if (msg.length > 1) {
 			req.push('任務遂行数:' + $quest_exec_count + '/' + $quest_count
-				+ ': 毎日' + q_count.daily
-				+ ', 毎週' + q_count.weekly
-				+ ', 毎月' + q_count.monthly
+				+ '(毎日:'  + p_count.daily   + '/' + q_count.daily
+				+ ', 毎週:' + p_count.weekly  + '/' + q_count.weekly
+				+ ', 毎月:' + p_count.monthly + '/' + q_count.monthly
+				+ ')'
 				);
 			req.push(msg);
 		}
