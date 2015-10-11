@@ -28,6 +28,7 @@ var $material = {
 	charge : [0,0,0,0, 0,0,0,0],	///< 補給累計.
 	ndock  : [0,0,0,0, 0,0,0,0],	///< 入渠累計.
 	dropitem    : [0,0,0,0, 0,0,0,0],	///< 道中資源累計.
+	autosupply  : [0,0,0,0, 0,0,0,0],	///< 自然増加/轟沈回収累計.
 	createship  : [0,0,0,0, 0,0,0,0],	///< 艦娘建造/改造累計.
 	createitem  : [0,0,0,0, 0,0,0,0],	///< 装備開発累計.
 	remodelslot : [0,0,0,0, 0,0,0,0],	///< 装備改修累計.
@@ -1038,6 +1039,7 @@ function print_port() {
 		, '\t==任務'
 		, '\t==遠征'
 		, '\t==道中'
+		, '\t==自然+轟沈'
 		, '\t==補給'
 		, '\t==入渠'
 		, '\t==建造+改造'
@@ -1056,6 +1058,7 @@ function print_port() {
 		msg[j++] += '\t  ' + $material.quest[i];
 		msg[j++] += '\t  ' + $material.mission[i];
 		msg[j++] += '\t  ' + $material.dropitem[i];
+		msg[j++] += '\t  ' + $material.autosupply[i];
 		msg[j++] += '\t  ' + $material.charge[i];
 		msg[j++] += '\t  ' + $material.ndock[i];
 		msg[j++] += '\t  ' + $material.createship[i];
@@ -1391,13 +1394,20 @@ function on_next_cell(json) {
 		$is_boss = true;
 	}
 	if (g) {	// 資源マス.
-		$material.dropitem[g.api_id-1] += g.api_getcount;	// 道中ドロップによる資材増加を記録する.
-		var msg = area + ':' + material_name(g.api_id) + 'x' + g.api_getcount;
+		var id = g.api_id;
+		var count = g.api_getcount;
+		$material.dropitem[id-1]   += count;	// 道中ドロップによる資材増加を記録する.
+		$material.autosupply[id-1] -= count;	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
+		var msg = area + ':' + material_name(id) + 'x' + count;
 		$battle_log.push(msg);
 		print_next('next item', msg);
 	}
 	else if (h) {	// 渦潮マス.
-		var msg = area + ':' + material_name(h.api_mst_id) + 'x' + -h.api_count;
+		var id = h.api_mst_id;
+		var count = h.api_count;
+		$material.dropitem[id-1]   -= count;	// 道中ロスによる資材増加を記録する.
+		$material.autosupply[id-1] += count;	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
+		var msg = area + ':' + material_name(id) + 'x' + -count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
 		$battle_log.push(msg);
 		print_next('next loss', msg);
@@ -2078,7 +2088,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		func = function(json) {
 			var id = decode_postdata_params(request.request.postData.params).api_ship_id;
 			if (id) ship_delete([id]);		// 解体した艦娘が持つ装備を、リストから抜く.
-			update_material(json.api_data.api_material, $material.destroyship); /// 解体による資材増加を記録する. @bug 資材自然増加分が含まれてしまう.
+			update_material(json.api_data.api_material, $material.destroyship); /// 解体による資材増加を記録する.
 			print_port();
 		};
 	}
@@ -2099,7 +2109,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var d = json.api_data;
 			add_slotitem_list(d.api_after_slot);	// 装備リストを更新する.
 			slotitem_delete(d.api_use_slot_id);		// 改修で消費した装備を装備リストから抜く.
-			update_material(d.api_after_material, $material.remodelslot);	/// 改修による資材消費を記録する. @bug 資材自然増加分が含まれてしまう.
+			update_material(d.api_after_material, $material.remodelslot);	/// 改修による資材消費を記録する.
 			print_port();
 		};
 	}
@@ -2276,7 +2286,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			$battle_deck_id = -1;
 			$ship_escape = {};
 			$combined_flag = json.api_data.api_combined_flag;	// 連合艦隊編成有無.
-			update_material(json.api_data.api_material);		// 資材を更新する.
+			update_material(json.api_data.api_material, $material.autosupply);	// 資材を更新する. 差分を自然増加として記録する.
 			var basic = json.api_data.api_basic;
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
@@ -2329,8 +2339,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			var d = json.api_data;
 			var id = decode_postdata_params(request.request.postData.params).api_deck_id;
 			$last_mission[id] = '前回遠征: ' + d.api_quest_name + ' ' + mission_clear_name(d.api_clear_result);
-			for (var i = 0; i < d.api_get_material.length; ++i) // i=0..3 燃料からボーキーまで.
-				$material.mission[i] += d.api_get_material[i];
+			for (var i = 0; i < d.api_get_material.length; ++i) { // i=0..3 燃料からボーキーまで.
+				$material.mission[i]    += d.api_get_material[i];
+				$material.autosupply[i] -= d.api_get_material[i];	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
+			}
 			var add_mission_item = function(flag, get_item) {
 				var id = 0;
 				switch (flag) {
@@ -2339,7 +2351,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 				case 3: id = 7; break; // 歯車.
 				case 4: id = get_item.api_useitem_id; break; // その他のアイテム.
 				}
-				if (id >= 1 && id <= 8 && get_item) $material.mission[id-1] += get_item.api_useitem_count;
+				if (id >= 1 && id <= 8 && get_item) {
+					$material.mission[id-1]    += get_item.api_useitem_count;
+					$material.autosupply[id-1] -= get_item.api_useitem_count;	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
+				}
 			};
 			add_mission_item(d.api_useitem_flag[0], d.api_get_item1);
 			add_mission_item(d.api_useitem_flag[1], d.api_get_item2);
