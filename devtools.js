@@ -38,6 +38,7 @@ var $material = {
 	beg : null,	///< 初期資材. 初回更新時にnowのコピーを保持する.
 	diff: ""	///< 変化量メッセージ.
 };
+var $material_sum = null;
 var $quest_count = -1;
 var $quest_exec_count = 0;
 var $quest_list = {};
@@ -2028,24 +2029,12 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	}
 	else if (api_name == '/api_req_kousyou/createship') {
 		// 艦娘建造.
-		var params = decode_postdata_params(request.request.postData.params); // 送信した消費資材値を抜き出す.
-		$material.createship[0] -= params.api_item1;
-		$material.createship[1] -= params.api_item2;
-		$material.createship[2] -= params.api_item3;
-		$material.createship[3] -= params.api_item4;
-		$material.createship[6] -= params.api_item5;		// 開発資材(歯車).
-		if (params.api_highspeed != 0) {
-			$material.createship[4] -= (params.api_large_flag != 0 ? 10 : 1);	// 高速建造材(バーナー).
-		}
+		$material_sum = $material.createship;	// 消費資材は後続の /api_get_member/material パケットにて集計する.
 		// 直後に /api_get_member/kdock と /api_get_member/material パケットが来るので print_port() は不要.
 	}
 	else if (api_name == '/api_req_kaisou/remodeling') {
 		// 艦娘改造.
-		var params = decode_postdata_params(request.request.postData.params);
-		var ship = $ship_list[params.api_id];
-		var mst = $mst_ship[ship.ship_id];
-		$material.createship[1] -= mst.api_afterbull;	// 消費弾薬.
-		$material.createship[2] -= mst.api_afterfuel;	// 消費鋼材. afterfuelという名前だが、消費するのは鋼材である.
+		$material_sum = $material.createship;	// 消費資材は後続の /api_get_member/material パケットにて集計する. 従来は$mst_ship[]から消費資材を得ていたが、翔鶴改二／改二甲の相互改造における開発資材(歯車)消費値が取れないので方法を変えた.
 		// 直後に /api_get_member/ship3, /api_get_member/slot_item, /api_get_member/material パケットが来るので print_port() は不要.
 	}
 	else if (api_name == '/api_req_kousyou/createitem') {
@@ -2218,7 +2207,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_get_member/material') {
 		// 建造後、任務クリア後など.
 		func = function(json) { // 資材変化を記録する.
-			update_material(json.api_data);
+			update_material(json.api_data, $material_sum);
+			$material_sum = null;
 			print_port();
 		};
 	}
