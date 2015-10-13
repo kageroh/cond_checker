@@ -9,7 +9,10 @@ div.style.left = '850px';
 div.innerHTML = "<h2>艦これ余所見プレイ支援</h2>"
 	+ "<h3>ロード中...</h3>"
 	+ "ゲームスタート後に「ロード完了」が表示されない場合は[デベロッパー ツール]を起動し、画面をリロードしてゲームスタートからやり直してください\n"
-	+ "※ デベロッパーツールは、Opt+Cmd+I(Mac), Ctrl+Shift+I, F12 キーで起動できます\n";
+	+ "※ デベロッパーツールは、Opt+Cmd+I(Mac), Ctrl+Shift+I, F12 キーで起動できます\n"
+	+ "※ chrome://extensions を開いて、KanColle-YPS の有効チェックが外れていないか確認してください\n"
+	+ "任務遂行のデバイス間同期を有効にするには chrome://settings/syncSetup を開いて「拡張機能」の同期を有効にしてください\n"
+	;
 
 var hst = document.createElement('div');
 hst.style.whiteSpace = div.style.whiteSpace;
