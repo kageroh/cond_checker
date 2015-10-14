@@ -1406,8 +1406,8 @@ function on_next_cell(json) {
 	else if (h) {	// 渦潮マス.
 		var id = h.api_mst_id;
 		var count = h.api_count;
-		$material.dropitem[id-1]   -= count;	// 道中ロスによる資材増加を記録する.
-		$material.autosupply[id-1] += count;	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
+		$material.dropitem[id-1] -= count;	// 道中ロスによる資材減少を記録する.
+		$material.charge[id-1]   += count;	// 後続の /api_req_hokyu/charge にて補給に含まれる分を補正する.
 		var msg = area + ':' + material_name(id) + 'x' + -count;
 		if (h.api_dentan) msg += '(電探により軽減あり)';
 		$battle_log.push(msg);
