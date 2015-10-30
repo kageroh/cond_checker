@@ -2110,6 +2110,16 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			print_port();
 		};
 	}
+	else if (api_name == '/api_req_hensei/preset_select') {
+		// 編成展開.
+		func = function(json) {
+			var id = decode_postdata_params(request.request.postData.params).api_deck_id;	// 艦隊番号.
+			var deck = json.api_data;
+			$fdeck_list[id] = deck;
+			update_fdeck_list($fdeck_list); // 編成結果を $ship_fdeck に反映する.
+			print_port();
+		};
+	}
 	else if (api_name == '/api_req_hensei/change') {
 		// 艦隊編成.
 		var params = decode_postdata_params(request.request.postData.params);
