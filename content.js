@@ -138,7 +138,10 @@ function parse_markdown(a) {
 		s = s.replace(/撃沈---/g, '<span style="color:steelblue">$&</span>');
 		s = s.replace(/大破!!!/g, '<span style="color:red">$&</span>');
 		s = s.replace(/MISS!!/g, '<span style="color:red">$&</span>'); // 判定ミスを着色する.
-		s = s.replace(/\(0\.\d+\%\)/g, '<span style="color:red">$&</span>'); // 微小ダメージを着色する.
+		s = s.replace(/:(中破)/g, ':<span style="text-shadow:0 0 0.5em orange">$1</span>');
+		s = s.replace(/:(小破)/g, ':<span style="text-shadow:0 0 0.5em yellow">$1</span>');
+		s = s.replace(/^出撃中:/g, '<span style="text-shadow:0 0 1em lime">$&</span>');
+		s = s.replace(/^遠征\d+/g, '<span style="text-shadow:0 0 1em cyan">$&</span>');
 		s = s.replace(/@!!([^!]+)!!@/g, '<span style="color:red">$1</span>');
 		// markdown書式を変換する.
 		if      (/^--+/.test(s))	t = "<hr>";
