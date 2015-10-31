@@ -45,6 +45,7 @@ var $quest_list = {};
 var $battle_count = 0;
 var $ndock_list = {};
 var $do_print_port_on_ndock = false;
+var $do_print_port_on_slot_item = false;
 var $kdock_list = {};
 var $battle_deck_id = -1;
 var $battle_log = [];
@@ -2019,6 +2020,10 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			$slotitem_list = {};
 			add_slotitem_list(json.api_data, prev);
 			save_storage('slotitem_list', $slotitem_list);
+			if ($do_print_port_on_slot_item) {
+				$do_print_port_on_slot_item = false;
+				print_port();
+			}
 		};
 	}
 	else if (api_name == '/api_get_member/kdock') {
@@ -2282,15 +2287,20 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_ship_list(json.api_data.api_ship);
 			update_fdeck_list(json.api_data.api_deck_port);
 			update_ndock_list(json.api_data.api_ndock);
-			if ($battle_deck_id > 0) $last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
-			$battle_deck_id = -1;
 			$ship_escape = {};
 			$combined_flag = json.api_data.api_combined_flag;	// 連合艦隊編成有無.
 			update_material(json.api_data.api_material, $material.autosupply);	// 資材を更新する. 差分を自然増加として記録する.
 			var basic = json.api_data.api_basic;
 			$max_ship     = basic.api_max_chara;
 			$max_slotitem = basic.api_max_slotitem + 3;
-			print_port();
+			if ($battle_deck_id > 0) {
+				$last_mission[$battle_deck_id] = '前回出撃: ' + $battle_log.join('\n→');
+				$battle_deck_id = -1;
+				$do_print_port_on_slot_item = true;	// 戦闘直後の母港帰還時は、後続する slot_item で艦載機の熟練度が更新されるまで print_port() を遅延する.
+			}
+			else {
+				print_port();
+			}
 		};
 	}
 	else if (api_name == '/api_get_member/ship_deck') {
