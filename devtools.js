@@ -1875,6 +1875,7 @@ function on_battle(json) {
 		calc_damage(result, nowhps, d.api_raigeki);		// 第一艦隊雷撃戦.
 		break;
 	case 1: // 連合艦隊(機動部隊).
+	case 3: // 連合艦隊(輸送護衛部隊).
 		calc_damage(result, nowhps, d.api_hougeki1, nowhps_c);	// 第二艦隊砲撃.
 		calc_damage(result, nowhps, d.api_raigeki, nowhps_c);	// 第二艦隊雷撃戦.
 		calc_damage(result, nowhps, d.api_hougeki2);	// 第一艦隊砲撃一巡目.
