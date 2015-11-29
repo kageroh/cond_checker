@@ -1810,16 +1810,16 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	if (e_leader_lost && f_lost_count < e_lost_count) {
 		return 'B';
 	}
-	$guess_debug_log = (rate >= 2.49 && rate <= 2.51) // B/C判定閾値検証.
-				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
-				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
-				;
-	if (rate > 2.5) { // ほぼ確定. rate == 2.5 でC判定を確認済み.
+//	$guess_debug_log = (rate >= 2.49 && rate <= 2.51) // B/C判定閾値検証.
+//				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
+//				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
+//				;
+	if (rate > 2.5) { // 確定. rate == 2.5 でC判定を確認済み.
 		return 'B';
 	}
 	$guess_debug_log = (rate >= 0.8864 && rate <= 0.9038) // C/D判定閾値検証.
-				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
-				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
+//				|| (f_damage_total != 0 && f_damage_percent == 0) // 自ダメージ 1%未満時.
+//				|| (e_damage_total != 0 && e_damage_percent == 0) // 敵ダメージ 1%未満時.
 				;
 	if (rate > 0.9) { // 要検証!!! r == 0.9038 でC判定を確認. rate == 0.8864 でD判定を確認済み. 0.8864～0.9038 の区間に閾値がある.
 		return 'C';
