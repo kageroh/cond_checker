@@ -50,6 +50,8 @@ var $kdock_list = {};
 var $battle_deck_id = -1;
 var $battle_log = [];
 var $last_mission = {};
+var $maxhps = null;
+var $maxhps_c = null;
 var $beginhps = null;
 var $beginhps_c = null;
 var $f_damage = 0;
@@ -720,10 +722,10 @@ function slotitem_use(slot, item_id) {
 	for (var i = 0; i < slot.length; ++i) {
 		var value = $slotitem_list[slot[i]];
 		if (value && count_if(item_id, value.item_id)) {
-			slot[i] = -1; return true;
+			slot[i] = -1; return value.item_id;
 		}
 	}
-	return false;
+	return 0;
 }
 
 function slotitem_delete(slot) {
@@ -1678,6 +1680,11 @@ function calc_damage(result, hp, battle, hc) {
 				result.detail.push({ty: (battle.api_fdam ? "航空戦" : "航空支援"), target: target, cl: battle_cl_name(damage ? battle.api_ecl_flag[i]+1 : 0), damage: damage, hp: hp[target]});
 		}
 	}
+	// 緊急ダメコン発動によるhp補正を行う.
+	if (hc)
+		repair_fdeck($fdeck_list[2], $maxhps_c, hc);
+	else
+		repair_fdeck($fdeck_list[$battle_deck_id], $maxhps, hp);
 }
 
 function calc_kouku_damage(result, hp, kouku, hc) {
@@ -1730,7 +1737,8 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 		var ship = $ship_list[fdeck.api_ship[i-1]];
 		if (ship) {
 			name = ship.name_lv();
-			if (nowhps[i] <= 0 && slotitem_use(ship.slot, [42, 43])) name += '!!修理発動';
+			if (ship.repair_msg) name += ship.repair_msg;
+			delete ship.repair_msg;
 			var repair = slotitem_count(ship.slot, 42);	// 修理要員(ダメコン).
 			var megami = slotitem_count(ship.slot, 43);	// 修理女神.
 			if (repair) name += '+修理要員x' + repair;
@@ -1740,9 +1748,22 @@ function push_fdeck_status(req, fdeck, maxhps, nowhps, beginhps) {
 	}
 }
 
+function repair_fdeck(fdeck, maxhps, nowhps) {
+	if (/^演習/.test($next_enemy)) return;
+	for (var i = 1; i <= 6; ++i) {
+		if (maxhps[i] == -1) continue;
+		var ship = $ship_list[fdeck.api_ship[i-1]];
+		if (ship && nowhps[i] <= 0) {
+			var id = slotitem_use(ship.slot, [42, 43]);	// slotの先頭から末尾に検索し、最初に見つけたダメコン装備を抜く.
+			switch (id) {
+			case 42: ship.repair_msg = '!!修理要員発動'; nowhps[i] = Math.floor(maxhps[i] * 0.2); break; // 修理要員は 20% 回復する.
+			case 43: ship.repair_msg = '!!修理女神発動'; nowhps[i] = maxhps[i]; break; // 修理女神は 100% 回復する.
+			}
+		}
+	}
+}
+
 function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c, isChase) {
-	// 友軍の轟沈／護衛退避には未対応.
-	// 応急修理発動時の計算も不明.
 	var f_damage_total = 0;
 	var f_hp_total = 0;
 	var f_maxhp_total = 0;
@@ -1845,6 +1866,18 @@ function on_battle(json) {
 		f_air_lostcount : 0,		// 非撃墜数.
 		detail : []					// 戦闘詳報.
 	};
+	$maxhps = maxhps;
+	$maxhps_c = maxhps_c;
+	if (d.api_escape_idx) {
+		d.api_escape_idx.forEach(function(idx) {
+			maxhps[idx] = -1;	// 護衛退避した艦を艦隊リストから抜く. idx=1..6
+		});
+	}
+	if (d.api_escape_idx_combined) {
+		d.api_escape_idx_combined.forEach(function(idx) {
+			maxhps_c[idx] = -1;	// 護衛退避した艦を第二艦隊リストから抜く. idx=1..6
+		});
+	}
 	if (d.api_touch_plane) {
 		// 触接(夜戦).
 		result.touch = d.api_touch_plane;
@@ -1922,16 +1955,6 @@ function on_battle(json) {
 	}
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
-	if (d.api_escape_idx) {
-		d.api_escape_idx.forEach(function(idx) {
-			maxhps[idx] = -1;	// 護衛退避した艦を艦隊リストから抜く. idx=1..6
-		});
-	}
-	if (d.api_escape_idx_combined) {
-		d.api_escape_idx_combined.forEach(function(idx) {
-			maxhps_c[idx] = -1;	// 護衛退避した艦を第二艦隊リストから抜く. idx=1..6
-		});
-	}
 	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c, $beginhps != beginhps)
 	req.push('戦闘被害:' + $guess_info_str);
 	req.push('勝敗推定:' + $guess_win_rank);

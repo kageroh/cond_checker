@@ -137,6 +137,7 @@ function parse_markdown(a) {
 		// 色付け.
 		s = s.replace(/撃沈---/g, '<span style="color:steelblue">$&</span>');
 		s = s.replace(/大破!!!/g, '<span style="color:red">$&</span>');
+		s = s.replace(/!!修理..発動/g, '<span style="color:red">$&</span>');
 		s = s.replace(/MISS!!/g, '<span style="color:red">$&</span>'); // 判定ミスを着色する.
 		s = s.replace(/:(中破)/g, ':<span style="text-shadow:0 0 0.5em orange">$1</span>');
 		s = s.replace(/:(小破)/g, ':<span style="text-shadow:0 0 0.5em yellow">$1</span>');
