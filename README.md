@@ -1,4 +1,5 @@
 # 艦これ余所見プレイ支援 KanColleYPS
+* v1.0 Dec.2015
 * 開発サイト: https://github.com/hkuno9000/KanColle-YPS
 * 公開サイト: http://hkuno9000.github.io/KanColle-YPS
 
@@ -86,7 +87,7 @@ Flash PlayerはChrome内蔵のほうを使用してください
 ![practice quest check screenshot](http://hkuno9000.github.io/KanColle-YPS/images/YPS-mission-quest-check.png)
 
 ## 注意事項
-* 修復要員、修復女神の装備表示は、修復発動後の変動に対応していない可能性があるので、表示を鵜呑みにすると危険です。大破進撃は自己責任でお願いします。
+* 大破進撃は自己責任でお願いします。
 * 戦闘後のドロップ艦が持ってきた装備の数は、母港帰還までカウントできない場合があります。
 
 ## 仕組みなど
