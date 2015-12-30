@@ -892,7 +892,7 @@ function debug_print_mst() {
 	var req = [];
 	req.push('## DEBUG mst_slotitem');
 	req.push(msg);
-	chrome.extension.sendRequest(req);
+	chrome.runtime.sendMessage(req);
 }
 
 function debug_print_newship_slots() {
@@ -907,7 +907,7 @@ function debug_print_newship_slots() {
 	var req = [];
 	req.push('## DEBUG newship_slots');
 	req.push(msg);
-	chrome.extension.sendRequest(req);
+	chrome.runtime.sendMessage(req);
 }
 
 //------------------------------------------------------------------------
@@ -1262,7 +1262,7 @@ function print_port() {
 	//
 	// 各艦隊の情報を一覧表示する.
 	push_all_fleets(req);
-	chrome.extension.sendRequest(req);
+	chrome.runtime.sendMessage(req);
 }
 
 //------------------------------------------------------------------------
@@ -1274,7 +1274,7 @@ function print_next(title, msg) {
 	req = req.concat(msg); // msg は string or Array.
 	push_all_fleets(req);
 	if (req.damage_H_alart) { req.splice(1, 0, '# @!!【大破進撃警告】!!@ ダメコン未装備なら、ブラウザを閉じて進撃中止を勧告します.'); } // 大破進撃の警告を2行目に挿入する.
-	chrome.extension.sendRequest(req);
+	chrome.runtime.sendMessage(req);
 }
 
 //------------------------------------------------------------------------
@@ -1383,7 +1383,7 @@ function on_mission_check(category) {
 	}
 	var quests = Object.keys($quest_list).length;
 	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
-	if (req.length > 1) chrome.extension.sendRequest(req);
+	if (req.length > 1) chrome.runtime.sendMessage(req);
 }
 
 function on_next_cell(json) {
@@ -1589,7 +1589,7 @@ function on_battle_result(json) {
 	if (drop_item_name) {
 		msg += '\n## drop item\n' + drop_item_name;
 	}
-	chrome.extension.sendRequest('## battle result\n' + msg);
+	chrome.runtime.sendMessage('## battle result\n' + msg);
 }
 
 function calc_damage(result, hp, battle, hc) {
@@ -2006,7 +2006,7 @@ function on_battle(json) {
 		$enemy_ship_names.push(name);
 		req.push('\t' + i + '(' + name + ').\t' + hp_status_on_battle(nowhps[i+6], maxhps[i+6], beginhps[i+6]));
 	}
-	chrome.extension.sendRequest(req);
+	chrome.runtime.sendMessage(req);
 }
 
 chrome.devtools.network.onRequestFinished.addListener(function (request) {
@@ -2032,7 +2032,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 			update_mst_mission(json.api_data.api_mst_mission);
 			update_mst_mapinfo(json.api_data.api_mst_mapinfo);
 			sync_cloud();
-			chrome.extension.sendRequest("## ロード完了");
+			chrome.runtime.sendMessage("## ロード完了");
 			// debug_print_mst();
 			// debug_print_newship_slots();
 		};
