@@ -1448,15 +1448,17 @@ function on_next_cell(json) {
 				if (b.w != a.w) return b.w - a.w;	// 今週回数が異なればその大小を返す.
 				return b.n - a.n;	// 通算回数の大小を返す.
 			});
-			var sm = 0; // submarine
+			var sum_ss = 0; // 敵潜水艦隊の通算回数合計.
+			var sum_all = 0; //　全敵艦隊の通算回数合計.
 			list.forEach(function(a) {
 				var s = '\t  ' + a.w + '\t  ' + a.n + '\t|' + a.name + '\t' + a.lv;
 				var ss = s.replace(/潜水.級/g, '@!!$&!!@');
-				if (s != ss) ++sm;
+				if (s != ss) sum_ss += a.n;
+				sum_all += a.n;
 				req.push(ss);
 			});
-			if (sm > 0) {
-				req.push('### 潜水艦注意!! ' + fraction_percent_name(sm, list.length));
+			if (sum_ss > 0) {
+				req.push('### 潜水艦注意!! ' + fraction_percent_name(sum_ss, sum_all));
 			}
 		}
 		print_next('next enemy' + ($battle_count + 1), req);
