@@ -1455,10 +1455,13 @@ function on_next_cell(json) {
 				var ss = s.replace(/潜水.級/g, '@!!$&!!@');
 				if (s != ss) sum_ss += a.n;
 				sum_all += a.n;
+				ss = ss.replace(/輸送.級/g, '@!!$&!!@');
+				ss = ss.replace(/空母.級/g, '@!!$&!!@');
+				ss = ss.replace(/軽母.級/g, '@!!$&!!@');
 				req.push(ss);
 			});
 			if (sum_ss > 0) {
-				req.push('### 潜水艦注意!! ' + fraction_percent_name(sum_ss, sum_all));
+				req.push('### @!!潜水艦注意!!@ ' + fraction_percent_name(sum_ss, sum_all));
 			}
 		}
 		print_next('next enemy' + ($battle_count + 1), req);

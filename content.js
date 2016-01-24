@@ -143,6 +143,10 @@ function parse_markdown(a) {
 		s = s.replace(/:(小破)/g, ':<span style="text-shadow:0 0 0.5em yellow">$1</span>');
 		s = s.replace(/^出撃中:/g, '<span style="text-shadow:0 0 1em lime">$&</span>');
 		s = s.replace(/^遠征\d+/g, '<span style="text-shadow:0 0 1em cyan">$&</span>');
+		s = s.replace(/@!!(輸送.級)!!@/g, '<span style="color:limegreen">$1</span>');
+		s = s.replace(/@!!(空母.級)!!@/g, '<span style="color:darkorange">$1</span>');
+		s = s.replace(/@!!(軽母.級)!!@/g, '<span style="color:orange">$1</span>');
+		s = s.replace(/@!!(潜水.級)!!@/g, '<span style="color:deeppink">$1</span>');
 		s = s.replace(/@!!([^!]+)!!@/g, '<span style="color:red">$1</span>');
 		// markdown書式を変換する.
 		if      (/^--+/.test(s))	t = "<hr>";
