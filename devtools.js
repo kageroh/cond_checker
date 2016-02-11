@@ -1768,7 +1768,7 @@ function repair_fdeck(fdeck, maxhps, nowhps) {
 	}
 }
 
-function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c, isChase) {
+function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c, isChase, battle_api_name) {
 	var f_damage_total = 0;
 	var f_hp_total = 0;
 	var f_maxhp_total = 0;
@@ -1827,6 +1827,16 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 				+ (isChase ? ', chase_rate:' : ', rate:') + Math.round(rate * 10000) / 10000
 				;
 	$guess_debug_log = false;
+	if (/ld_airbattle/.test(battle_api_name)) {
+		if (f_lost_count == 0) {
+			if (f_damage_total == 0) return '完S'; // 確定.
+			if (f_damage_percent <= 10) return 'A'; // 要検証!!! 0.4%～8%　で A
+			if (f_damage_percent <= 20) return 'B'; // 要検証!!! 14%～19%　で B
+			if (f_damage_percent <= 50) return 'C'; // 要検証!!! 24%～xx%　で C
+		}
+		if (f_lost_count < f_count/2) return 'D'; // 要検証!!!
+		return 'E';
+	}
 	if (e_count == e_lost_count && f_lost_count == 0) {
 		return (f_damage_total == 0) ? '完S' : 'S';	// 1%未満の微ダメージでも、"完S"にはならない.
 	}
@@ -1856,7 +1866,7 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 	return 'E';
 }
 
-function on_battle(json) {
+function on_battle(json, battle_api_name) {
 	var d = json.api_data;
 	if (!d.api_maxhps || !d.api_nowhps) return;
 	var maxhps = d.api_maxhps;				// 出撃艦隊[1..6] 敵艦隊[7..12]
@@ -1960,7 +1970,7 @@ function on_battle(json) {
 	}
 	if (!$beginhps) $beginhps = beginhps;
 	if (!$beginhps_c) $beginhps_c = beginhps_c;
-	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c, $beginhps != beginhps)
+	$guess_win_rank = guess_win_rank(nowhps, maxhps, $beginhps, nowhps_c, maxhps_c, $beginhps_c, $beginhps != beginhps, battle_api_name)
 	req.push('戦闘被害:' + $guess_info_str);
 	req.push('勝敗推定:' + $guess_win_rank);
 
@@ -2523,6 +2533,6 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		if (!content) return;
 		var json = JSON.parse(content.replace(/^svdata=/, ''));
 		if (!json || !json.api_data) return;
-		func(json);
+		func(json, api_name);
 	});
 });
