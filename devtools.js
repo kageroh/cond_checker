@@ -1518,7 +1518,7 @@ function on_battle_result(json) {
 			msg += '\n### @!!勝敗推定ミス!!@ ' + $guess_info_str;
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
 		}
-		else if (/[DE]/.test(rank) || $guess_debug_log) {
+		else if ($guess_debug_log) {
 			push_to_logbook($next_enemy + ', ' + $guess_info_str);
 		}
 		var log = $next_enemy + '(' + e.api_deck_name + '):' + $battle_info + ':' + rank;
