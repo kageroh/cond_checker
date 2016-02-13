@@ -2460,7 +2460,8 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 		|| api_name == '/api_req_sortie/ld_airbattle'
 		|| api_name == '/api_req_combined_battle/battle'
 		|| api_name == '/api_req_combined_battle/battle_water'
-		|| api_name == '/api_req_combined_battle/airbattle') {
+		|| api_name == '/api_req_combined_battle/airbattle'
+		|| api_name == '/api_req_combined_battle/ld_airbattle') {
 		// 昼戦開始.
 		$battle_count++;
 		$beginhps = null;
