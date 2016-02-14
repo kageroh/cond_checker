@@ -1828,12 +1828,15 @@ function guess_win_rank(nowhps, maxhps, beginhps, nowhps_c, maxhps_c, beginhps_c
 				;
 	$guess_debug_log = false;
 	if (/ld_airbattle/.test(battle_api_name)) {
-		if (f_lost_count == 0) {
-			if (f_damage_total == 0) return '完S'; // 確定.
-			if (f_damage_percent <= 10) return 'A'; // 要検証!!! 0.4%～8%　で A
-			if (f_damage_percent <= 20) return 'B'; // 要検証!!! 14%～19%　で B
-			if (f_damage_percent <= 50) return 'C'; // 要検証!!! 24%～xx%　で C
-		}
+		$guess_debug_log = (f_lost_count != 0) // D/E判定検証.
+			|| (f_damage_percent > 9 && f_damage_percent < 10) // A/B閾値検証.
+			|| (f_damage_percent > 19 && f_damage_percent < 22) // B/C閾値検証.
+			|| (f_damage_percent > 41) // C/D閾値検証.
+			;
+		if (f_damage_total == 0) return '完S'; // 確定.
+		if (f_damage_percent < 10) return 'A'; // 要検証!!! 自ダメージ 0.4%～9%　で A判定を確認済み.
+		if (f_damage_percent < 20) return 'B'; // 要検証!!! 自ダメージ 10%～19%　で B判定を確認済み.
+		if (f_damage_percent < 50) return 'C'; // 要検証!!! 自ダメージ 22%～41%　で C判定を確認済み.
 		if (f_lost_count < f_count/2) return 'D'; // 要検証!!!
 		return 'E';
 	}
