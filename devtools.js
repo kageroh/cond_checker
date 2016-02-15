@@ -785,6 +785,7 @@ function fleet_brief_status(deck, deck2) {
 	var damage_L = 0;
 	var fuel = 0, fuel_max = 0;
 	var bull = 0, bull_max = 0;
+	var drumcan = {ships:0, sum:0};
 	var list = deck.api_ship;
 	if (deck2) list = list.concat(deck2.api_ship);
 	for (var i in list) {
@@ -799,6 +800,12 @@ function fleet_brief_status(deck, deck2) {
 			else if (r <= 0.25) damage_H++; // 大破.
 			else if (r <= 0.50) damage_M++; // 中破.
 			else if (r <= 0.75) damage_L++; // 小破.
+			// 装備集計.
+			var d = slotitem_count(ship.slot, 75);	// ドラム缶.
+			if (d) {
+				drumcan.ships++;
+				drumcan.sum += d;
+			}
 		}
 	}
 	return kira_names(cond_list)
@@ -809,13 +816,13 @@ function fleet_brief_status(deck, deck2) {
 		+ (damage_H ? ' 大破!!!' + damage_H : '')
 		+ (damage_M ? ' 中破' + damage_M : '')
 		+ (damage_L ? ' 小破' + damage_L : '')
+		+ (drumcan.sum ? ' ドラム缶' + drumcan.sum + '個' + drumcan.ships + '隻' : '')
 		;
 }
 
 function push_fleet_status(msg, deck) {
 	var lv_sum = 0;
 	var fleet_ships = 0;
-	var drumcan = {ships:0, sum:0, msg:''};
 	for (var i = 0, ship, s_id; ship = $ship_list[s_id = deck.api_ship[i]]; ++i) {
 		fleet_ships++;
 		lv_sum += ship.lv;
@@ -842,16 +849,8 @@ function push_fleet_status(msg, deck) {
 			+ '\t|' + ship.slot_names()
 			+ '\t' + ship.next_level()
 			);
-		var d = slotitem_count(ship.slot, 75);	// ドラム缶.
-		if (d) {
-			drumcan.ships++;
-			drumcan.sum += d;
-		}
 	}
-	if (drumcan.sum) {
-		drumcan.msg = 'ドラム缶x' + drumcan.sum + '個(' + drumcan.ships + '隻)';
-	}
-	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum + '\t\t\t\t\t' + drumcan.msg);
+	msg.push('\t合計' + fleet_ships +'隻:\tLv' + lv_sum);
 }
 
 function update_material(material, sum) {
