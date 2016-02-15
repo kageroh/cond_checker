@@ -62,6 +62,7 @@ var $svDateTime = null;
 var $newship_slots = null;
 var $enemy_formation = '';
 var $enemy_ship_names = [];
+var $log_daily = 0;
 
 //-------------------------------------------------------------------------
 // Ship クラス.
@@ -351,8 +352,9 @@ function update_mst_mapinfo(list) {
 }
 
 function get_weekly() {
-	var wn = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
-	wn = Math.floor(wn / (7*24*60*60*1000)); // 経過週数に変換する.
+	var ms = Date.now() - Date.UTC(2013, 4-1, 22, 5-9, 0); // 2013-4-22 05:00 JST からの経過ミリ秒数.
+	var dn = Math.floor(ms / (24*60*60*1000)); // 経過日数に変換する.
+	var wn = Math.floor(dn / 7); // 経過週数に変換する.
 	if ($weekly == null || $weekly.week != wn) {
 		$weekly = {
 			quest_state : 0, // あ号任務状況(1:未遂行, 2:遂行中, 3:達成)
@@ -364,6 +366,9 @@ function get_weekly() {
 			week      : wn,
 			savetime : 0
 		};
+	}
+	if ($weekly.daily != dn) {
+		$weekly.daily = dn;
 	}
 	if ($weekly.monday_material == null) {
 		$weekly.monday_material = $material.now.concat(); save_weekly();
@@ -1073,6 +1078,11 @@ function print_port() {
 	}
 	msg.push('---');
 	req.push(msg);
+	if ($log_daily != weekly.daily) {
+		// 起動直後と毎朝5:00に、資源値をログ記録する.
+		$log_daily = weekly.daily;
+		push_to_logbook(msg[2].replace(/現在値/, $pcDateTime.toLocaleString() + ' 資材値:'));	// 日付+現在値.
+	}
 	//
 	// 艦娘保有数、未ロック艦一覧、未保有艦一覧、ダブリ艦一覧を表示する.
 	var ships = Object.keys($ship_list).length;
