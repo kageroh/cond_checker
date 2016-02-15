@@ -786,6 +786,7 @@ function fleet_brief_status(deck, deck2) {
 	var fuel = 0, fuel_max = 0;
 	var bull = 0, bull_max = 0;
 	var drumcan = {ships:0, sum:0};
+	var daihatu = {ships:0, sum:0};
 	var list = deck.api_ship;
 	if (deck2) list = list.concat(deck2.api_ship);
 	for (var i in list) {
@@ -806,6 +807,11 @@ function fleet_brief_status(deck, deck2) {
 				drumcan.ships++;
 				drumcan.sum += d;
 			}
+			var d = slotitem_count(ship.slot, 68);	// 大発動艇.
+			if (d) {
+				daihatu.ships++;
+				daihatu.sum += d;
+			}
 		}
 	}
 	return kira_names(cond_list)
@@ -817,6 +823,7 @@ function fleet_brief_status(deck, deck2) {
 		+ (damage_M ? ' 中破' + damage_M : '')
 		+ (damage_L ? ' 小破' + damage_L : '')
 		+ (drumcan.sum ? ' ドラム缶' + drumcan.sum + '個' + drumcan.ships + '隻' : '')
+		+ (daihatu.sum ? ' 大発' + daihatu.sum + '個' : '')
 		;
 }
 
