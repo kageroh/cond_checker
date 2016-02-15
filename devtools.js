@@ -787,6 +787,7 @@ function fleet_brief_status(deck, deck2) {
 	var bull = 0, bull_max = 0;
 	var drumcan = {ships:0, sum:0};
 	var daihatu = {ships:0, sum:0};
+	var akashi = '';
 	var list = deck.api_ship;
 	if (deck2) list = list.concat(deck2.api_ship);
 	for (var i in list) {
@@ -812,6 +813,11 @@ function fleet_brief_status(deck, deck2) {
 				daihatu.ships++;
 				daihatu.sum += d;
 			}
+			// 明石検出.
+			var name = ship.name_lv();
+			if (/明石/.test(name)) {
+				akashi += ' ' + name;
+			}
 		}
 	}
 	return kira_names(cond_list)
@@ -824,6 +830,7 @@ function fleet_brief_status(deck, deck2) {
 		+ (damage_L ? ' 小破' + damage_L : '')
 		+ (drumcan.sum ? ' ドラム缶' + drumcan.sum + '個' + drumcan.ships + '隻' : '')
 		+ (daihatu.sum ? ' 大発' + daihatu.sum + '個' : '')
+		+ akashi
 		;
 }
 
