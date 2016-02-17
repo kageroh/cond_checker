@@ -1284,6 +1284,7 @@ function print_port() {
 		var msg = ['YPS_logbook'];
 		msg = msg.concat($logbook);
 		req.push(msg);
+		msg.push('---');
 	}
 	//
 	// 遂行中任務を一覧表示する.
@@ -1347,6 +1348,7 @@ function push_quests(req) {
 				+ ')'
 				);
 			req.push(msg);
+			msg.push('---');
 		}
 	}
 	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
