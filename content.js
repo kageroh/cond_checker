@@ -234,6 +234,11 @@ function history_buttons() {
 		;
 }
 
+function version_banner() {
+	var ver_name = 'v1.1 Feb.2016';	// copy from manifest.json
+	return ' <a href="http://hkuno9000.github.io/KanColle-YPS/" target="KanColle-YPS-website">KanColle-YPS ' + ver_name + '</a>';
+}
+
 //------------------------------------------------------------------------
 // 表示内容受信.
 //
@@ -241,7 +246,7 @@ chrome.runtime.onMessage.addListener(function (req) {
 	if (!div.parentNode) document.body.replaceChild(div, hst); // 履歴表示を中断する.
 	if (req instanceof Array) {
 		div.innerHTML = parse_markdown(req);
-		navi.innerHTML = all_close_button() + history_buttons();
+		navi.innerHTML = all_close_button() + history_buttons() + version_banner();
 	}
 	else {
 		div.innerHTML += parse_markdown(req.toString().split('\n'));
