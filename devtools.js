@@ -1414,7 +1414,10 @@ function on_mission_check(category) {
 	}
 	var quests = Object.keys($quest_list).length;
 	if (quests != $quest_count) req.push('### 任務リストを先頭から最終ページまでめくってください');
-	if (req.length > 1) chrome.runtime.sendMessage(req);
+	if (req.length > 1) {
+		push_all_fleets(req);
+		chrome.runtime.sendMessage(req);
+	}
 }
 
 function on_next_cell(json) {
