@@ -764,6 +764,7 @@ function is_airplane(item) {
 	case 25:// オートジャイロ.
 	case 26:// 対潜哨戒機.
 	case 41:// 大型飛行艇.
+	case 45:// 水上戦闘機.
 		return true;
 	default:
 		return false;
