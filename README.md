@@ -1,5 +1,5 @@
 # 艦これ余所見プレイ支援 KanColleYPS
-* v1.1 Feb.2016: 2016冬イベント空襲戦マス対応
+* v1.2 Mar.2016: 敵装備、遠征情報強化版
 * 開発サイト: https://github.com/hkuno9000/KanColle-YPS
 * 公開サイト: http://hkuno9000.github.io/KanColle-YPS
 * リリース履歴: https://github.com/hkuno9000/KanColle-YPS/releases
