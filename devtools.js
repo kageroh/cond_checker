@@ -295,6 +295,14 @@ function update_kdock_list(list) {
 	});
 }
 
+function update_slotitem_list(list) {
+	if (!list) return;
+	var prev = $slotitem_list;
+	$slotitem_list = {};
+	add_slotitem_list(list, prev);
+	save_storage('slotitem_list', $slotitem_list);
+}
+
 function update_mst_ship(list) {
 	if (!list) return;
 	$mst_ship = {};
@@ -2128,20 +2136,14 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 	else if (api_name == '/api_get_member/require_info') { // 2016.4 メンテで追加された.
 		// ログイン直後の一覧表更新.
 		func = function(json) { // 装備リストと建造リストを更新する.
-			var prev = $slotitem_list;
-			$slotitem_list = {};
-			add_slotitem_list(json.api_data.api_slot_item, prev);
-			save_storage('slotitem_list', $slotitem_list);
+			update_slotitem_list(json.api_data.api_slot_item);
 			update_kdock_list(json.api_data.api_kdock);
 		};
 	}
 	else if (api_name == '/api_get_member/slot_item') {
 		// 保有装備一覧表.
 		func = function(json) { // 保有する装備配列をリストに記録する.
-			var prev = $slotitem_list;
-			$slotitem_list = {};
-			add_slotitem_list(json.api_data, prev);
-			save_storage('slotitem_list', $slotitem_list);
+			update_slotitem_list(json.api_data);
 			if ($do_print_port_on_slot_item) {
 				$do_print_port_on_slot_item = false;
 				print_port();
