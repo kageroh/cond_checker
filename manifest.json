@@ -6,7 +6,8 @@
 	"description": "艦これの余所見プレイを支援する(cond_checker改造版)",
 	"homepage_url": "http://hkuno9000.github.io/KanColle-YPS/",
 	"permissions": [
-		"storage"
+		"storage",
+		"tabs"
 	],
 	"background": {
 		"scripts": ["background.js"]
