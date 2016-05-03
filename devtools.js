@@ -1459,16 +1459,17 @@ function on_next_cell(json) {
 		$is_boss = true;
 	}
 	if (g) {	// 資源マス.
-		for(var i = 0; i < g.length; ++i){
+		var msg = area;
+		for (var i = 0; i < g.length; ++i) {
 			var item = g[i];
 			var id = item.api_id;
 			var count = item.api_getcount;
 			$material.dropitem[id-1]   += count;	// 道中ドロップによる資材増加を記録する.
 			$material.autosupply[id-1] -= count;	// 後続の /api_port/port にて自然増加に誤算入される分を補正する.
-			var msg = area + ':' + material_name(id) + 'x' + count;
-			$battle_log.push(msg);
-			print_next('next item', msg);
+			msg += (i == 0 ? ':' : ', ') + material_name(id) + 'x' + count;
 		}
+		$battle_log.push(msg);
+		print_next('next item', msg);
 	}
 	else if (h) {	// 渦潮マス.
 		var id = h.api_mst_id;
